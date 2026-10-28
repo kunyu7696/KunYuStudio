@@ -1,6 +1,6 @@
 # KunYu Studio 架构设计
 
-> 原 KunYuEcosystem
+> 原名称 KunYuEcosystem
 >
 > 本文描述 KunYuStudio 的技术架构：进程模型、目录分层、IPC 约定、核心数据模型、
 > 端到端数据流、版本矩阵与安全模型。功能清单见 [FEATURES.md](FEATURES.md)，
