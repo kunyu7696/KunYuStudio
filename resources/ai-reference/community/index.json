@@ -1,0 +1,919 @@
+{
+  "generatedAt": "2026-09-15T12:54:58.340Z",
+  "sources": {
+    "officialRepos": [
+      {
+        "repo": "FabricMC/fabric-example-mod",
+        "branch": "master",
+        "license": "CC0-1.0",
+        "url": "https://github.com/FabricMC/fabric-example-mod",
+        "localDir": "examples/fabric-example-mod",
+        "files": [
+          {
+            "path": "examples/fabric-example-mod/build.gradle",
+            "source": "https://raw.githubusercontent.com/FabricMC/fabric-example-mod/master/build.gradle",
+            "status": "cached"
+          },
+          {
+            "path": "examples/fabric-example-mod/gradle.properties",
+            "source": "https://raw.githubusercontent.com/FabricMC/fabric-example-mod/master/gradle.properties",
+            "status": "cached"
+          },
+          {
+            "path": "examples/fabric-example-mod/settings.gradle",
+            "source": "https://raw.githubusercontent.com/FabricMC/fabric-example-mod/master/settings.gradle",
+            "status": "cached"
+          },
+          {
+            "path": "examples/fabric-example-mod/src/main/resources/fabric.mod.json",
+            "source": "https://raw.githubusercontent.com/FabricMC/fabric-example-mod/master/src/main/resources/fabric.mod.json",
+            "status": "cached"
+          },
+          {
+            "path": "examples/fabric-example-mod/src/main/java/com/example/ExampleMod.java",
+            "source": "https://raw.githubusercontent.com/FabricMC/fabric-example-mod/26.2/src/main/java/com/example/ExampleMod.java",
+            "status": "ok"
+          }
+        ],
+        "defaultBranch": "26.2"
+      },
+      {
+        "repo": "MinecraftForge/MinecraftForge",
+        "branch": "1.20.x",
+        "license": "LGPL-2.1",
+        "licenseNote": "参考用，勿直接分发；MDK 示例文件允许作为参考",
+        "url": "https://github.com/MinecraftForge/MinecraftForge",
+        "localDir": "examples/forge-mdk",
+        "files": [
+          {
+            "path": "examples/forge-mdk/build.gradle",
+            "source": "https://raw.githubusercontent.com/MinecraftForge/MinecraftForge/1.20.x/mdk/build.gradle",
+            "status": "cached"
+          },
+          {
+            "path": "examples/forge-mdk/gradle.properties",
+            "source": "https://raw.githubusercontent.com/MinecraftForge/MinecraftForge/1.20.x/mdk/gradle.properties",
+            "status": "cached"
+          },
+          {
+            "path": "examples/forge-mdk/settings.gradle",
+            "source": "https://raw.githubusercontent.com/MinecraftForge/MinecraftForge/1.20.x/mdk/settings.gradle",
+            "status": "cached"
+          },
+          {
+            "path": "examples/forge-mdk/src/main/resources/META-INF/mods.toml",
+            "source": "https://raw.githubusercontent.com/MinecraftForge/MinecraftForge/1.20.x/mdk/src/main/resources/META-INF/mods.toml",
+            "status": "cached"
+          },
+          {
+            "path": "examples/forge-mdk/src/main/java/com/example/examplemod/ExampleMod.java",
+            "source": "https://raw.githubusercontent.com/MinecraftForge/MinecraftForge/1.20.x/mdk/src/main/java/com/example/examplemod/ExampleMod.java",
+            "status": "cached"
+          },
+          {
+            "path": "examples/forge-mdk/src/main/java/com/example/examplemod/Config.java",
+            "source": "https://raw.githubusercontent.com/MinecraftForge/MinecraftForge/1.20.x/mdk/src/main/java/com/example/examplemod/Config.java",
+            "status": "cached"
+          }
+        ]
+      },
+      {
+        "repo": "neoforged/ModDevGradle",
+        "branch": "main",
+        "license": "LGPL-2.1",
+        "url": "https://github.com/neoforged/ModDevGradle",
+        "localDir": "examples/neoforge-mdg",
+        "files": [
+          {
+            "path": "examples/neoforge-mdg/build.gradle",
+            "source": "https://raw.githubusercontent.com/neoforged/ModDevGradle/main/testproject/build.gradle",
+            "status": "cached"
+          },
+          {
+            "path": "examples/neoforge-mdg/gradle.properties",
+            "source": "https://raw.githubusercontent.com/neoforged/ModDevGradle/main/testproject/gradle.properties",
+            "status": "cached"
+          },
+          {
+            "path": "examples/neoforge-mdg/src/main/resources/META-INF/neoforge.mods.toml",
+            "source": "https://raw.githubusercontent.com/neoforged/ModDevGradle/main/testproject/src/main/resources/META-INF/neoforge.mods.toml",
+            "status": "cached"
+          }
+        ]
+      }
+    ],
+    "modrinth": {
+      "fabric": [
+        {
+          "slug": "fabric-api",
+          "title": "Fabric API",
+          "downloads": 254343725,
+          "follows": 35547,
+          "license": null,
+          "categories": [
+            "fabric",
+            "library"
+          ],
+          "clientSide": "optional",
+          "serverSide": "optional",
+          "dateModified": "2026-09-14T20:06:40.740356+00:00",
+          "url": "https://modrinth.com/mod/fabric-api"
+        },
+        {
+          "slug": "sodium",
+          "title": "Sodium",
+          "downloads": 225559969,
+          "follows": 40388,
+          "license": null,
+          "categories": [
+            "fabric",
+            "neoforge",
+            "optimization",
+            "quilt"
+          ],
+          "clientSide": "required",
+          "serverSide": "unsupported",
+          "dateModified": "2026-09-12T22:49:34.597785+00:00",
+          "url": "https://modrinth.com/mod/sodium"
+        },
+        {
+          "slug": "iris",
+          "title": "Iris Shaders",
+          "downloads": 175299236,
+          "follows": 29006,
+          "license": null,
+          "categories": [
+            "decoration",
+            "fabric",
+            "neoforge",
+            "optimization",
+            "quilt"
+          ],
+          "clientSide": "required",
+          "serverSide": "unsupported",
+          "dateModified": "2026-09-13T00:03:30.890232+00:00",
+          "url": "https://modrinth.com/mod/iris"
+        },
+        {
+          "slug": "cloth-config",
+          "title": "Cloth Config API",
+          "downloads": 167180724,
+          "follows": 16405,
+          "license": null,
+          "categories": [
+            "fabric",
+            "forge",
+            "library",
+            "neoforge"
+          ],
+          "clientSide": "optional",
+          "serverSide": "optional",
+          "dateModified": "2026-09-15T03:38:28.461659+00:00",
+          "url": "https://modrinth.com/mod/cloth-config"
+        },
+        {
+          "slug": "entityculling",
+          "title": "Entity Culling",
+          "downloads": 165937684,
+          "follows": 17188,
+          "license": null,
+          "categories": [
+            "babric",
+            "fabric",
+            "forge",
+            "neoforge",
+            "optimization",
+            "quilt"
+          ],
+          "clientSide": "required",
+          "serverSide": "unsupported",
+          "dateModified": "2026-06-20T14:43:51.020555+00:00",
+          "url": "https://modrinth.com/mod/entityculling"
+        },
+        {
+          "slug": "ferrite-core",
+          "title": "FerriteCore",
+          "downloads": 150285993,
+          "follows": 16037,
+          "license": null,
+          "categories": [
+            "fabric",
+            "forge",
+            "neoforge",
+            "optimization",
+            "quilt",
+            "utility"
+          ],
+          "clientSide": "optional",
+          "serverSide": "optional",
+          "dateModified": "2026-03-24T18:31:48.941879+00:00",
+          "url": "https://modrinth.com/mod/ferrite-core"
+        },
+        {
+          "slug": "modmenu",
+          "title": "Mod Menu",
+          "downloads": 143187083,
+          "follows": 26762,
+          "license": null,
+          "categories": [
+            "fabric",
+            "quilt",
+            "utility"
+          ],
+          "clientSide": "required",
+          "serverSide": "unsupported",
+          "dateModified": "2026-09-11T00:52:37.965427+00:00",
+          "url": "https://modrinth.com/mod/modmenu"
+        },
+        {
+          "slug": "lithium",
+          "title": "Lithium",
+          "downloads": 127189004,
+          "follows": 23223,
+          "license": null,
+          "categories": [
+            "fabric",
+            "neoforge",
+            "optimization",
+            "quilt"
+          ],
+          "clientSide": "optional",
+          "serverSide": "optional",
+          "dateModified": "2026-07-29T12:19:51.776129+00:00",
+          "url": "https://modrinth.com/mod/lithium"
+        },
+        {
+          "slug": "immediatelyfast",
+          "title": "ImmediatelyFast",
+          "downloads": 122942918,
+          "follows": 11254,
+          "license": null,
+          "categories": [
+            "fabric",
+            "forge",
+            "neoforge",
+            "optimization",
+            "quilt"
+          ],
+          "clientSide": "required",
+          "serverSide": "unsupported",
+          "dateModified": "2026-09-13T22:28:10.083588+00:00",
+          "url": "https://modrinth.com/mod/immediatelyfast"
+        },
+        {
+          "slug": "yacl",
+          "title": "YetAnotherConfigLib (YACL)",
+          "downloads": 121849302,
+          "follows": 9430,
+          "license": null,
+          "categories": [
+            "fabric",
+            "forge",
+            "library",
+            "management",
+            "neoforge",
+            "quilt",
+            "utility"
+          ],
+          "clientSide": "optional",
+          "serverSide": "optional",
+          "dateModified": "2026-07-19T12:41:22.184098+00:00",
+          "url": "https://modrinth.com/mod/yacl"
+        },
+        {
+          "slug": "fabric-language-kotlin",
+          "title": "Fabric Language Kotlin",
+          "downloads": 117693423,
+          "follows": 10934,
+          "license": null,
+          "categories": [
+            "fabric",
+            "library"
+          ],
+          "clientSide": "optional",
+          "serverSide": "optional",
+          "dateModified": "2026-09-07T12:48:36.411031+00:00",
+          "url": "https://modrinth.com/mod/fabric-language-kotlin"
+        },
+        {
+          "slug": "xaeros-minimap",
+          "title": "Xaero's Minimap",
+          "downloads": 109523962,
+          "follows": 18067,
+          "license": null,
+          "categories": [
+            "adventure",
+            "fabric",
+            "forge",
+            "neoforge",
+            "quilt",
+            "transportation",
+            "utility"
+          ],
+          "clientSide": "required",
+          "serverSide": "optional",
+          "dateModified": "2026-09-15T09:24:11.568241+00:00",
+          "url": "https://modrinth.com/mod/xaeros-minimap"
+        },
+        {
+          "slug": "entitytexturefeatures",
+          "title": "[ETF] Entity Texture Features",
+          "downloads": 100236772,
+          "follows": 10319,
+          "license": null,
+          "categories": [
+            "decoration",
+            "fabric",
+            "forge",
+            "neoforge",
+            "quilt",
+            "utility"
+          ],
+          "clientSide": "required",
+          "serverSide": "unsupported",
+          "dateModified": "2026-09-02T01:00:13.841897+00:00",
+          "url": "https://modrinth.com/mod/entitytexturefeatures"
+        },
+        {
+          "slug": "architectury-api",
+          "title": "Architectury API",
+          "downloads": 99101804,
+          "follows": 7622,
+          "license": null,
+          "categories": [
+            "fabric",
+            "forge",
+            "library",
+            "neoforge",
+            "quilt"
+          ],
+          "clientSide": "required",
+          "serverSide": "required",
+          "dateModified": "2026-09-10T15:05:01.978946+00:00",
+          "url": "https://modrinth.com/mod/architectury-api"
+        },
+        {
+          "slug": "xaeros-world-map",
+          "title": "Xaero's World Map",
+          "downloads": 95892710,
+          "follows": 13643,
+          "license": null,
+          "categories": [
+            "adventure",
+            "fabric",
+            "forge",
+            "neoforge",
+            "quilt",
+            "transportation",
+            "utility"
+          ],
+          "clientSide": "required",
+          "serverSide": "optional",
+          "dateModified": "2026-09-15T09:26:50.567439+00:00",
+          "url": "https://modrinth.com/mod/xaeros-world-map"
+        }
+      ],
+      "forge": [
+        {
+          "slug": "fabric-api",
+          "title": "Fabric API",
+          "downloads": 254343725,
+          "follows": 35547,
+          "license": null,
+          "categories": [
+            "fabric",
+            "library"
+          ],
+          "clientSide": "optional",
+          "serverSide": "optional",
+          "dateModified": "2026-09-14T20:06:40.740356+00:00",
+          "url": "https://modrinth.com/mod/fabric-api"
+        },
+        {
+          "slug": "sodium",
+          "title": "Sodium",
+          "downloads": 225559969,
+          "follows": 40388,
+          "license": null,
+          "categories": [
+            "fabric",
+            "neoforge",
+            "optimization",
+            "quilt"
+          ],
+          "clientSide": "required",
+          "serverSide": "unsupported",
+          "dateModified": "2026-09-12T22:49:34.597785+00:00",
+          "url": "https://modrinth.com/mod/sodium"
+        },
+        {
+          "slug": "iris",
+          "title": "Iris Shaders",
+          "downloads": 175299236,
+          "follows": 29006,
+          "license": null,
+          "categories": [
+            "decoration",
+            "fabric",
+            "neoforge",
+            "optimization",
+            "quilt"
+          ],
+          "clientSide": "required",
+          "serverSide": "unsupported",
+          "dateModified": "2026-09-13T00:03:30.890232+00:00",
+          "url": "https://modrinth.com/mod/iris"
+        },
+        {
+          "slug": "cloth-config",
+          "title": "Cloth Config API",
+          "downloads": 167180724,
+          "follows": 16405,
+          "license": null,
+          "categories": [
+            "fabric",
+            "forge",
+            "library",
+            "neoforge"
+          ],
+          "clientSide": "optional",
+          "serverSide": "optional",
+          "dateModified": "2026-09-15T03:38:28.461659+00:00",
+          "url": "https://modrinth.com/mod/cloth-config"
+        },
+        {
+          "slug": "entityculling",
+          "title": "Entity Culling",
+          "downloads": 165937684,
+          "follows": 17188,
+          "license": null,
+          "categories": [
+            "babric",
+            "fabric",
+            "forge",
+            "neoforge",
+            "optimization",
+            "quilt"
+          ],
+          "clientSide": "required",
+          "serverSide": "unsupported",
+          "dateModified": "2026-06-20T14:43:51.020555+00:00",
+          "url": "https://modrinth.com/mod/entityculling"
+        },
+        {
+          "slug": "ferrite-core",
+          "title": "FerriteCore",
+          "downloads": 150285993,
+          "follows": 16037,
+          "license": null,
+          "categories": [
+            "fabric",
+            "forge",
+            "neoforge",
+            "optimization",
+            "quilt",
+            "utility"
+          ],
+          "clientSide": "optional",
+          "serverSide": "optional",
+          "dateModified": "2026-03-24T18:31:48.941879+00:00",
+          "url": "https://modrinth.com/mod/ferrite-core"
+        },
+        {
+          "slug": "modmenu",
+          "title": "Mod Menu",
+          "downloads": 143187083,
+          "follows": 26762,
+          "license": null,
+          "categories": [
+            "fabric",
+            "quilt",
+            "utility"
+          ],
+          "clientSide": "required",
+          "serverSide": "unsupported",
+          "dateModified": "2026-09-11T00:52:37.965427+00:00",
+          "url": "https://modrinth.com/mod/modmenu"
+        },
+        {
+          "slug": "lithium",
+          "title": "Lithium",
+          "downloads": 127189004,
+          "follows": 23223,
+          "license": null,
+          "categories": [
+            "fabric",
+            "neoforge",
+            "optimization",
+            "quilt"
+          ],
+          "clientSide": "optional",
+          "serverSide": "optional",
+          "dateModified": "2026-07-29T12:19:51.776129+00:00",
+          "url": "https://modrinth.com/mod/lithium"
+        },
+        {
+          "slug": "immediatelyfast",
+          "title": "ImmediatelyFast",
+          "downloads": 122942918,
+          "follows": 11254,
+          "license": null,
+          "categories": [
+            "fabric",
+            "forge",
+            "neoforge",
+            "optimization",
+            "quilt"
+          ],
+          "clientSide": "required",
+          "serverSide": "unsupported",
+          "dateModified": "2026-09-13T22:28:10.083588+00:00",
+          "url": "https://modrinth.com/mod/immediatelyfast"
+        },
+        {
+          "slug": "yacl",
+          "title": "YetAnotherConfigLib (YACL)",
+          "downloads": 121849302,
+          "follows": 9430,
+          "license": null,
+          "categories": [
+            "fabric",
+            "forge",
+            "library",
+            "management",
+            "neoforge",
+            "quilt",
+            "utility"
+          ],
+          "clientSide": "optional",
+          "serverSide": "optional",
+          "dateModified": "2026-07-19T12:41:22.184098+00:00",
+          "url": "https://modrinth.com/mod/yacl"
+        },
+        {
+          "slug": "fabric-language-kotlin",
+          "title": "Fabric Language Kotlin",
+          "downloads": 117693423,
+          "follows": 10934,
+          "license": null,
+          "categories": [
+            "fabric",
+            "library"
+          ],
+          "clientSide": "optional",
+          "serverSide": "optional",
+          "dateModified": "2026-09-07T12:48:36.411031+00:00",
+          "url": "https://modrinth.com/mod/fabric-language-kotlin"
+        },
+        {
+          "slug": "xaeros-minimap",
+          "title": "Xaero's Minimap",
+          "downloads": 109523962,
+          "follows": 18067,
+          "license": null,
+          "categories": [
+            "adventure",
+            "fabric",
+            "forge",
+            "neoforge",
+            "quilt",
+            "transportation",
+            "utility"
+          ],
+          "clientSide": "required",
+          "serverSide": "optional",
+          "dateModified": "2026-09-15T09:24:11.568241+00:00",
+          "url": "https://modrinth.com/mod/xaeros-minimap"
+        },
+        {
+          "slug": "entitytexturefeatures",
+          "title": "[ETF] Entity Texture Features",
+          "downloads": 100236772,
+          "follows": 10319,
+          "license": null,
+          "categories": [
+            "decoration",
+            "fabric",
+            "forge",
+            "neoforge",
+            "quilt",
+            "utility"
+          ],
+          "clientSide": "required",
+          "serverSide": "unsupported",
+          "dateModified": "2026-09-02T01:00:13.841897+00:00",
+          "url": "https://modrinth.com/mod/entitytexturefeatures"
+        },
+        {
+          "slug": "architectury-api",
+          "title": "Architectury API",
+          "downloads": 99101804,
+          "follows": 7622,
+          "license": null,
+          "categories": [
+            "fabric",
+            "forge",
+            "library",
+            "neoforge",
+            "quilt"
+          ],
+          "clientSide": "required",
+          "serverSide": "required",
+          "dateModified": "2026-09-10T15:05:01.978946+00:00",
+          "url": "https://modrinth.com/mod/architectury-api"
+        },
+        {
+          "slug": "xaeros-world-map",
+          "title": "Xaero's World Map",
+          "downloads": 95892710,
+          "follows": 13643,
+          "license": null,
+          "categories": [
+            "adventure",
+            "fabric",
+            "forge",
+            "neoforge",
+            "quilt",
+            "transportation",
+            "utility"
+          ],
+          "clientSide": "required",
+          "serverSide": "optional",
+          "dateModified": "2026-09-15T09:26:50.567439+00:00",
+          "url": "https://modrinth.com/mod/xaeros-world-map"
+        }
+      ],
+      "neoforge": [
+        {
+          "slug": "fabric-api",
+          "title": "Fabric API",
+          "downloads": 254343725,
+          "follows": 35547,
+          "license": null,
+          "categories": [
+            "fabric",
+            "library"
+          ],
+          "clientSide": "optional",
+          "serverSide": "optional",
+          "dateModified": "2026-09-14T20:06:40.740356+00:00",
+          "url": "https://modrinth.com/mod/fabric-api"
+        },
+        {
+          "slug": "sodium",
+          "title": "Sodium",
+          "downloads": 225559969,
+          "follows": 40388,
+          "license": null,
+          "categories": [
+            "fabric",
+            "neoforge",
+            "optimization",
+            "quilt"
+          ],
+          "clientSide": "required",
+          "serverSide": "unsupported",
+          "dateModified": "2026-09-12T22:49:34.597785+00:00",
+          "url": "https://modrinth.com/mod/sodium"
+        },
+        {
+          "slug": "iris",
+          "title": "Iris Shaders",
+          "downloads": 175299236,
+          "follows": 29006,
+          "license": null,
+          "categories": [
+            "decoration",
+            "fabric",
+            "neoforge",
+            "optimization",
+            "quilt"
+          ],
+          "clientSide": "required",
+          "serverSide": "unsupported",
+          "dateModified": "2026-09-13T00:03:30.890232+00:00",
+          "url": "https://modrinth.com/mod/iris"
+        },
+        {
+          "slug": "cloth-config",
+          "title": "Cloth Config API",
+          "downloads": 167180724,
+          "follows": 16405,
+          "license": null,
+          "categories": [
+            "fabric",
+            "forge",
+            "library",
+            "neoforge"
+          ],
+          "clientSide": "optional",
+          "serverSide": "optional",
+          "dateModified": "2026-09-15T03:38:28.461659+00:00",
+          "url": "https://modrinth.com/mod/cloth-config"
+        },
+        {
+          "slug": "entityculling",
+          "title": "Entity Culling",
+          "downloads": 165937684,
+          "follows": 17188,
+          "license": null,
+          "categories": [
+            "babric",
+            "fabric",
+            "forge",
+            "neoforge",
+            "optimization",
+            "quilt"
+          ],
+          "clientSide": "required",
+          "serverSide": "unsupported",
+          "dateModified": "2026-06-20T14:43:51.020555+00:00",
+          "url": "https://modrinth.com/mod/entityculling"
+        },
+        {
+          "slug": "ferrite-core",
+          "title": "FerriteCore",
+          "downloads": 150285993,
+          "follows": 16037,
+          "license": null,
+          "categories": [
+            "fabric",
+            "forge",
+            "neoforge",
+            "optimization",
+            "quilt",
+            "utility"
+          ],
+          "clientSide": "optional",
+          "serverSide": "optional",
+          "dateModified": "2026-03-24T18:31:48.941879+00:00",
+          "url": "https://modrinth.com/mod/ferrite-core"
+        },
+        {
+          "slug": "modmenu",
+          "title": "Mod Menu",
+          "downloads": 143187083,
+          "follows": 26762,
+          "license": null,
+          "categories": [
+            "fabric",
+            "quilt",
+            "utility"
+          ],
+          "clientSide": "required",
+          "serverSide": "unsupported",
+          "dateModified": "2026-09-11T00:52:37.965427+00:00",
+          "url": "https://modrinth.com/mod/modmenu"
+        },
+        {
+          "slug": "lithium",
+          "title": "Lithium",
+          "downloads": 127189004,
+          "follows": 23223,
+          "license": null,
+          "categories": [
+            "fabric",
+            "neoforge",
+            "optimization",
+            "quilt"
+          ],
+          "clientSide": "optional",
+          "serverSide": "optional",
+          "dateModified": "2026-07-29T12:19:51.776129+00:00",
+          "url": "https://modrinth.com/mod/lithium"
+        },
+        {
+          "slug": "immediatelyfast",
+          "title": "ImmediatelyFast",
+          "downloads": 122942918,
+          "follows": 11254,
+          "license": null,
+          "categories": [
+            "fabric",
+            "forge",
+            "neoforge",
+            "optimization",
+            "quilt"
+          ],
+          "clientSide": "required",
+          "serverSide": "unsupported",
+          "dateModified": "2026-09-13T22:28:10.083588+00:00",
+          "url": "https://modrinth.com/mod/immediatelyfast"
+        },
+        {
+          "slug": "yacl",
+          "title": "YetAnotherConfigLib (YACL)",
+          "downloads": 121849302,
+          "follows": 9430,
+          "license": null,
+          "categories": [
+            "fabric",
+            "forge",
+            "library",
+            "management",
+            "neoforge",
+            "quilt",
+            "utility"
+          ],
+          "clientSide": "optional",
+          "serverSide": "optional",
+          "dateModified": "2026-07-19T12:41:22.184098+00:00",
+          "url": "https://modrinth.com/mod/yacl"
+        },
+        {
+          "slug": "fabric-language-kotlin",
+          "title": "Fabric Language Kotlin",
+          "downloads": 117693423,
+          "follows": 10934,
+          "license": null,
+          "categories": [
+            "fabric",
+            "library"
+          ],
+          "clientSide": "optional",
+          "serverSide": "optional",
+          "dateModified": "2026-09-07T12:48:36.411031+00:00",
+          "url": "https://modrinth.com/mod/fabric-language-kotlin"
+        },
+        {
+          "slug": "xaeros-minimap",
+          "title": "Xaero's Minimap",
+          "downloads": 109523962,
+          "follows": 18067,
+          "license": null,
+          "categories": [
+            "adventure",
+            "fabric",
+            "forge",
+            "neoforge",
+            "quilt",
+            "transportation",
+            "utility"
+          ],
+          "clientSide": "required",
+          "serverSide": "optional",
+          "dateModified": "2026-09-15T09:24:11.568241+00:00",
+          "url": "https://modrinth.com/mod/xaeros-minimap"
+        },
+        {
+          "slug": "entitytexturefeatures",
+          "title": "[ETF] Entity Texture Features",
+          "downloads": 100236772,
+          "follows": 10319,
+          "license": null,
+          "categories": [
+            "decoration",
+            "fabric",
+            "forge",
+            "neoforge",
+            "quilt",
+            "utility"
+          ],
+          "clientSide": "required",
+          "serverSide": "unsupported",
+          "dateModified": "2026-09-02T01:00:13.841897+00:00",
+          "url": "https://modrinth.com/mod/entitytexturefeatures"
+        },
+        {
+          "slug": "architectury-api",
+          "title": "Architectury API",
+          "downloads": 99101804,
+          "follows": 7622,
+          "license": null,
+          "categories": [
+            "fabric",
+            "forge",
+            "library",
+            "neoforge",
+            "quilt"
+          ],
+          "clientSide": "required",
+          "serverSide": "required",
+          "dateModified": "2026-09-10T15:05:01.978946+00:00",
+          "url": "https://modrinth.com/mod/architectury-api"
+        },
+        {
+          "slug": "xaeros-world-map",
+          "title": "Xaero's World Map",
+          "downloads": 95892710,
+          "follows": 13643,
+          "license": null,
+          "categories": [
+            "adventure",
+            "fabric",
+            "forge",
+            "neoforge",
+            "quilt",
+            "transportation",
+            "utility"
+          ],
+          "clientSide": "required",
+          "serverSide": "optional",
+          "dateModified": "2026-09-15T09:26:50.567439+00:00",
+          "url": "https://modrinth.com/mod/xaeros-world-map"
+        }
+      ]
+    }
+  },
+  "usage": "仅作为 AI 提示词参考与代码风格对照，不得直接拷贝分发受版权保护内容"
+}

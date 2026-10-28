@@ -1,0 +1,27 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.0 | fabric/1.21.7/recipe/stonecutting_recipe.json | mapping: Yarn | provenance: extracted verbatim from source PDF; Chinese annotations unrecoverable (no ToUnicode)
+// ============================================================================
+{
+    // ============================================================
+    //  - Fabric 1.21.7
+    // ============================================================
+    // : data/examplemod/recipes/stonecutting_recipe.json
+    // stonecutting
+    // :
+    // 1.  ingredient
+    // 2. ingredient  item  tag
+    // 3. count 1
+    // 4. result
+    // 5.  cookingtime  experience
+    // ============================================================
+    "type": "minecraft:stonecutting",
+    // ingredient:
+    "ingredient": {
+        "item": "minecraft:stone"
+    },
+    // result:
+    "result": "minecraft:stone_bricks",
+    // count:
+
+    "count": 1
+}

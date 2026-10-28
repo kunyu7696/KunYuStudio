@@ -1,0 +1,22 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.2 | forge/1.20.4/recipe/smelting_recipe.json | mapping: Mojang official | provenance: adapted from official loader MDK/docs
+// ============================================================================
+{
+    // ============================================================
+    // 熔炼 - Forge 1.20.4
+    // ============================================================
+    // 位置：data/examplemod/recipes/smelting_recipe.json
+    // 同族类型：blasting（高炉）/ smoking（烟熏）/ campfire_cooking（营火）。
+    // ============================================================
+    "type": "minecraft:smelting",
+    // ingredient：可用 "item" 或 "tag"
+    "ingredient": {
+        "item": "minecraft:raw_iron"
+    },
+    // result：1.20.4 熔炼产物是纯字符串 ID
+    "result": "examplemod:example_ingot",
+    // experience：熔炼一次所得经验
+    "experience": 0.7,
+    // cookingtime：单位 tick（200 = 10 秒）
+    "cookingtime": 200
+}

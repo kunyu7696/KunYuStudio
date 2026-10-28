@@ -1,0 +1,167 @@
+name: Release
+
+# 发版链路（自更新配套）：推 v* tag 触发 → 三平台并行构建 → 收尾 job 汇总为
+# 单个草稿 Release（人工在 Releases 页点 Publish 后客户端才检得出，防止半成品
+# 被自动更新拉走）。
+#
+# 为什么不是各平台各自 electron-builder --publish always（v0.1.4 的旧做法）：
+# electron-builder 用 getReleaseByTag 查既有 Release，而该 API 不返回草稿，
+# 于是每个平台各自新建一个草稿——v0.1.4 实测产出 2 个草稿、资产被劈成 4+6 个。
+# 改为「各平台只构建并上传 workflow artifact，收尾 job 一次性建草稿并上传」，
+# 从根上消除多草稿；三平台也因此可并行（旧做法靠 needs 串行属于无效规避）。
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+# Unix LF 换行符必须保留：Windows CRLF 会导致 YAML 解析错误
+# （.gitattributes 已锁 *.yml eol=lf，编辑时勿改成 CRLF）
+permissions:
+  # gh release 创建/上传资产需要 contents 写权限
+  contents: write
+
+jobs:
+  build-win:
+    name: Windows 安装包构建
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # observer-agent 用纯 JDK 工具链构建（build-observer-agent.cjs）
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - run: npm ci
+
+      # 发版前过完整质量门禁：tag 是人工切的，这里挡住带病发布
+      # （只需在 Windows 跑一遍；跨平台单测由 ci.yml 的三系统矩阵覆盖）
+      - name: 质量门禁（typecheck + lint + 单测）
+        run: |
+          npm run typecheck
+          npm run lint
+          npm run test
+
+      # build:win = 构建 + electron-builder --win --publish never（只出产物，不上传）
+      - name: 构建安装包
+        run: npm run build:win
+
+      - name: 上传 Windows 产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: win
+          # 只取安装包 / 差分块 / 更新元数据；排除 builder-debug.yml 与 *-unpacked 目录
+          path: |
+            dist/*.exe
+            dist/*.blockmap
+            dist/latest*.yml
+          if-no-files-found: error
+
+  build-mac:
+    name: macOS dmg 构建（x64 + arm64）
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - run: npm ci
+
+      # 无 Apple 开发者账号：CSC_IDENTITY_AUTO_DISCOVERY=false 阻止自动寻找证书
+      # （electron-builder.yml 另设 identity: null 跳过签名）
+      - name: 构建 dmg
+        run: npm run build:mac
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - name: 上传 macOS 产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac
+          path: |
+            dist/*.dmg
+            dist/*.blockmap
+            dist/latest*.yml
+          if-no-files-found: error
+
+  build-linux:
+    name: Linux AppImage 构建
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - run: npm ci
+
+      - name: 构建 AppImage
+        run: npm run build:linux
+
+      - name: 上传 Linux 产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: |
+            dist/*.AppImage
+            dist/*.blockmap
+            dist/latest*.yml
+          if-no-files-found: error
+
+  # 收尾合并 job：全流程唯一创建 Release 的地方（三个构建 job 只产出 artifact）
+  release-publish:
+    name: 汇总三平台产物并创建草稿 Release
+    needs: [build-win, build-mac, build-linux]
+    # 仅 tag 推送时发布；workflow_dispatch 手动触发只做构建校验，不建 Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      # merge-multiple：三份 artifact 平铺进同一目录。文件名互不冲突
+      # （setup.exe / *.dmg / *.AppImage 按平台不同名；latest.yml / latest-mac.yml /
+      # latest-linux.yml 亦不同名），故可直接作为一次发布的全量资产。
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: 列出待发布资产
+        run: ls -lh artifacts
+
+      # 用 gh 一次性建草稿；重跑同一 tag 时草稿已存在 → 改为覆盖上传，避免作业失败
+      - name: 创建草稿 Release 并上传全部资产
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          if gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release upload "$TAG" artifacts/* --clobber --repo "${{ github.repository }}"
+          else
+            gh release create "$TAG" artifacts/* \
+              --repo "${{ github.repository }}" \
+              --draft \
+              --title "KunYu Studio $TAG" \
+              --notes "由 CI 自动构建的三平台安装包（Windows NSIS / macOS dmg x64+arm64 / Linux AppImage x64）。确认无误后在 Releases 页点 Publish 公开，客户端自更新才会检出。"
+          fi

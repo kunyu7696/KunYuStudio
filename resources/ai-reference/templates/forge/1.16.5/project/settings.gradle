@@ -1,0 +1,30 @@
+/*
+ * KunYuEcosystem AI Reference 模板迁移（forge/1.20.1 -> forge/1.16.5）
+ * provenance: translated-from-forge-1.20.1
+ * 目标 loader=forge mc=1.16.5 loaderVersion=36.2.42
+ * 注意：本文件由脚本从种子组合复制并替换版本号得到。Java API、Yarn/Mojmap 命名、
+ *       加载器 DSL 在 1.16.5 上可能与种子版本存在差异，构建失败时
+ *       请优先查阅 1.16.5 官方文档/Forge docs。
+ * verifiedAt 为 null 表示本模板尚未在目标版本真机编译验证。
+ */
+# ============================================================================
+# KunYuEcosystem AI Reference v3.2 | forge/1.16.5/project/settings.gradle | mapping: Mojang official | provenance: adapted from official loader MDK/docs
+# ============================================================================
+// ============================================================================
+// settings.gradle —— Gradle 插件仓库与项目名
+// ============================================================================
+// 用法要点：
+// - ForgeGradle 6 插件发布在 Forge Maven，必须放在 pluginManagement 首位。
+// ============================================================================
+pluginManagement {
+    repositories {
+        // Forge Maven：提供 net.minecraftforge.gradle 插件
+        maven { url = 'https://maven.minecraftforge.net/' }
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+// 注意：FG4 硬性拒绝 Gradle 7+，本组合锁定 Gradle 6.9.4（不可声明 foojay-resolver，其最低要求 Gradle 7.6）；
+// JDK 8 工具链由编译宿主本机提供。
+// jar 名；与 mods.toml 的 modId 保持一致便于排查
+rootProject.name = 'examplemod'

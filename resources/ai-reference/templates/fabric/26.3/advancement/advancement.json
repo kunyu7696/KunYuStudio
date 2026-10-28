@@ -1,0 +1,89 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.0 | fabric/26.3/advancement/advancement.json | mapping: Yarn | provenance: extracted verbatim from source PDF; Chinese annotations unrecoverable (no ToUnicode)
+// ============================================================================
+{
+    // ============================================================
+    // / - Fabric 26.3
+    // ============================================================
+    // : data/examplemod/advancements/example_advancement.json
+    // Advancement Minecraft 1.12+
+    // toast
+    // :
+    // - display:
+    // - parent:
+    // - criteria:
+    // - requirements: AND / OR
+    // - rewards:
+    // :
+    // 1. parent display.background
+    // 2. 26.3  inventory_changed  "items"  "item"
+    // 3. criteria  trigger
+    // 4. requirements  AND OR
+    // 5. frame : task() / goal() / challenge()
+    // ============================================================
+    // ID
+    "parent": "examplemod:example/root",
+    "display": {
+        "icon": {
+            "item": "examplemod:example_item"
+        },
+        //  translate  literal
+        "title": {
+            "translate": "advancements.examplemod.example.title"
+        },
+        "description": {
+            "translate": "advancements.examplemod.example.description"
+        },
+        // : task(,) / goal(,) / challenge(,)
+        "frame": "task",
+
+        "show_toast": true,
+        "announce_to_chat": true,
+        "hidden": false
+        //  background
+        // "background": "minecraft:textures/block/stone.png"
+    },
+    //  key  trigger  conditions
+    "criteria": {
+        "get_example_item": {
+            // :
+            "trigger": "minecraft:inventory_changed",
+            "conditions": {
+                // 26.3  "items"
+                //  "item"
+                "items": [
+                    {
+                        "items": [
+                            "examplemod:example_item"
+                        ]
+                    }
+                ]
+            }
+        },
+        "another_condition": {
+            // :
+            "trigger": "minecraft:location",
+            "conditions": {
+                "player": {
+                    "location": {
+                        "dimension": "minecraft:overworld"
+                    }
+                }
+            }
+        }
+    },
+    //  AND
+    //  OR
+    // :  get_example_item AND another_condition
+    "requirements": [
+        ["get_example_item"],
+        ["another_condition"]
+    ],
+    "rewards": {
+        "experience": 10,
+        "loot": [
+            "examplemod:example_loot_table"
+        ],
+        "function": "examplemod:grant_example_reward"
+    }
+}

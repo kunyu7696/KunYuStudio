@@ -1,0 +1,155 @@
+name: CI
+
+on:
+  push:
+    # 实际分支是 master，此前写 [main] 导致 push 型 CI 永不命中
+    branches: [master]
+  pull_request:
+  schedule:
+    # 每周一 03:00 UTC 跑一次矩阵门禁（真实构建耗时长，不随 PR 触发）
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+# Unix LF 换行符必须保留：Windows CRLF 会导致 YAML 解析错误（项目硬约束）
+jobs:
+  # 三平台门禁：代码已是跨平台形态（win32 专属逻辑均有 platform 守卫/分支），
+  # typecheck/lint/单测在三个系统上都跑，防止某个平台专属回归混进 master。
+  # 覆盖率门槛只在 Windows 跑（平台条件测试 runIf 跳过会影响计数，不与覆盖率耦合）。
+  gate:
+    name: 质量门禁（typecheck + 单测，${{ matrix.os }}）
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # electron 44 起无 postinstall：npm ci 后无 path.txt，首次 require('electron')
+      # 惰性 spawnSync 下载 ~100MB 二进制并冻结事件循环——CI 冷缓存下 vitest 墙钟判
+      # 5s 测试超时，多 worker 并发下载还互踩 dist 解压目录（2026-10-26/27 三轮 master
+      # 红的共同根因）。单测从不启动 electron，预置存在性桩即可掐断下载链路。
+      - name: 预置 electron 二进制桩
+        run: node scripts/stub-electron-binary.cjs
+
+      - name: typecheck（node 侧）
+        run: npm run typecheck:node
+
+      - name: typecheck（web 侧）
+        run: npm run typecheck:web
+
+      - name: lint（.ts + .vue）
+        run: npm run lint
+
+      - name: 单元测试
+        # npm run test 经 run-vitest.cjs 透传退出码：非 0 即本步骤失败（显式退出码门禁，
+        # 不允许"摘要全绿但 exit 1"的静默 flake 混过 CI）
+        run: npm run test
+
+      - name: 覆盖率门槛（services 层，仅 Windows）
+        if: matrix.os == 'windows-latest'
+        run: npm run test:coverage
+
+      - name: 产物新鲜度门禁（out/ 不落后于 src）
+        # assert-out-fresh 此前只挂在本机 build:win，CI 从不执行。
+        # 这里跑 electron-vite build 后断言 out/（main+renderer mtime 门 + 判别串门）；
+        # 打包级验证（app.asar 一致性）仍留在本地 build:win 的 verify-dist-freshness。
+        run: |
+          npm run build
+          node scripts/assert-out-fresh.cjs
+
+  matrix-pr:
+    name: 矩阵门禁（compileJava + processResources + jar，2-6 分钟/组合）
+    # push 直推 master 也必须过编译门禁，不再只认 PR；
+    # push 档只跑 core 档控制时长，PR 档 core+extended 全量
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: |
+            17
+            21
+            25
+
+      - run: npm ci
+
+      - name: PR/push 轻量矩阵（compileJava + processResources + jar，不写回 manifest）
+        run: npm run test:matrix-pr
+        env:
+          KY_MATRIX_TIERS: ${{ github.event_name == 'push' && 'core' || 'core,extended' }}
+
+  matrix-gate:
+    name: 矩阵门禁（core/extended/legacy 真机构建）
+    # 全部 32 个「加载器 × MC 版本」组合各跑一次 gradlew build，只随定时/手动触发
+    # （forge-1.16.5 已冻结，不在构建矩阵内、仅存 manifest 指纹）；
+    # legacy 三个遗产版本（1.16.5/1.18.2/1.19.2，fabric/forge 共 5 组合）
+    # 修复后纳入门禁，不再永绝于编译验证之外
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+    # matrixHealth 落回仓库 manifest 需要 push 权限（结果不再只进 artifact）
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # 矩阵 core/extended 组合需要 JDK 17 / 21 / 25（26.x 起 Mojang 交付 Java 25）三种编译宿主
+      # （setup-java 写入 JAVA_HOME_17_X64 / JAVA_HOME_21_X64 / JAVA_HOME_25_X64）
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: |
+            17
+            21
+            25
+
+      - run: npm ci
+
+      - name: 矩阵真实构建（结果写入统一存储 overlay）
+        run: npm run test:matrix
+        env:
+          KY_MATRIX_TIERS: core,extended,legacy
+
+      # 统一成套整改：门禁只写 overlay（运行时唯一真源），manifest 不再被测试回写；
+      # 这里把 overlay 快照单向导出回仓库 manifest（发布基线刷新），artifact/commit 链路照旧。
+      - name: matrixHealth 快照导出 manifest
+        if: always()
+        run: node scripts/exportMatrixHealth.mjs
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: matrix-manifest
+          path: resources/ai-reference/manifest.json
+
+      - name: matrixHealth 落回仓库 manifest
+        # 此前结果只随 artifact 上传，仓库内 matrixHealth 永久停在最后一次本机运行。
+        # 回写在 test:matrix 内部完成（writeBackMatrixHealth），这里把变更提交回触发分支。
+        # 若无变更（如环境性失败未回写）则 git diff --quiet 短路，push 为 no-op。
+        if: always()
+        run: |
+          git config user.name "kunyu-ci-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add resources/ai-reference/manifest.json
+          git diff --cached --quiet || git commit -m "chore(matrix): 定时真机构建刷新 matrixHealth"
+          git push

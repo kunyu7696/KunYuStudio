@@ -1,0 +1,26 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.2 | neoforge/1.21.7/recipe/smithing_recipe.json | mapping: Mojang official | provenance: adapted from official loader MDK/docs
+// ============================================================================
+{
+    // ============================================================
+    // 锻造台 - NeoForge 1.21.7
+    // ============================================================
+    // 位置：data/examplemod/recipe/smithing_recipe.json
+    // 1.20+ 拆分为 smithing_transform（升级/转换）与 smithing_trim（盔甲纹饰）。
+    // ============================================================
+    "type": "minecraft:smithing_transform",
+    // template：锻造模板
+    "template": {
+        "item": "minecraft:netherite_upgrade_smithing_template"
+    },
+    // base：被升级的基础物品
+    "base": {
+        "item": "minecraft:diamond_sword"
+    },
+    // addition：升级材料
+    "addition": {
+        "item": "minecraft:netherite_ingot"
+    },
+    // result：纯字符串 ID
+    "result": "minecraft:netherite_sword"
+}

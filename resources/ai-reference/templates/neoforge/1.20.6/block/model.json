@@ -1,0 +1,27 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.2 | neoforge/1.20.6/block/model.json | mapping: Mojang official | provenance: adapted from official loader MDK/docs
+// ============================================================================
+{
+  // ================================================================
+  // 方块模型 JSON（NeoForge 1.20.6）
+  // ================================================================
+  // 位置：src/main/resources/assets/examplemod/models/block/example_block.json
+  // 由 blockstate.json 的 "model" 引用；加载器无关。
+  // ================================================================
+  // parent 决定基础形状；cube_all 只需一个 "all" 贴图
+  "parent": "block/cube_all",
+  // 贴图名 "examplemod:block/example_block" 对应
+  // assets/examplemod/textures/block/example_block.png
+  "textures": {
+    "all": "examplemod:block/example_block"
+  }
+  // 六面不同贴图时改用 parent "block/cube"：
+  // "textures": {
+  //   "up": "examplemod:block/example_block_top",
+  //   "down": "examplemod:block/example_block_bottom",
+  //   "north": "examplemod:block/example_block_side",
+  //   "south": "examplemod:block/example_block_side",
+  //   "east": "examplemod:block/example_block_side",
+  //   "west": "examplemod:block/example_block_side"
+  // }
+}

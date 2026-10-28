@@ -1,0 +1,16 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.2 | neoforge/1.21.4/tag/entity_tag.json | mapping: Mojang official | provenance: adapted from official loader MDK/docs
+// ============================================================================
+{
+    // ============================================================
+    // 实体标签 - NeoForge 1.21.4
+    // ============================================================
+    // 位置：data/examplemod/tags/entity/example_entity_tag.json
+    // 常用原版标签：minecraft:skeletons 等。
+    // ============================================================
+    "replace": false,
+    "values": [
+        "minecraft:cow",
+        "examplemod:example_entity"
+    ]
+}

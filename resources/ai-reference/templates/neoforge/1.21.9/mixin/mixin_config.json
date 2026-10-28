@@ -1,0 +1,30 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.2 | neoforge/1.21.9/mixin/mixin_config.json | mapping: Mojang official | provenance: adapted from official loader MDK/docs
+// ============================================================================
+{
+    // ============================================================
+    // Mixin 配置 - NeoForge 1.21.9
+    // ============================================================
+    // 实际位置：src/main/resources/examplemod.mixins.json
+    // 注册方式：neoforge.mods.toml 中添加
+    //   [[mixins]]
+    //   config="examplemod.mixins.json"
+    // refmap 由 Mixin 注解处理器在构建期生成（ModDevGradle 已自动配置）。
+    // ============================================================
+    "required": true,
+    "package": "com.example.examplemod.mixin",
+    "compatibilityLevel": "JAVA_17",
+    "refmap": "examplemod.refmap.json",
+    // 通用端 Mixin（不含 Client/Server 前缀类）
+    "mixins": [
+        "ExampleInjectMixin",
+        "ExampleModifyArgMixin"
+    ],
+    // 仅客户端 Mixin
+    "client": [
+    ],
+    "injectors": {
+        // defaultRequire=1：注入点不匹配时报错而非静默跳过
+        "defaultRequire": 1
+    }
+}

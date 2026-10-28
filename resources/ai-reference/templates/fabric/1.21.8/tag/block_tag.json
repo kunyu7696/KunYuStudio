@@ -1,0 +1,31 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.0 | fabric/1.21.8/tag/block_tag.json | mapping: Yarn | provenance: extracted verbatim from source PDF; Chinese annotations unrecoverable (no ToUnicode)
+// ============================================================================
+{
+    // ============================================================
+    //  - Fabric 1.21.8
+    // ============================================================
+    // : data/examplemod/tags/blocks/example_block_tag.json
+    // :
+    //   minecraft:logs
+    //   minecraft:mineable/axe
+    //   minecraft:mineable/pickaxe
+    //   minecraft:mineable/shovel
+    //   minecraft:needs_iron_tool
+    //   minecraft:needs_diamond_tool
+    //   minecraft:base_stone_overworld
+    //   minecraft:base_stone_nether
+    //   minecraft:overworld_natural_logs
+    // :
+    // 1. : data/<mod_id>/tags/blocks/
+    // 2. : data/<mod_id>/tags/items/
+    // 3.  mineable/*
+    // 4.  needs_*_tool
+    // ============================================================
+    "replace": false,
+    "values": [
+        "minecraft:diamond_block",
+        "minecraft:emerald_block",
+        "examplemod:example_block"
+    ]
+}

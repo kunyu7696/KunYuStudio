@@ -1,0 +1,70 @@
+/*
+ * KunYuEcosystem AI Reference 模板迁移（neoforge/1.21.1 -> neoforge/1.21.11）
+ * provenance: translated-from-neoforge-1.21.1
+ * 目标 loader=neoforge mc=1.21.11 loaderVersion=21.11.45
+ * 注意：本文件由脚本从种子组合复制并替换版本号得到。Java API、Yarn/Mojmap 命名、
+ *       加载器 DSL 在 1.21.11 上可能与种子版本存在差异，构建失败时
+ *       请优先查阅 1.21.11 官方文档/NeoForge docs。
+ * verifiedAt 为 null 表示本模板尚未在目标版本真机编译验证。
+ */
+// ============================================================================
+// KunYuEcosystem AI Reference v3.2 | neoforge/1.21.11/project/build.gradle | mapping: Mojang official | provenance: adapted from official loader MDK/docs
+// ============================================================================
+// ============================================================================
+// build.gradle —— NeoForge 1.21.11（ModDevGradle 2.x，Groovy DSL）
+// ============================================================================
+// 用法要点：
+// - ModDevGradle（MDG）自动拉取 NeoForge 并配置 Mojang 官方映射与 runClient/runServer/runData。
+// - NeoForge 运行时使用 Mojang 官方映射，无需 reobf 步骤。
+// - 需要 JDK 21；推荐 Gradle 8.8+（用 gradle wrapper 固定）。
+// ============================================================================
+plugins {
+    id 'java-library'
+    // ModDevGradle 2.x 主插件
+    id 'net.neoforged.moddev' version '2.0.147'
+}
+version = project.mod_version
+group = project.maven_group
+
+base {
+    // 决定 jar 最终名：examplemod-1.0.0.jar
+    archivesName = project.archives_base_name
+}
+
+repositories {
+    // MDG 已自动添加 NeoForged Maven；此处补充依赖第三方库的仓库
+    mavenCentral()
+}
+
+neoForge {
+    // NeoForge 版本（21.1.x 对应 Minecraft 1.21.11）
+    version = project.neoforge_version
+
+    runs {
+        client { client() }
+        server { server() }
+        data {
+            data()
+            // runData：把 JSON（配方/标签/模型等）生成到 src/generated/resources
+            programArguments.addAll '--mod', 'examplemod', '--all',
+                    '--output', file('src/generated/resources/').getAbsolutePath(),
+                    '--existing', file('src/main/resources/').getAbsolutePath()
+        }
+    }
+
+    mods {
+        examplemod { sourceSet sourceSets.main }
+    }
+}
+
+// 数据生成输出目录并入资源处理
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+// Minecraft 1.21.11 需要 Java 21；统一 UTF-8 编译编码
+java {
+    toolchain { languageVersion = JavaLanguageVersion.of(21) }
+}
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 21
+}

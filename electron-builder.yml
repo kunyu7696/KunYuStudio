@@ -1,0 +1,175 @@
+# 打包配置
+# Windows NSIS / macOS dmg（不签名）/ Linux AppImage 三平台目标；
+# publish 无 GH_TOKEN / 未传 --publish 时不执行发布（本地构建安全）。
+appId: com.kunyu.ecosystem
+productName: KunYu Studio
+copyright: Copyright © 2026 KunYu Studio
+
+# Electron 运行时 locales 裁剪（0.1.1 瘦身）：默认携带 ~100 种语言 .pak（48MB），
+# 应用 UI 只有中英双语，只保留这两个；NSIS 安装器语言另由 nsis.installerLanguages 控制。
+electronLanguages:
+  - zh-CN
+  - en-US
+
+directories:
+  output: dist
+  buildResources: resources/build
+
+# 应用代码：electron-vite 产物。
+# node_modules 由 electron-builder 按生产依赖自动并入（asarUnpack 整体解包），
+# 此处的排除项压掉运行时永远用不到的分发垃圾（此前打进 1070 个 sourcemap、
+# 636 个 .ts、203 个 test 目录，白白膨胀 app.asar.unpacked）。
+files:
+  - out/**
+  - '!node_modules/**/*.map'
+  - '!node_modules/**/*.ts'
+  - '!node_modules/**/{test,tests,__tests__}/**'
+  - '!node_modules/**/{docs,doc,examples,example}/**'
+  - '!node_modules/**/{.github,.vscode,.idea,.git}/**'
+  # 原生依赖按构建平台裁剪（0.1.1 起）：只裁「其他操作系统/架构的原生二进制」与
+  # 「永不激活的 web 后端 wasm」，不排除任何 Node 侧运行时代码——@xenova/transformers
+  # 对 sharp / onnxruntime-node / onnxruntime-web 是顶层静态 import（其 src/backends/onnx.js
+  # 与 utils/image.js），整包排除会让 kbRagService 直接炸进关键词降级，故三个包本体全保留。
+  # ⚠ 必须放在全局 files：平台级 win.files 会整体覆盖（而非合并）全局 files，
+  # 曾因覆盖导致 out/** 失效、项目根 .dev-userdata（3.6GB）被打进 app.asar，
+  # 7z 超 NSIS 单文件 2GB mmap 上限而构建失败。
+  # ⚠ 宏取值（已核 app-builder-lib 源码）：${os}=mac/windows/linux（目录名对不上），
+  # ${platform}=宿主机 process.platform（win32/darwin/linux，与二进制目录名一致）、
+  # ${arch}=x64/arm64（按构建架构逐次展开）。故此处用 ${platform}——
+  # 前提是「目标平台与构建宿主一致」（CI 三 runner 各建各的，不做交叉构建）。
+  # onnxruntime-node 全平台 native：仅保留当前平台/架构（约 -83MB 解压体积）
+  - '!node_modules/onnxruntime-node/bin/napi-v3/!(${platform})/**'
+  - '!node_modules/onnxruntime-node/bin/napi-v3/${platform}/!(${arch})/**'
+  # onnxruntime-web 的 wasm 仅 web 后端激活时才加载；主进程恒走 onnxruntime-node
+  # 后端，web wasm 为不可达资产（-46MB 解压体积）。模块代码保留（顶层静态 import 需要）。
+  - '!node_modules/onnxruntime-web/dist/*.wasm'
+  # better-sqlite3 预编译 8 平台平铺：仅保留当前平台-架构 .node（约 -14MB 解压体积；
+  # linux 目标为 glibc AppImage，linuxmusl 随之排除）
+  - '!node_modules/better-sqlite3/prebuilds/!(${platform}-${arch}).node'
+
+# better-sqlite3 原生模块必须位于 asar 外才能被 dlopen 加载；
+# mcdev-mcp 为内置 MCP 服务（ELECTRON_RUN_AS_NODE 启动 ESM CLI，必须是 asar 外
+# 的实体文件，sql.js wasm 同理；其传递依赖 150+ 包无法跨越 asar 边界解析，
+# 故随生产依赖整体解包；electron-vite 本就把生产依赖外置，主进程引用不受影响）
+# 另：npm（DSH 社区插件安装器的内置 CLI）也要由外部 node / ELECTRON_RUN_AS_NODE
+# 子进程加载，同样依赖本条规则解包到 app.asar.unpacked/node_modules/npm。
+asarUnpack:
+  - '**/node_modules/**'
+
+# BrowserWindow 运行时窗口图标（主进程按 app.isPackaged 读取）
+extraResources:
+  - from: resources/icon.png
+    to: icon.png
+  # 第三方许可声明（sharp vendor 内 9 个 LGPLv3 库此前无随包声明）
+  - from: resources/THIRD-PARTY-NOTICES.md
+    to: THIRD-PARTY-NOTICES.md
+  # AI 反幻觉参考包（manifest/41 模板/prompt，只读资产）。
+  # .migration-progress.json 是本机运行期进度缓存（已 gitignore），不得进安装包
+  - from: resources/ai-reference
+    to: ai-reference
+    filter:
+      - '**/*'
+      - '!.migration-progress.json'
+  # M7.1 mcdev-mcp 内置启动器：修正 ELECTRON_RUN_AS_NODE 下 commander 的 argv 切片
+  - from: resources/mcdev-runner.mjs
+    to: mcdev-runner.mjs
+  # kunyu-observer-agent 观察探针（javaagent 形态，游戏内 HTTP 服务，全自动测试沙箱依赖；
+  # 覆盖 Fabric/Forge/NeoForge 与 MC 全版本，不再是 mod）。
+  # 前置条件：打包前执行 node scripts/build-observer-agent.cjs（纯 JDK 工具链，无需 Gradle），
+  # 产物为 resources/observer-agent/dist/kunyu-observer-agent.jar。
+  - from: resources/observer-agent/dist/kunyu-observer-agent.jar
+    to: observer-agent/kunyu-observer-agent.jar
+  # P0 离线知识源①：minecraft-data（MIT）1.20.1 结构化数据子集 + 中文别名种子
+  - from: resources/mcdata
+    to: mcdata
+    filter:
+      - '**/*'
+  # P0 离线知识源②③：Fabric 开发文档 / MC 中文开发百科（坤舆原创语料）
+  - from: resources/knowledge
+    to: knowledge
+    filter:
+      - '**/*'
+  # DSH 社区插件精选清单（manifest.json）。漏带会使打包版的
+  # 「DSH 插件」模块整体不可用（dsh:get-state 直接 ENOENT）
+  - from: resources/dsh-plugins
+    to: dsh-plugins
+    filter:
+      - '**/*'
+  # dsh-pet 桌宠适配层（dsh-pet-kunyu/lib：纯 ESM JS，主进程运行时动态 import）
+  - from: dsh-pet-kunyu/lib
+    to: dsh-pet-kunyu/lib
+    filter:
+      - '**/*'
+  # A3 离线模型预置：bge-small-zh-v1.5 嵌入模型（首启免下载）。
+  # 前置条件：打包前执行 npm run fetch-models（从 hf-mirror 拉取到 resources/models）；
+  # 目录不存在时 electron-builder 跳过该条，运行时自动回退在线下载。
+  - from: resources/models
+    to: models
+    filter:
+      - '**/*'
+
+# node_modules 内的 better-sqlite3 预编译二进制已在 dev 下验证与 Electron 44 兼容，
+# 无需在本机重编译（避免依赖 MSVC 工具链）
+npmRebuild: false
+
+# 使用本地 node_modules/electron/dist 作为运行时分发包，
+# 规避打包时重复下载 electron zip（国内网络下 GitHub 下载易卡死）。
+# ⚠ 仅 Windows 脚本（build:win/release:win 的 -c.electronDist 覆盖）启用：
+# 该路径固定为宿主架构 dist，mac 在 arm64 runner 上出 x64 包需要按目标架构下载，
+# Linux/mac 构建走默认 per-arch 下载（CI 网络畅通，无此问题）。
+# electronDist: node_modules/electron/dist
+
+win:
+  icon: resources/build/icon.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  allowElevation: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  artifactName: ${productName}-${version}-setup.${ext}
+  installerLanguages:
+    - zh_CN
+    - en_US
+
+# mac dmg（无 Apple 开发者账号：identity=null 跳过签名；Gatekeeper 首装需右键→打开，
+# 客户端自动更新不可用，走「检测新版本 → 浏览器下载 dmg」链路，见 updaterService 文件头）
+mac:
+  # 主体 80% 内缩版（51px 安全区 padding，避免 squircle 蒙版裁切发丝/翅膀尖）
+  icon: resources/build/icon-mac.png
+  category: public.app-category.developer-tools
+  identity: null
+  artifactName: ${productName}-${version}-mac-${arch}.${ext}
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+
+# linux AppImage x64（electron-updater 的 linux 自动更新只支持 AppImage，deb/rpm 不出）
+linux:
+  icon: resources/build/icon.png
+  category: Development
+  artifactName: ${productName}-${version}-linux-${arch}.${ext}
+  target:
+    - target: AppImage
+      arch:
+        - x64
+
+# 发布通道：GitHub Releases（kunyu7696/KunYuStudio，公开仓库）。
+# electron-updater 消费 latest.yml / app-update.yml 做自动更新（updaterService.ts），
+# 国内镜像兜底走 releases/latest/download 稳定路径（见 updaterService.buildMirrorFeed）。
+# 无代码签名证书：SmartScreen 会拦截首装，但 Windows 自动更新不强制签名。
+# 本地 build:win 仍带 --publish never（只生成元数据不上传）；
+# CI 发版走 release:win（--publish always，产出草稿 Release，人工点发布后客户端可检出）。
+publish:
+  provider: github
+  owner: kunyu7696
+  repo: KunYuStudio
+  # 草稿发布：CI 传包后人工确认再公开，避免半成品 Release 被客户端检出
+  releaseType: draft

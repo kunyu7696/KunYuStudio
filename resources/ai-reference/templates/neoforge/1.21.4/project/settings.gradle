@@ -1,0 +1,32 @@
+/*
+ * KunYuEcosystem AI Reference 模板迁移（neoforge/1.21.1 -> neoforge/1.21.4）
+ * provenance: translated-from-neoforge-1.21.1
+ * 目标 loader=neoforge mc=1.21.4 loaderVersion=21.4.158
+ * 注意：本文件由脚本从种子组合复制并替换版本号得到。Java API、Yarn/Mojmap 命名、
+ *       加载器 DSL 在 1.21.4 上可能与种子版本存在差异，构建失败时
+ *       请优先查阅 1.21.4 官方文档/NeoForge docs。
+ * verifiedAt 为 null 表示本模板尚未在目标版本真机编译验证。
+ */
+# ============================================================================
+# KunYuEcosystem AI Reference v3.2 | neoforge/1.21.4/project/settings.gradle | mapping: Mojang official | provenance: adapted from official loader MDK/docs
+# ============================================================================
+// ============================================================================
+// settings.gradle —— Gradle 插件仓库与项目名
+// ============================================================================
+// 用法要点：
+// - ModDevGradle 插件发布在 NeoForged Maven，必须放在 pluginManagement 首位。
+// ============================================================================
+pluginManagement {
+    repositories {
+        // NeoForged Maven：提供 net.neoforged.moddev 插件
+        maven { url = 'https://maven.neoforged.net/releases' }
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+plugins {
+    // 本机没有匹配 JDK 时自动下载工具链
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+}
+// jar 名；与 neoforge.mods.toml 的 modId 保持一致便于排查
+rootProject.name = 'examplemod'

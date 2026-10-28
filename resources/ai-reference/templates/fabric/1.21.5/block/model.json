@@ -1,0 +1,89 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.0 | fabric/1.21.5/block/model.json | mapping: Yarn | provenance: extracted verbatim from source PDF; Chinese annotations unrecoverable (no ToUnicode)
+// ============================================================================
+{
+  // ================================================================
+  //  JSON  (Fabric 1.21.5)
+  // ================================================================
+  // src/main/resources/assets/examplemod/models/block/<model_name>.json
+  //  blockstate.json  "model"
+  //  JSON
+  //   /
+  //  parent  block/
+  //   block/cube_all        ——
+  //   block/cube           ——
+  //   block/cube_column    ——
+  //   block/cube_bottom_top—— //
+  //   block/cross          ——
+  //   block/tinted_cross   ——
+  //   block/cube_directional ——
+  // Minecraft  GSON  JSON
+  //        //
+  // ================================================================
+  // "parent"
+  //  textures
+  //  block/cube_all  "all"
+  //   - parent  "cube_all"  "block/cube_all"
+  //      "block/"
+  //   - cube_all  "all"cube  "up/down/north/..."
+  "parent": "block/cube_all",
+  // "textures"
+
+  //  block/cube_all "all"
+  //  "all"
+  // "examplemod:block/<texture_name>"
+  //   assets/examplemod/textures/block/<texture_name>.png
+  //    .png  "block/"
+  //   -  "examplemod:example_block"  "examplemod:block/example_block"
+  //   - .png  textures/  textures/block/
+  //   -
+  "textures": {
+    "all": "examplemod:block/example_block"
+  }
+  // ----  block/cube ----
+  //  "block/cube"
+  //   "parent": "block/cube",
+  //   "textures": {
+  //     "up":    "examplemod:block/example_block_top",
+  //     "down":  "examplemod:block/example_block_bottom",
+  //     "north": "examplemod:block/example_block_side",
+  //     "south": "examplemod:block/example_block_side",
+  //     "east":  "examplemod:block/example_block_side",
+  //     "west":  "examplemod:block/example_block_side"
+  //   }
+  //   north = Z
+  //   south = Z
+  //   east  = X
+  //   west  = X
+  //   up    = Y
+  //   down  = Y
+  // ----  ----
+  //  parent
+  //  "elements"
+  //   {
+  //     "elements": [
+  //       {
+  //         "from": [0, 0, 0],      //  0~16
+  //         "to":   [16, 16, 16],   //
+  //         "faces": {
+  //           "up":    { "uv": [0, 0, 16, 16], "texture": "#all" },
+  //           "down":  { "uv": [0, 0, 16, 16], "texture": "#all" },
+  //           "north": { "uv": [0, 0, 16, 16], "texture": "#all" },
+  //           "south": { "uv": [0, 0, 16, 16], "texture": "#all" },
+  //           "east":  { "uv": [0, 0, 16, 16], "texture": "#all" },
+  //           "west":  { "uv": [0, 0, 16, 16], "texture": "#all" }
+  //         }
+  //       }
+  //     ],
+  //     "textures": {
+  //       "all": "examplemod:block/example_block"
+  //     }
+  //   }
+  //  16x16x16
+  //   "from"  "to"  0~16
+  //   [0,0,0] = [16,16,16] =
+  // UV
+  //   "uv": [u0, v0, u1, v1]
+  //    0~16  16x16
+  //   "#all"  #  textures
+}

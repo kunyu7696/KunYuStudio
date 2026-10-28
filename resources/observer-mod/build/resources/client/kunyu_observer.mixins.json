@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "com.kunyu.observer.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "client": [
+    "ChatHudMixin",
+    "MinecraftClientMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

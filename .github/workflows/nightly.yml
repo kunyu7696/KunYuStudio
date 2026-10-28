@@ -1,0 +1,54 @@
+name: Nightly 真机回归
+
+# 真机档（Gradle 构建 / observer mod / 打包冒烟）：不进 PR 门禁，避免 flaky 阻塞。
+# 每天 UTC 16:00（北京时间 00:00）跑 main；也可在 Actions 页手动触发。
+on:
+  schedule:
+    - cron: '0 16 * * *'
+  workflow_dispatch:
+
+jobs:
+  observer-build:
+    name: observer mod 真机构建（Gradle + JDK17）
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: gradlew build
+        working-directory: resources/observer-mod
+        run: ./gradlew build --no-daemon
+
+      - name: 校验产物 jar 非空且含 fabric.mod.json
+        shell: pwsh
+        run: |
+          $jar = Get-ChildItem resources/observer-mod/build/libs/*.jar | Select-Object -First 1
+          if (-not $jar) { throw 'observer jar 不存在' }
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zip = [System.IO.Compression.ZipFile]::OpenRead($jar.FullName)
+          $names = $zip.Entries | ForEach-Object FullName
+          $zip.Dispose()
+          if ($names -notcontains 'fabric.mod.json') { throw 'jar 缺 fabric.mod.json' }
+          Write-Host "OK: $($jar.Name)（$($names.Count) entries）"
+
+  package-smoke:
+    name: 打包冒烟（electron-vite build）
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # 只跑 vite 构建，不跑 electron-builder（observer jar / 模型拉取属发布前置，
+      # 在发布工作流里做；这里验证"代码可编译打包"这一底线）
+      - name: electron-vite build
+        run: npm run build

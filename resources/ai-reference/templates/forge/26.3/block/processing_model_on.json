@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "examplemod:block/processing_block_side",
+    "down": "examplemod:block/processing_block_side",
+    "up": "examplemod:block/processing_block_top_lit",
+    "north": "examplemod:block/processing_block_front_on",
+    "east": "examplemod:block/processing_block_side",
+    "south": "examplemod:block/processing_block_side",
+    "west": "examplemod:block/processing_block_side"
+  }
+}

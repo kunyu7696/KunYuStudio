@@ -1,0 +1,29 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.0 | fabric/1.21.1/recipe/smelting_recipe.json | mapping: Yarn | provenance: extracted verbatim from source PDF; Chinese annotations unrecoverable (no ToUnicode)
+// ============================================================================
+{
+    // ============================================================
+    //  - Fabric 1.21.1
+    // ============================================================
+    // : data/examplemod/recipes/smelting_recipe.json
+    // smelting
+    // :
+    // 1. cookingtime  tick20 tick = 1
+    // 2.  cookingtime  20010
+    // 3. experience
+    // 4. ingredient  tag
+    // 5. result ID
+    // ============================================================
+    "type": "minecraft:smelting",
+    // ingredient:
+    //  tag
+    "ingredient": {
+        "item": "minecraft:raw_iron"
+    },
+    // result:
+    "result": "minecraft:iron_ingot",
+    // experience:
+    "experience": 0.7,
+    // cookingtime: tick200 = 10
+    "cookingtime": 200
+}

@@ -1,0 +1,40 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.0 | fabric/26.3/recipe/shaped_recipe.json | mapping: Yarn | provenance: extracted verbatim from source PDF; Chinese annotations unrecoverable (no ToUnicode)
+// ============================================================================
+{
+    // ============================================================
+    //  - Fabric 26.3
+    // ============================================================
+    // : data/examplemod/recipes/shaped_recipe.json
+    // crafting_shaped pattern  key
+    //  pattern
+    // :
+    // 1. pattern
+    // 2. pattern  key
+    // 3. key  #, X, *, @
+    // 4.
+    // 5. result  count  64
+    // 6. ingredient  tag  "tag"  "item"
+    // ============================================================
+    "type": "minecraft:crafting_shaped",
+    // pattern:
+    "pattern": [
+        "###",
+        "#X#",
+        "###"
+    ],
+    // key:  pattern
+    "key": {
+        "#": {
+            "item": "minecraft:diamond"
+        },
+        "X": {
+            "item": "minecraft:nether_star"
+        }
+    },
+    // result:
+    "result": {
+        "item": "examplemod:example_item",
+        "count": 1
+    }
+}

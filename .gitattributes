@@ -1,0 +1,35 @@
+# 换行符统一（此前两个 workflow 实测 CRLF，违反 ci.yml 自述的
+# 「Unix LF 必须保留：Windows CRLF 会导致 YAML 解析错误」硬约束，且仓库无本文件）
+# 默认：文本文件仓库内一律 LF（text=auto），检出按平台默认
+* text=auto
+
+# 脚本与工作流：任何平台检出都必须是 LF（CI 解析 / bash 解释）
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sh text eol=lf
+*.gradle text eol=lf
+*.properties text eol=lf
+
+# Windows 批处理：cmd.exe 要求 CRLF
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# 二进制资产：不做任何换行转换
+*.png binary
+*.jpg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.icns binary
+*.jar binary
+*.asar binary
+*.wasm binary
+*.node binary
+*.zip binary
+*.gz binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.db binary

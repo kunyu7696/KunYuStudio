@@ -1,0 +1,16 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.2 | forge/1.20.1/tag/entity_tag.json | mapping: Mojang official | provenance: adapted from official loader MDK/docs
+// ============================================================================
+{
+    // ============================================================
+    // 实体标签 - Forge 1.20.1
+    // ============================================================
+    // 位置：data/examplemod/tags/entities/example_entity_tag.json
+    // 常用原版标签：minecraft:skeletons、minecraft:beehive_inhabitors 等。
+    // ============================================================
+    "replace": false,
+    "values": [
+        "minecraft:cow",
+        "examplemod:example_entity"
+    ]
+}

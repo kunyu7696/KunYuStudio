@@ -1,0 +1,62 @@
+// ============================================================================
+// kunyu-observer —— KunYuEcosystem 观察 mod 构建脚本（Fabric Loom, 1.20.1 Yarn）
+// 仅客户端 mod：在游戏内置 HTTP 服务，供工作台查询截图 / 玩家 / 世界状态。
+// 不需要 Fabric API，只依赖 Fabric Loader + Mixin。
+// ============================================================================
+plugins {
+    id 'fabric-loom' version '1.6-SNAPSHOT'
+}
+
+// 纯客户端 mod：源码与资源均在 src/client/ 下，必须启用 split source sets，
+// 否则 Loom 不编译 client 源集，产物 jar 会是空壳（无 class / fabric.mod.json）。
+loom {
+    splitEnvironmentSourceSets()
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+}
+
+// split source sets 后资源分属 main/client 两个源集，fabric.mod.json 在
+// src/client/resources，必须同时配置 processClientResources，否则 ${version} 不会展开。
+processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+}
+processClientResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 17
+    it.options.encoding = 'UTF-8'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+jar {
+    from("LICENSE") {
+        rename { "${it}_${project.base.archivesName.get()}" }
+    }
+}

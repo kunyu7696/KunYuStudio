@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 1,
+  "corpusVersion": "2026.10.24",
+  "generatedAt": "2026-10-24",
+  "files": [
+    {
+      "path": "fabric/01-mod-basics.md",
+      "sha256": "f1c852502c1f895bf1122adcfa89201e9852059c72bb549408a8b5ab615c37e0",
+      "bytes": 2265
+    },
+    {
+      "path": "fabric/02-registration.md",
+      "sha256": "aa8929082d0f089609dc2a493a2fff0dd7dfbc6fbaf637add6faa98b65c675cf",
+      "bytes": 2652
+    },
+    {
+      "path": "fabric/03-events.md",
+      "sha256": "2fb23ed3e23a335ecf235d5f91195e3f705a2ce516a460dc2fe2e9eed54129e6",
+      "bytes": 2421
+    },
+    {
+      "path": "fabric/04-networking.md",
+      "sha256": "a15cacb7077f4fd85850f54e478667a13f52118228033ed077116874b638dfd8",
+      "bytes": 1922
+    },
+    {
+      "path": "fabric/05-screens.md",
+      "sha256": "a77948b16b91e4657f2d678808ccea1c0c1fec285ee776d3417ff3e27c10f1eb",
+      "bytes": 2153
+    },
+    {
+      "path": "fabric/06-nbt-persistence.md",
+      "sha256": "00fb2f7f56be2e1ea9d9bb1bdc02e6efccca33d095d2eab3be6962b49202d9f5",
+      "bytes": 2408
+    },
+    {
+      "path": "fabric/07-mixins.md",
+      "sha256": "edb4f50f51e828a8ab1777bcfea4c8e3cf2882dd2f86bb76768cf2a7987ae9d1",
+      "bytes": 2786
+    },
+    {
+      "path": "fabric/08-entities-ai.md",
+      "sha256": "d3571a64ed9dc4d1dbb672e28fc78d3e5fa640985c4261b1707ace0a0b98b0ed",
+      "bytes": 3204
+    },
+    {
+      "path": "fabric/09-tags-datapack.md",
+      "sha256": "45c911169472504567e17c06db43a18d065f9223e14ef28a70e2c96d29b881af",
+      "bytes": 2562
+    },
+    {
+      "path": "fabric/10-loot-tables.md",
+      "sha256": "e00a4e02dcff5e6d0192d46971c8e4720f78916aecff85bf2ac52b91000932ad",
+      "bytes": 2444
+    },
+    {
+      "path": "fabric/11-worldgen.md",
+      "sha256": "4320568ac03dcea937aaa7a704b6d7e63f788d7a35b2c4059102754a8ba8be20",
+      "bytes": 2390
+    },
+    {
+      "path": "fabric/12-rendering.md",
+      "sha256": "6cdb219526e764ced3138fe77b01d9d4ad26cf0ffe3460a489066f956101988f",
+      "bytes": 2663
+    },
+    {
+      "path": "kubejs/01-recipes.md",
+      "sha256": "50ec2d785d1e906291533e8f07fd70cc6ada6d76cfcd572922ac5e10e6d17eea",
+      "bytes": 6347
+    },
+    {
+      "path": "kubejs/02-registry.md",
+      "sha256": "e7c18be468b63810217ff4e05aebd1db423c2c0187cf5bd0f015fb8b4629367a",
+      "bytes": 5247
+    },
+    {
+      "path": "kubejs/03-tags.md",
+      "sha256": "ac25b7597481bb44a539db35c78fb3c26f69126e09ad313674b7264aaadc92da",
+      "bytes": 2520
+    },
+    {
+      "path": "kubejs/04-events.md",
+      "sha256": "ddc79185282d313820f640f796c268007cbc3b40b4cc1297665f4dad854aeff5",
+      "bytes": 3234
+    },
+    {
+      "path": "kubejs/05-modification.md",
+      "sha256": "5ba83fc4f5422abd1e52951e64ddff86012ff24c1a09fffe62f901517251bfa3",
+      "bytes": 3164
+    },
+    {
+      "path": "mcwiki/01-identifier.md",
+      "sha256": "b5736973c848bf1b42ce8280cee40b9b759d2b7328c7de313b7e6d06a6d15772",
+      "bytes": 1590
+    },
+    {
+      "path": "mcwiki/02-attributes.md",
+      "sha256": "c1b72847527fa3d35c2697d87657f5981f6da0a1c67fead21e9569f3ed3929b4",
+      "bytes": 1979
+    },
+    {
+      "path": "mcwiki/03-damage.md",
+      "sha256": "79477c9fd9eae3bc3b187aff14ba1e9d23a21bd368122a489d5bedeb43b7af76",
+      "bytes": 1876
+    },
+    {
+      "path": "mcwiki/04-goals.md",
+      "sha256": "54687492f9ef265dfd60e6e9e963ca588350e4cff66eb072e32762261c184a37",
+      "bytes": 2189
+    },
+    {
+      "path": "mcwiki/05-recipes.md",
+      "sha256": "e14751b8becb686960787d42a7073ae78a882d8b428c15c8a9096e2eec074b80",
+      "bytes": 1833
+    },
+    {
+      "path": "mcwiki/06-advancements.md",
+      "sha256": "0828314704cdaaf80801177d628b4ab4285a28236d7176fe3a2476e9d10ef67f",
+      "bytes": 1956
+    },
+    {
+      "path": "mcwiki/07-asset-datapack-layout.md",
+      "sha256": "736a871ee2185955ed27b3f5eac70b4503c0a962fa798e4498590f27522c3a68",
+      "bytes": 1955
+    },
+    {
+      "path": "mcwiki/08-particles-sounds-text.md",
+      "sha256": "d0da254224fbcf83c74d18187d9bd48261591496e9272a1b88427e4188dee455",
+      "bytes": 4286
+    },
+    {
+      "path": "mcwiki/09-enchantments-effects.md",
+      "sha256": "2e72b697c6e3a3ff14e5504aeff10d40f5d59904586e0c30749da4eb918b85c8",
+      "bytes": 2571
+    },
+    {
+      "path": "mcwiki/10-commands-functions.md",
+      "sha256": "2b357518b6ed374749a9e301d8d07ec6dce4b2879abc704f209c17e93abf9707",
+      "bytes": 3556
+    },
+    {
+      "path": "mcwiki/11-food-hunger.md",
+      "sha256": "fd8c4b047bc73db798e34f9bdd421c3a9ecc990e6681e4e379c97080b83e7ddb",
+      "bytes": 1793
+    },
+    {
+      "path": "mcwiki/12-gametest.md",
+      "sha256": "d89b36ed57db064f349cb10826b0509698f26da1b34a7a8253331bdec564275b",
+      "bytes": 2317
+    },
+    {
+      "path": "mcwiki/13-resourcepack-basics.md",
+      "sha256": "8c3acefb0704d686f101111a0f2caab88eeb3d288af3b58fa84829942bc8fb88",
+      "bytes": 2601
+    },
+    {
+      "path": "mcwiki/14-item-model-definitions.md",
+      "sha256": "874574fdba937673ee977269eb16e9a874bbda60e642eab61394eb6d4c2b34b7",
+      "bytes": 4285
+    },
+    {
+      "path": "mcwiki/15-display-transformation.md",
+      "sha256": "f455a5da8b5ffbcd324f95f2ba58069148b1f65ca1b6e95eb1c676c41d08bc06",
+      "bytes": 2937
+    },
+    {
+      "path": "mcwiki/16-dialogs.md",
+      "sha256": "da532f8d638f3835f2e829cec32d3369cba91d00f1e03f228465f5e43b697834",
+      "bytes": 3035
+    },
+    {
+      "path": "mcwiki/17-dimension-and-structure.md",
+      "sha256": "2b0b86a27bf67c8ca556590e1219e3a182cf070d150e25cf349491646bb666c1",
+      "bytes": 3855
+    },
+    {
+      "path": "mcwiki/18-loot-predicate-item-modifier.md",
+      "sha256": "7ade37e0375f1146e6c03e2497afceb02a85cec4582835502b087c77c42facbd",
+      "bytes": 3432
+    }
+  ],
+  "fingerprint": "65a368f09ab656997050efc5c9546fd5ca37147dafa78971e87bcf7c3c483b69"
+}

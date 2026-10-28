@@ -1,0 +1,36 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.0 | fabric/1.21.7/recipe/shapeless_recipe.json | mapping: Yarn | provenance: extracted verbatim from source PDF; Chinese annotations unrecoverable (no ToUnicode)
+// ============================================================================
+{
+
+    // ============================================================
+    //  - Fabric 1.21.7
+    // ============================================================
+    // : data/examplemod/recipes/shapeless_recipe.json
+    // crafting_shapeless
+    //  ingredients
+    // :
+    // 1. ingredients
+    // 2.
+    // 3.  "tag"  "item"
+    // 4.  pattern  key
+    // ============================================================
+    "type": "minecraft:crafting_shapeless",
+    // ingredients:
+    "ingredients": [
+        {
+            "item": "minecraft:diamond"
+        },
+        {
+            "item": "minecraft:emerald"
+        },
+        {
+            "tag": "minecraft:logs"
+        }
+    ],
+    // result:
+    "result": {
+        "item": "examplemod:example_item",
+        "count": 1
+    }
+}

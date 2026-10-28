@@ -1,0 +1,36 @@
+node_modules/
+out/
+dist/
+# 例外：内置探针 javaagent 产物随仓库分发（dev 直接可用，克隆后无需 JDK 即可运行）
+!resources/observer-agent/dist/
+resources/observer-agent/dist/*
+!resources/observer-agent/dist/kunyu-observer-agent.jar
+!resources/observer-agent/dist/kunyu-observer-agent.jar.version
+.vite/
+.dev-userdata/
+.trae/
+udata/
+*.log
+npm-debug.log*
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
+
+# 本地临时产物：飞书文档草稿工作区、根目录截图、脚本断点状态
+draft_*_folder/
+m3-*.png
+resources/ai-reference/.migration-progress.json
+scripts/.probe-results.json
+
+# Windows ACL 修复工具的诊断报告与权限回滚备份（本机一次性产物）
+.acl-diagnostics/
+.acl-recovery/
+
+# Gradle 本地构建缓存（lock/bin 等每次构建自动更新，不应入库）
+.gradle/
+
+# vitest 覆盖率输出
+coverage/
+
+# 一次性本地评审工作区
+.kyreview*/

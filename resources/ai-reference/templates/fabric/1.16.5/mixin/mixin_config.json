@@ -1,0 +1,50 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.0 | fabric/1.16.5/mixin/mixin_config.json | mapping: Yarn | provenance: extracted verbatim from source PDF; Chinese annotations unrecoverable (no ToUnicode)
+// ============================================================================
+{
+    // ============================================================
+    // Mixin  - Fabric 1.16.5
+    // ============================================================
+    // : src/main/resources/examplemod.mixins.json
+    //  fabric.mod.json  "mixins" :
+    //   "mixins": [
+    //     "examplemod.mixins.json"
+    //   ]
+    // :
+    // - required:           true=false=
+    // - package:            Mixin
+    // - compatibilityLevel: Java1.16.5  JAVA_17
+    // - mixins:             Mixin
+    // - client:             Mixin
+    // - server:              Mixin
+    // - injectors:
+    //   - defaultRequire:    1=0=
+    // :
+    // 1. compatibilityLevel  JAVA_171.16.5  Java 8+
+    // 2. package Mixin
+    // 3. mixins  .java
+    // 4. client
+    // 5.  Mixin  fabric.mod.json
+    // ============================================================
+    "required": true,
+    "package": "com.example.mod.mixin",
+    "compatibilityLevel": "JAVA_17",
+    // Mixin
+    "mixins": [
+        "ExampleInjectMixin",
+        "ExampleModifyArgMixin"
+    ],
+    // Mixin
+    "client": [
+        "client.ExampleClientMixin"
+    ],
+    // Mixin
+    // "server": [
+    //     "server.ExampleServerMixin"
+    // ],
+    "injectors": {
+        // defaultRequire: 1  @Inject
+        //  0 bug
+        "defaultRequire": 1
+    }
+}

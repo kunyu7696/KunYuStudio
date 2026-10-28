@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "kunyu_observer",
+  "version": "1.0.0",
+  "name": "KunYu Observer",
+  "description": "KunYuEcosystem 观察 mod：在客户端内置仅监听 127.0.0.1 的 HTTP 服务，向工作台提供截图 / 玩家状态 / 世界查询与受限输入注入，用于 AI 闭环验证。",
+  "authors": [
+    "KunYuEcosystem"
+  ],
+  "contact": {},
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.kunyu.observer.KunyuObserverClient"
+    ]
+  },
+  "mixins": [
+    "kunyu_observer.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "minecraft": "~1.20.1",
+    "java": ">=17"
+  }
+}

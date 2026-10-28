@@ -1,0 +1,16 @@
+{
+  "meta": {
+    "description": "坤宇 DSH 社区插件精选清单：category=tool 的插件由兼容宿主加载进 AI 工具循环；UI/桌宠类插件依赖 dsh web 前端模块表，坤宇内无法渲染，不入清单（桌宠需求由运行时按需获取的第三方社区插件 dsh-pet（作者 PC2005-cloud，MIT，坤宇不随包分发）满足，坤宇仅提供自研适配层，见 DSH 页桌宠卡片）",
+    "publicSiblingDeps": ["@deepseek-ai/cordis@^4.0.4", "@deepseek-ai/cosmokit@^1.8.5", "@deepseek-ai/schemastery@^3.18.4"]
+  },
+  "plugins": [
+    {
+      "id": "web-search-pro",
+      "npm": "dsh-web-search-pro",
+      "name": "DSH 网络搜索 Pro",
+      "description": "多引擎网页搜索（DeepSeek/Exa/DDG/Bing/Jina + GitHub/B站/YouTube/RSS），SQLite 缓存与正文抽取",
+      "category": "tool",
+      "shims": ["@deepseek-ai/dsh-tools"]
+    }
+  ]
+}

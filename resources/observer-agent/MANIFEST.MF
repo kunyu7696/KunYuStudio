@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+Premain-Class: kunyu.observer.Agent
+Agent-Class: kunyu.observer.Agent
+Can-Redefine-Classes: false
+Can-Retransform-Classes: false

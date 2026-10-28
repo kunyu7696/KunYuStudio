@@ -1,0 +1,49 @@
+# KunYuEcosystem AI Reference 模板迁移（neoforge/1.21.1 -> neoforge/1.21.3）
+# provenance: translated-from-neoforge-1.21.1
+# 目标 loader=neoforge mc=1.21.3 loaderVersion=21.3.0-beta
+# 注意：本文件由脚本从种子组合复制并替换版本号得到。Java API、Yarn/Mojmap 命名、
+#       加载器 DSL 在 1.21.3 上可能与种子版本存在差异，构建失败时
+#       请优先查阅 1.21.3 官方文档/NeoForge docs。
+# verifiedAt 为 null 表示本模板尚未在目标版本真机编译验证。
+
+# ============================================================================
+# KunYuEcosystem AI Reference v3.2 | neoforge/1.21.3/project/neoforge.mods.toml | mapping: Mojang official | provenance: adapted from official loader MDK/docs
+# ============================================================================
+# 用法要点：
+# - 实际位置：src/main/resources/META-INF/neoforge.mods.toml（文件名必须带 neoforge 前缀）。
+# - modLoader=javafml；1.21.3 的 FML loaderVersion 为 [4,)。
+# - 1.20.5+ 依赖声明用 type="required"/"optional"（替代旧的 mandatory=true）。
+# - 使用 Mixin 时追加 [[mixins]] config="examplemod.mixins.json"。
+# ============================================================================
+modLoader="javafml"
+loaderVersion="[21,)"
+license="MIT"
+#issueTrackerURL="https://github.com/example/examplemod/issues"
+
+[[mods]]
+modId="examplemod"
+version="1.0.0"
+displayName="Example Mod"
+description='''
+KunYuEcosystem AI reference scaffold for NeoForge 1.21.3.
+'''
+authors="Example Author"
+#logoFile="assets/examplemod/logo.png"
+
+[[dependencies.examplemod]]
+    modId="neoforge"
+    type="required"
+    versionRange="[21,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.examplemod]]
+    modId="minecraft"
+    type="required"
+    versionRange="[1.21.3]"
+    ordering="NONE"
+    side="BOTH"
+
+# 如使用 Mixin，取消注释并把 examplemod.mixins.json 放入 src/main/resources：
+# [[mixins]]
+# config="examplemod.mixins.json"

@@ -1,0 +1,143 @@
+{
+  "generatedAt": "2026-09-15T12:54:58.340Z",
+  "files": [
+    {
+      "path": "examples/fabric-example-mod/build.gradle",
+      "url": "https://raw.githubusercontent.com/FabricMC/fabric-example-mod/master/build.gradle",
+      "license": "CC0-1.0",
+      "fetchedAt": "2026-09-15T12:54:58.340Z",
+      "cached": true
+    },
+    {
+      "path": "examples/fabric-example-mod/gradle.properties",
+      "url": "https://raw.githubusercontent.com/FabricMC/fabric-example-mod/master/gradle.properties",
+      "license": "CC0-1.0",
+      "fetchedAt": "2026-09-15T12:54:58.340Z",
+      "cached": true
+    },
+    {
+      "path": "examples/fabric-example-mod/settings.gradle",
+      "url": "https://raw.githubusercontent.com/FabricMC/fabric-example-mod/master/settings.gradle",
+      "license": "CC0-1.0",
+      "fetchedAt": "2026-09-15T12:54:58.340Z",
+      "cached": true
+    },
+    {
+      "path": "examples/fabric-example-mod/src/main/resources/fabric.mod.json",
+      "url": "https://raw.githubusercontent.com/FabricMC/fabric-example-mod/master/src/main/resources/fabric.mod.json",
+      "license": "CC0-1.0",
+      "fetchedAt": "2026-09-15T12:54:58.340Z",
+      "cached": true
+    },
+    {
+      "path": "examples/fabric-example-mod/src/main/java/com/example/ExampleMod.java",
+      "url": "https://raw.githubusercontent.com/FabricMC/fabric-example-mod/26.2/src/main/java/com/example/ExampleMod.java",
+      "license": "CC0-1.0",
+      "fetchedAt": "2026-09-15T12:54:58.340Z",
+      "viaTreePath": "src/main/java/com/example/ExampleMod.java",
+      "viaBranch": "26.2"
+    },
+    {
+      "path": "examples/forge-mdk/build.gradle",
+      "url": "https://raw.githubusercontent.com/MinecraftForge/MinecraftForge/1.20.x/mdk/build.gradle",
+      "license": "LGPL-2.1",
+      "licenseNote": "参考用，勿直接分发；MDK 示例文件允许作为参考",
+      "fetchedAt": "2026-09-15T12:54:58.340Z",
+      "cached": true
+    },
+    {
+      "path": "examples/forge-mdk/gradle.properties",
+      "url": "https://raw.githubusercontent.com/MinecraftForge/MinecraftForge/1.20.x/mdk/gradle.properties",
+      "license": "LGPL-2.1",
+      "licenseNote": "参考用，勿直接分发；MDK 示例文件允许作为参考",
+      "fetchedAt": "2026-09-15T12:54:58.340Z",
+      "cached": true
+    },
+    {
+      "path": "examples/forge-mdk/settings.gradle",
+      "url": "https://raw.githubusercontent.com/MinecraftForge/MinecraftForge/1.20.x/mdk/settings.gradle",
+      "license": "LGPL-2.1",
+      "licenseNote": "参考用，勿直接分发；MDK 示例文件允许作为参考",
+      "fetchedAt": "2026-09-15T12:54:58.340Z",
+      "cached": true
+    },
+    {
+      "path": "examples/forge-mdk/src/main/resources/META-INF/mods.toml",
+      "url": "https://raw.githubusercontent.com/MinecraftForge/MinecraftForge/1.20.x/mdk/src/main/resources/META-INF/mods.toml",
+      "license": "LGPL-2.1",
+      "licenseNote": "参考用，勿直接分发；MDK 示例文件允许作为参考",
+      "fetchedAt": "2026-09-15T12:54:58.340Z",
+      "cached": true
+    },
+    {
+      "path": "examples/forge-mdk/src/main/java/com/example/examplemod/ExampleMod.java",
+      "url": "https://raw.githubusercontent.com/MinecraftForge/MinecraftForge/1.20.x/mdk/src/main/java/com/example/examplemod/ExampleMod.java",
+      "license": "LGPL-2.1",
+      "licenseNote": "参考用，勿直接分发；MDK 示例文件允许作为参考",
+      "fetchedAt": "2026-09-15T12:54:58.340Z",
+      "cached": true
+    },
+    {
+      "path": "examples/forge-mdk/src/main/java/com/example/examplemod/Config.java",
+      "url": "https://raw.githubusercontent.com/MinecraftForge/MinecraftForge/1.20.x/mdk/src/main/java/com/example/examplemod/Config.java",
+      "license": "LGPL-2.1",
+      "licenseNote": "参考用，勿直接分发；MDK 示例文件允许作为参考",
+      "fetchedAt": "2026-09-15T12:54:58.340Z",
+      "cached": true
+    },
+    {
+      "path": "examples/neoforge-mdg/build.gradle",
+      "url": "https://raw.githubusercontent.com/neoforged/ModDevGradle/main/testproject/build.gradle",
+      "license": "LGPL-2.1",
+      "fetchedAt": "2026-09-15T12:54:58.340Z",
+      "cached": true
+    },
+    {
+      "path": "examples/neoforge-mdg/gradle.properties",
+      "url": "https://raw.githubusercontent.com/neoforged/ModDevGradle/main/testproject/gradle.properties",
+      "license": "LGPL-2.1",
+      "fetchedAt": "2026-09-15T12:54:58.340Z",
+      "cached": true
+    },
+    {
+      "path": "examples/neoforge-mdg/src/main/resources/META-INF/neoforge.mods.toml",
+      "url": "https://raw.githubusercontent.com/neoforged/ModDevGradle/main/testproject/src/main/resources/META-INF/neoforge.mods.toml",
+      "license": "LGPL-2.1",
+      "fetchedAt": "2026-09-15T12:54:58.340Z",
+      "cached": true
+    }
+  ],
+  "failed": [],
+  "apiRequests": [
+    {
+      "url": "https://api.github.com/repos/FabricMC/fabric-example-mod",
+      "purpose": "resolve default_branch: FabricMC/fabric-example-mod (configured=master)",
+      "result": "26.2",
+      "fetchedAt": "2026-09-15T12:55:01.029Z"
+    },
+    {
+      "url": "https://api.github.com/repos/FabricMC/fabric-example-mod/git/trees/26.2?recursive=1",
+      "purpose": "git trees fallback lookup: FabricMC/fabric-example-mod@26.2",
+      "truncated": false,
+      "fetchedAt": "2026-09-15T12:55:01.840Z"
+    },
+    {
+      "url": "https://api.modrinth.com/v2/search?limit=15&index=downloads&loaders=%5B%22fabric%22%5D&facets=%5B%5B%22project_type%3Amod%22%5D%5D",
+      "purpose": "modrinth search: loaders=[\"fabric\"]",
+      "count": 15,
+      "fetchedAt": "2026-09-15T12:54:58.340Z"
+    },
+    {
+      "url": "https://api.modrinth.com/v2/search?limit=15&index=downloads&loaders=%5B%22forge%22%5D&facets=%5B%5B%22project_type%3Amod%22%5D%5D",
+      "purpose": "modrinth search: loaders=[\"forge\"]",
+      "count": 15,
+      "fetchedAt": "2026-09-15T12:54:58.340Z"
+    },
+    {
+      "url": "https://api.modrinth.com/v2/search?limit=15&index=downloads&loaders=%5B%22neoforge%22%5D&facets=%5B%5B%22project_type%3Amod%22%5D%5D",
+      "purpose": "modrinth search: loaders=[\"neoforge\"]",
+      "count": 15,
+      "fetchedAt": "2026-09-15T12:54:58.340Z"
+    }
+  ]
+}

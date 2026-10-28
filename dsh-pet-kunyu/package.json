@@ -1,0 +1,32 @@
+{
+  "name": "dsh-pet-kunyu",
+  "version": "0.1.0",
+  "description": "dsh-pet 的坤宇（KunYuEcosystem）后端适配层：零修改加载原装 dsh-pet 插件，为它注入 webServer / llm / agentDefaultModel / credentials / commands 五个宿主服务，并提供 kunyu Agent 事件 → session/event 的工作状态桥。物理、拖拽、多宠物、配置合并、碎碎念与对话全部沿用原作实现。",
+  "type": "module",
+  "license": "MIT",
+  "main": "lib/pet-host.js",
+  "exports": {
+    ".": "./lib/pet-host.js",
+    "./agent-event-bridge": "./lib/agent-event-bridge.js"
+  },
+  "files": [
+    "lib",
+    "README.md"
+  ],
+  "peerDependencies": {
+    "dsh-pet": ">=0.3.0"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PC2005-cloud/dsh-pet.git"
+  },
+  "keywords": [
+    "dsh-pet",
+    "kunyu",
+    "backend",
+    "desktop-pet"
+  ]
+}

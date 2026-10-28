@@ -1,0 +1,297 @@
+/* ============================================================
+ * KunYuEcosystem 设计令牌（设计文档第 5 章）
+ * 深色为中性灰调暗色；浅色为经典浅白
+ * 品牌主色：PCL2 蓝 #2979FF
+ * ============================================================ */
+:root {
+  /* 背景层级（深色为默认，中性灰调） */
+  --ky-bg-base: #1a1c20;
+  --ky-bg-sidebar: #212327;
+  --ky-bg-panel: #27292e;
+  --ky-bg-hover: #383b41;
+  --ky-code-bg: #141519; /* 内联代码块底色（插件命令行等） */
+
+  /* 品牌主色（PCL2 蓝）：主操作 / 选中 */
+  --ky-accent: #2979ff;
+  --ky-accent-rgb: 41, 121, 255;
+  --ky-accent-hover: #4b92ff;
+  --ky-accent-active: #1e62e0;
+  --ky-accent-soft: rgba(var(--ky-accent-rgb), 0.12);
+
+  /* 语义色 */
+  --ky-blue: #38bdf8; /* 类型高亮 / 信息 */
+  --ky-yellow: #fbbf24; /* 警告 / 数字 */
+  --ky-red: #f87171; /* 错误 / 角标 */
+
+  /* 文字（深色主题纯白系） */
+  --ky-text: #ffffff;
+  --ky-text-sub: rgba(255, 255, 255, 0.72);
+  --ky-text-dim: rgba(255, 255, 255, 0.45);
+
+  /* 边框 / 分隔线 */
+  --ky-border: rgba(255, 255, 255, 0.1);
+  --ky-border-strong: rgba(255, 255, 255, 0.2);
+
+  /* 字体：跟随系统 */
+  --ky-font-sans: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --ky-font-mono: 'JetBrains Mono', 'Fira Code', Consolas, 'Courier New', monospace;
+
+  /* 圆角 */
+  --ky-radius-panel: 6px;
+  --ky-radius-control: 4px;
+
+  /* 间距 */
+  --ky-gap-card: 13px;
+  --ky-gap-form: 12px;
+
+  /* 布局尺寸 */
+  --ky-topbar-h: 48px;
+  --ky-activitybar-w: 48px;
+  --ky-sidebar-w: 240px;
+  --ky-sidebar-min: 180px;
+  --ky-sidebar-max: 400px;
+  --ky-statusbar-h: 26px;
+}
+
+/* 浅色主题：经典浅白 */
+html.light {
+  --ky-bg-base: #f5f6f7;
+  --ky-bg-sidebar: #ffffff;
+  --ky-bg-panel: #ffffff;
+  --ky-bg-hover: #ebedf0;
+  --ky-code-bg: #f0f1f3;
+
+  --ky-text: #1f2329;
+  --ky-text-sub: rgba(31, 35, 41, 0.72);
+  --ky-text-dim: rgba(31, 35, 41, 0.45);
+
+  --ky-border: rgba(0, 0, 0, 0.09);
+  --ky-border-strong: rgba(0, 0, 0, 0.18);
+}
+
+/* Element Plus 变量桥接：让组件库使用 KunYu 令牌（随 --ky-* 联动两主题）。
+   必须用 html.dark/html.light 选择器：specificity 需不低于 theme-chalk 的 html.dark，
+   否则深色模式下 --el-* 会被组件库内置值覆盖。 */
+html.dark,
+html.light {
+  --el-bg-color: var(--ky-bg-panel);
+  --el-bg-color-page: var(--ky-bg-base);
+  --el-bg-color-overlay: var(--ky-bg-sidebar);
+  --el-text-color-primary: var(--ky-text);
+  --el-text-color-regular: var(--ky-text-sub);
+  --el-text-color-secondary: var(--ky-text-dim);
+  --el-border-color: var(--ky-border);
+  --el-border-color-light: var(--ky-border);
+  --el-border-color-lighter: var(--ky-border);
+  --el-fill-color: var(--ky-bg-hover);
+  --el-fill-color-light: var(--ky-bg-hover);
+  --el-fill-color-blank: var(--ky-bg-panel);
+  --el-color-primary: var(--ky-accent);
+  --el-color-success: var(--ky-accent);
+  --el-color-warning: var(--ky-yellow);
+  --el-color-danger: var(--ky-red);
+  --el-color-info: var(--ky-blue);
+  --el-border-radius-base: var(--ky-radius-control);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--ky-bg-base);
+  color: var(--ky-text);
+  font-family: var(--ky-font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  overflow: hidden;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 原生 <button> 重置：消除浏览器默认白底 + 黑字 */
+button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+button:focus {
+  outline: none;
+}
+
+code,
+pre,
+.mono {
+  font-family: var(--ky-font-mono);
+}
+
+/* ---------- 全局滚动条 ---------- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--ky-bg-hover);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ky-text-dim);
+  background-clip: content-box;
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ---------- 通用辅助类 ---------- */
+.ky-divider-v {
+  width: 1px;
+  height: 20px;
+  background: var(--ky-border);
+  margin: 0 6px;
+  flex-shrink: 0;
+}
+
+/* Element 按钮：通过覆盖 CSS 变量实现主题化。
+   Element Plus 内部用 var(--el-button-bg-color) 等变量，
+   不能硬写 background-color 否则会覆盖所有子类型。
+   default 类型按主题拆分；主色按钮统一使用品牌蓝令牌。 */
+.el-button {
+  font-size: 12px;
+}
+html.dark .el-button {
+  --el-button-bg-color: #383b41;
+  --el-button-border-color: rgba(255, 255, 255, 0.16);
+  --el-button-text-color: #ffffff;
+  --el-button-hover-bg-color: #45494f;
+  --el-button-hover-border-color: rgba(255, 255, 255, 0.28);
+  --el-button-hover-text-color: #ffffff;
+  --el-button-active-bg-color: #52565d;
+  --el-button-active-border-color: rgba(255, 255, 255, 0.32);
+  --el-button-active-text-color: #ffffff;
+}
+html.light .el-button {
+  --el-button-bg-color: #ffffff;
+  --el-button-border-color: rgba(0, 0, 0, 0.15);
+  --el-button-text-color: #1f2329;
+  --el-button-hover-bg-color: var(--ky-accent-soft);
+  --el-button-hover-border-color: var(--ky-accent);
+  --el-button-hover-text-color: var(--ky-accent);
+  --el-button-active-bg-color: rgba(var(--ky-accent-rgb), 0.18);
+  --el-button-active-border-color: var(--ky-accent-active);
+  --el-button-active-text-color: var(--ky-accent-active);
+}
+.el-button--primary {
+  --el-button-bg-color: var(--ky-accent);
+  --el-button-border-color: var(--ky-accent);
+  --el-button-text-color: #ffffff;
+  --el-button-hover-bg-color: var(--ky-accent-hover);
+  --el-button-hover-border-color: var(--ky-accent-hover);
+  --el-button-hover-text-color: #ffffff;
+  --el-button-active-bg-color: var(--ky-accent-active);
+  --el-button-active-border-color: var(--ky-accent-active);
+  --el-button-active-text-color: #ffffff;
+}
+.el-button--success {
+  --el-button-bg-color: var(--ky-accent);
+  --el-button-border-color: var(--ky-accent);
+  --el-button-text-color: #ffffff;
+}
+.el-button--warning {
+  --el-button-bg-color: #fbbf24;
+  --el-button-border-color: #fbbf24;
+  --el-button-text-color: #11111b;
+}
+.el-button--danger {
+  --el-button-bg-color: #f87171;
+  --el-button-border-color: #f87171;
+  --el-button-text-color: #fff;
+}
+.el-button--info {
+  --el-button-bg-color: #38bdf8;
+  --el-button-border-color: #38bdf8;
+  --el-button-text-color: #11111b;
+}
+/* plain 变体：透明背景 */
+.el-button.is-plain {
+  background-color: transparent !important;
+}
+/* text 按钮：透明背景 */
+.el-button.is-text {
+  --el-button-bg-color: transparent;
+  --el-button-border-color: transparent;
+}
+/* disabled：降暗（按主题拆分） */
+html.dark .el-button.is-disabled,
+html.dark .el-button.is-disabled:hover {
+  --el-button-bg-color: #27292e;
+  --el-button-border-color: rgba(255, 255, 255, 0.08);
+  --el-button-text-color: rgba(255, 255, 255, 0.35);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+html.light .el-button.is-disabled,
+html.light .el-button.is-disabled:hover {
+  --el-button-bg-color: #f0f1f3;
+  --el-button-border-color: rgba(0, 0, 0, 0.08);
+  --el-button-text-color: rgba(31, 35, 41, 0.35);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+/* disabled primary：品牌蓝降饱和（按主题拆分） */
+html.dark .el-button--primary.is-disabled,
+html.dark .el-button--primary.is-disabled:hover {
+  --el-button-bg-color: #1b3a73;
+  --el-button-border-color: #1b3a73;
+  --el-button-text-color: rgba(255, 255, 255, 0.6);
+  background-color: #1b3a73 !important;
+  border-color: #1b3a73 !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  opacity: 0.7;
+}
+html.light .el-button--primary.is-disabled,
+html.light .el-button--primary.is-disabled:hover {
+  --el-button-bg-color: rgba(var(--ky-accent-rgb), 0.45);
+  --el-button-border-color: rgba(var(--ky-accent-rgb), 0.45);
+  --el-button-text-color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(var(--ky-accent-rgb), 0.45) !important;
+  border-color: rgba(var(--ky-accent-rgb), 0.45) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  opacity: 0.7;
+}
+
+/* 通用输入控件底色 */
+.el-input__wrapper,
+.el-select__wrapper {
+  background-color: var(--ky-bg-base) !important;
+  box-shadow: 0 0 0 1px var(--ky-border) inset !important;
+}
+
+/* 设置搜索定位高亮：品牌蓝底色脉动后淡出（全局类，跨 scoped 组件生效） */
+@keyframes ky-setting-flash {
+  0% {
+    background-color: rgba(var(--ky-accent-rgb), 0.28);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+.setting-flash {
+  animation: ky-setting-flash 1.6s ease-out;
+  border-radius: 6px;
+}

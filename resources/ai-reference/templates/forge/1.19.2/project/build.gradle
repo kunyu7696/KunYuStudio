@@ -1,0 +1,101 @@
+/*
+ * KunYuEcosystem AI Reference 模板迁移（forge/1.20.1 -> forge/1.19.2）
+ * provenance: translated-from-forge-1.20.1
+ * 目标 loader=forge mc=1.19.2 loaderVersion=43.4.0
+ * 注意：本文件由脚本从种子组合复制并替换版本号得到。Java API、Yarn/Mojmap 命名、
+ *       加载器 DSL 在 1.19.2 上可能与种子版本存在差异，构建失败时
+ *       请优先查阅 1.19.2 官方文档/Forge docs。
+ * verifiedAt 为 null 表示本模板尚未在目标版本真机编译验证。
+ */
+// ============================================================================
+// KunYuEcosystem AI Reference v3.2 | forge/1.19.2/project/build.gradle | mapping: Mojang official | provenance: adapted from official loader MDK/docs
+// ============================================================================
+// ============================================================================
+// build.gradle —— Forge 1.19.2（ForgeGradle 6，Groovy DSL）
+// ============================================================================
+// 用法要点：
+// - ForgeGradle 6 负责拉取 Minecraft/Forge、应用 Mojang 官方映射、生成 runClient/runServer/runData 任务。
+// - 版本号抽到 gradle.properties；需要 JDK 17，推荐 Gradle 8.8+（用 gradle wrapper 固定）。
+// - 生产环境 jar 仍使用 SRG 名：FG6 会在 jar 之后自动执行 reobfJar 重混淆。
+// ============================================================================
+plugins {
+    // ForgeGradle 6 主插件；区间写法自动匹配 6.0.x ~ 6.1.x
+    id 'net.minecraftforge.gradle' version '[5.1,5.2)'
+    // 如需发布到 Maven 仓库再启用
+    id 'maven-publish'
+}
+version = project.mod_version
+group = project.maven_group
+
+base {
+    // 决定 jar 最终名：examplemod-1.0.0.jar
+    archivesName = project.archives_base_name
+}
+
+repositories {
+    mavenCentral()
+    // 依赖其它第三方库时在此追加 maven { url = '...' }
+}
+
+minecraft {
+    // Mojang 官方映射：Forge 1.19.2 开发期唯一映射渠道（channel: official）
+    mappings channel: 'official', version: project.minecraft_version
+    // 如需访问受保护成员，取消注释并创建对应文件：
+    // accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+
+    runs {
+        client {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            mods { examplemod { source sourceSets.main } }
+        }
+        server {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            mods { examplemod { source sourceSets.main } }
+        }
+        data {
+            workingDirectory project.file('run')
+            property 'forge.logging.markers', 'REGISTRIES'
+            property 'forge.logging.console.level', 'debug'
+            // runData：把 JSON（配方/标签/模型等）生成到 src/generated/resources
+            args '--mod', 'examplemod', '--all',
+                 '--output', file('src/generated/resources/'),
+                 '--existing', file('src/main/resources/')
+            mods { examplemod { source sourceSets.main } }
+        }
+    }
+}
+
+// 数据生成输出目录并入资源处理
+sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${project.minecraft_version}-${project.forge_version}"
+}
+
+// Minecraft 1.19.2 需要 Java 17；统一 UTF-8 编译编码
+java {
+    toolchain { languageVersion = JavaLanguageVersion.of(17) }
+    withSourcesJar()
+}
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 17
+}
+
+jar {
+    finalizedBy 'reobfJar'
+    manifest {
+        attributes([
+            'Specification-Title'   : 'examplemod',
+            'Specification-Vendor'  : 'Example Author',
+            'Specification-Version' : '1',
+            'Implementation-Title'  : project.name,
+            'Implementation-Version': project.version,
+            'Implementation-Vendor' : 'Example Author'
+        ])
+    }
+}

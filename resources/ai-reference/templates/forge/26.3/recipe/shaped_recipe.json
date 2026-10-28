@@ -1,0 +1,28 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.2 | forge/26.3/recipe/shaped_recipe.json | mapping: Mojang official | provenance: adapted from official loader MDK/docs
+// ============================================================================
+{
+    // ============================================================
+    // 有序合成 - Forge 26.3
+    // ============================================================
+    // 位置：data/examplemod/recipes/shaped_recipe.json
+    // crafting_shaped：pattern 定形状，key 定符号对应的材料。
+    // ============================================================
+    "type": "minecraft:crafting_shaped",
+    // 3 行 3 列；空格表示该格留空
+    "pattern": [
+        "###",
+        "#X#",
+        "###"
+    ],
+    // key：pattern 中出现的符号（除空格外）都要在此定义
+    "key": {
+        "#": { "item": "minecraft:diamond" },
+        "X": { "item": "minecraft:nether_star" }
+    },
+    // result：产物与数量（26.3 用 "item" 字段）
+    "result": {
+        "item": "examplemod:example_item",
+        "count": 1
+    }
+}

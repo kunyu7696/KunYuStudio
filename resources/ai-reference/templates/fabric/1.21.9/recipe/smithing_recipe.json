@@ -1,0 +1,40 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.0 | fabric/1.21.9/recipe/smithing_recipe.json | mapping: Yarn | provenance: extracted verbatim from source PDF; Chinese annotations unrecoverable (no ToUnicode)
+// ============================================================================
+{
+
+    // ============================================================
+    //  - Fabric 1.21.9
+    // ============================================================
+    // : data/examplemod/recipes/smithing_recipe.json
+    // 1.21.9
+    // 1.19  "minecraft:smithing"
+    // 1.20+
+    // 1. minecraft:smithing_transform - ->
+    // 2. minecraft:smithing_trim       -
+    // smithing_transform :
+    //   - template:   netherite_upgrade_smithing_template
+    //   - base:
+    //   - addition:
+    // :
+    // 1. 1.20+  "minecraft:smithing"
+    // 2. template 1.20
+    // 3. result
+    // ============================================================
+    "type": "minecraft:smithing_transform",
+    // template:
+    // 1.20
+    "template": {
+        "item": "minecraft:netherite_upgrade_smithing_template"
+    },
+    // base:
+    "base": {
+        "item": "minecraft:diamond_sword"
+    },
+    // addition:
+    "addition": {
+        "item": "minecraft:netherite_ingot"
+    },
+    // result:
+    "result": "minecraft:netherite_sword"
+}

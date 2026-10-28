@@ -1,0 +1,17 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.2 | forge/1.21.1/item/model.json | mapping: Mojang official | provenance: adapted from official loader MDK/docs
+// ============================================================================
+{
+  "//": [
+    "物品模型 JSON —— Forge 1.21.1（加载器无关）",
+    "位置：assets/<modid>/models/item/<item_name>.json",
+    "示例：example_item 对应 assets/examplemod/models/item/example_item.json",
+    "贴图：assets/examplemod/textures/item/example_item.png",
+    "parent 常用值：item/generated（普通平面物品）/ item/handheld（工具武器）",
+    "layer0 指向贴图，不含 .png；可叠加 layer1/layer2 做多层贴图"
+  ],
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "examplemod:item/example_item"
+  }
+}

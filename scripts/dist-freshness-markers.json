@@ -1,0 +1,29 @@
+{
+  "$comment": [
+    "产物新鲜度判别串的单一事实源。",
+    "assert-out-fresh.cjs（electron-vite build 之后、electron-builder 之前）与",
+    "verify-dist-freshness.cjs（打包之后）共同消费：requiredMarkers 每一条都必须出现在 out/main/index.js 字节里，",
+    "rendererMarkers 每一条都必须出现在 out/renderer 的 JS 产物拼接里。",
+    "维护约定：修复后把新增的用户可见文案串补充进来（判别串必须随版本变化，",
+    "否则会'永久通过、失去鉴别力'）。"
+  ],
+  "requiredMarkers": [
+    "kunyu.observer.token",
+    "X-Observer-Token",
+    "骨架缺失或损坏",
+    "不支持的加载器/版本组合",
+    "gradleVersion: \"8.12\"",
+    "项验收断言待人工确认",
+    "非失败，确认后即为完成",
+    "项验收断言未评估",
+    "验收契约未产出",
+    "# Attempt to set APP_HOME",
+    "catalogMissing",
+    "未找到 CurseForge 产物"
+  ],
+  "rendererMarkers": [
+    "物品类型",
+    "0 = 随机端口",
+    "高级：检索预算 / 数据源"
+  ]
+}

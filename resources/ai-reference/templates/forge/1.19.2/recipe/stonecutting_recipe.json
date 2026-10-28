@@ -1,0 +1,18 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.2 | forge/1.19.2/recipe/stonecutting_recipe.json | mapping: Mojang official | provenance: adapted from official loader MDK/docs
+// ============================================================================
+{
+    // ============================================================
+    // 切石 - Forge 1.19.2
+    // ============================================================
+    // 位置：data/examplemod/recipes/stonecutting_recipe.json
+    // 1 输入 1 输出，无消耗无经验。
+    // ============================================================
+    "type": "minecraft:stonecutting",
+    "ingredient": {
+        "item": "minecraft:stone"
+    },
+    // result：纯字符串 ID；count 为产出数量
+    "result": "examplemod:example_block",
+    "count": 1
+}

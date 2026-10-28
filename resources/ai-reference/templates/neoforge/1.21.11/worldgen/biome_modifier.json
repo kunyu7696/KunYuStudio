@@ -1,0 +1,25 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.2 | neoforge/1.21.11/worldgen/biome_modifier.json | mapping: Mojang official | provenance: adapted from official loader MDK/docs
+// ============================================================================
+{
+    // ============================================================
+    // 群系修改（刷怪生成）- NeoForge 1.21.11
+    // ============================================================
+    // 位置：data/examplemod/neoforge/biome_modifier/add_example_spawns.json
+    // 注意路径：NeoForge 专属 serializer 放在 data/<modid>/neoforge/biome_modifier/ 下。
+    // 可用类型：
+    // - neoforge:add_spawns     追加生物生成（本文件）
+    // - neoforge:remove_spawns  移除生物生成（spawners 填要移除的实体）
+    // - neoforge:add_features   注入矿物/植被等（见 ore_feature.java 尾部注释）
+    // ============================================================
+    "type": "neoforge:add_spawns",
+    // 生效群系：可用单个 ID、列表或标签（#minecraft:is_overworld 等）
+    "biomes": "#minecraft:is_overworld",
+    // 也可以写成 spawners 数组一次加多个
+    "spawners": {
+        "type": "examplemod:example_entity",
+        "weight": 100,      // 权重（对比原版羊 12、僵尸 95）
+        "minCount": 4,      // 每次生成数量下限
+        "maxCount": 8       // 上限
+    }
+}

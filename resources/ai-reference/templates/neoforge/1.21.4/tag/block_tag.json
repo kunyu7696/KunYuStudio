@@ -1,0 +1,19 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.2 | neoforge/1.21.4/tag/block_tag.json | mapping: Mojang official | provenance: adapted from official loader MDK/docs
+// ============================================================================
+{
+    // ============================================================
+    // 方块标签 - NeoForge 1.21.4
+    // ============================================================
+    // 位置：data/examplemod/tags/block/example_block_tag.json
+    // 注意：1.21 起标签目录改为单数（tags/block、tags/item、tags/entity）。
+    // 常用原版标签：minecraft:mineable/pickaxe、minecraft:needs_iron_tool 等。
+    // 想把内容并入原版标签，就把文件建到 data/minecraft/tags/block/<tag>.json。
+    // ============================================================
+    "replace": false,
+    "values": [
+        "minecraft:diamond_block",
+        "minecraft:emerald_block",
+        "examplemod:example_block"
+    ]
+}

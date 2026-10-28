@@ -1,0 +1,30 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.0 | fabric/1.21.9/tag/item_tag.json | mapping: Yarn | provenance: extracted verbatim from source PDF; Chinese annotations unrecoverable (no ToUnicode)
+// ============================================================================
+{
+    // ============================================================
+
+    //  - Fabric 1.21.9
+    // ============================================================
+    // : data/examplemod/tags/items/example_item_tag.json
+    // :
+    //   minecraft:logs
+    //   minecraft:planks
+    //   minecraft:coals
+    //   minecraft:saplings
+    //   minecraft:flowers
+    // :
+    // 1.  data/<mod_id>/tags/items/
+    // 2.
+    //    : data/<mod_id>/tags/items/
+    //    : data/<mod_id>/tags/blocks/
+    // 3. values ID
+    // 4. replace  true
+    // ============================================================
+    "replace": false,
+    "values": [
+        "minecraft:diamond",
+        "minecraft:emerald",
+        "examplemod:example_item"
+    ]
+}

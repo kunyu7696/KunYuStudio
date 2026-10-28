@@ -1,0 +1,69 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.2 | neoforge/1.21.3/advancement/advancement.json | mapping: Mojang official | provenance: adapted from official loader MDK/docs
+// ============================================================================
+{
+    // ============================================================
+    // 进度/成就 - NeoForge 1.21.3
+    // ============================================================
+    // 位置：data/examplemod/advancement/example_advancement.json
+    // 注意：1.21 起目录名改为单数 advancement（1.20.x 是 advancements）。
+    // 原版数据包格式，与加载器无关；NeoForge 也可用 runData 的 AdvancementProvider 生成。
+    // ============================================================
+    // 父进度决定树形展示位置；根进度可用 display.background 设背景
+    "parent": "examplemod:example/root",
+    "display": {
+        "icon": {
+            "item": "examplemod:example_item"
+        },
+        // 标题/描述建议走翻译键（assets/examplemod/lang/en_us.json）
+        "title": {
+            "translate": "advancements.examplemod.example.title"
+        },
+        "description": {
+            "translate": "advancements.examplemod.example.description"
+        },
+        // frame: task（普通）/ goal（目标）/ challenge（挑战）
+        "frame": "task",
+        "show_toast": true,
+        "announce_to_chat": true,
+        "hidden": false
+        // 根进度可加："background": "minecraft:textures/block/stone.png"
+    },
+    // criteria：达成条件集合；requirements 描述它们之间的 AND/OR 关系
+    "criteria": {
+        "get_example_item": {
+            "trigger": "minecraft:inventory_changed",
+            "conditions": {
+                "items": [
+                    {
+                        "items": [
+                            "examplemod:example_item"
+                        ]
+                    }
+                ]
+            }
+        },
+        "another_condition": {
+            "trigger": "minecraft:location",
+            "conditions": {
+                "player": {
+                    "location": {
+                        "dimension": "minecraft:overworld"
+                    }
+                }
+            }
+        }
+    },
+    // 本例：两个条件需同时满足（AND）；OR 则写成 [[a, b]]
+    "requirements": [
+        ["get_example_item"],
+        ["another_condition"]
+    ],
+    "rewards": {
+        "experience": 10,
+        "loot": [
+            "examplemod:example_loot_table"
+        ],
+        "function": "examplemod:grant_example_reward"
+    }
+}

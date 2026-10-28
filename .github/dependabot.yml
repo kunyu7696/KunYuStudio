@@ -1,0 +1,46 @@
+version: 2
+updates:
+  # 生产/开发 npm 依赖：每周一检查（与矩阵门禁同频，避免补丁版本积压）
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+      # vitest 生态联动：vitest 与 @vitest/coverage-v8 版本必须严格对齐
+      # （coverage 的 peerDependencies 锁死同名版本），单独升任一个必然 npm ci 失败
+      vitest:
+        patterns:
+          - vitest
+          - '@vitest/*'
+    ignore:
+      # 构建链大版本由人工统一升级：这些包互相锁 peer / Node 下限，
+      # bot 逐个升级只会产出必然失败的孤立 PR（实测：vite 8 被 electron-vite 5 的
+      # peer ^5||^6||^7 拦截；coverage-v8 5 要求 vitest 5.0.5；chokidar 6 要求 Node >=22.22）。
+      # 升级时删除对应条目并一次性改齐 peer 组合。
+      - dependency-name: vite
+        update-types:
+          - version-update:semver-major
+      - dependency-name: electron-vite
+        update-types:
+          - version-update:semver-major
+      - dependency-name: vitest
+        update-types:
+          - version-update:semver-major
+      - dependency-name: '@vitest/coverage-v8'
+        update-types:
+          - version-update:semver-major
+      - dependency-name: chokidar
+        update-types:
+          - version-update:semver-major
+
+  # GitHub Actions 版本跟进（actions/checkout、setup-node 等）
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5

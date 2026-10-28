@@ -1,0 +1,42 @@
+# ============================================================================
+# KunYuEcosystem AI Reference v3.2 | forge/1.20.1/project/mods.toml | mapping: Mojang official | provenance: adapted from official loader MDK/docs
+# ============================================================================
+# 用法要点：
+# - 实际位置：src/main/resources/META-INF/mods.toml。
+# - modLoader=javafml 表示 Java 代码模组；loaderVersion 匹配 Forge 主版本 47。
+# - [[mods]] 段声明 modId/version/displayName/description；
+#   [[dependencies.<modId>]] 声明对 forge 与 minecraft 的版本约束。
+# - 使用 Mixin 时追加 [[mixins]] config="examplemod.mixins.json"。
+# ============================================================================
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+#issueTrackerURL="https://github.com/example/examplemod/issues"
+
+[[mods]]
+modId="examplemod"
+version="1.0.0"
+displayName="Example Mod"
+description='''
+KunYuEcosystem AI reference scaffold for Forge 1.20.1.
+'''
+authors="Example Author"
+#logoFile="assets/examplemod/logo.png"
+
+[[dependencies.examplemod]]
+    modId="forge"
+    mandatory=true
+    versionRange="[47,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.examplemod]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1,1.21)"
+    ordering="NONE"
+    side="BOTH"
+
+# 如使用 Mixin，取消注释并把 examplemod.mixins.json 放入 src/main/resources：
+# [[mixins]]
+# config="examplemod.mixins.json"

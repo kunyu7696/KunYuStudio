@@ -1,0 +1,23 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.2 | neoforge/1.21.7/block/blockstate.json | mapping: Mojang official | provenance: adapted from official loader MDK/docs
+// ============================================================================
+{
+  // ================================================================
+  // 方块状态 JSON（NeoForge 1.21.7）
+  // ================================================================
+  // 位置：src/main/resources/assets/examplemod/blockstates/example_block.json
+  // 作用：把 BlockState 组合映射到模型；加载器无关，两种 mod 通用。
+  // ================================================================
+  "variants": {
+    // "" 表示该方块的默认状态（未声明任何属性时）
+    // "model" 指向 assets/examplemod/models/block/example_block.json
+    "": {
+      "model": "examplemod:block/example_block"
+    }
+    // 有朝向属性时可写：
+    // "facing=north": { "model": "examplemod:block/example_block" },
+    // "facing=east":  { "model": "examplemod:block/example_block", "y": 90 },
+    // "facing=south": { "model": "examplemod:block/example_block", "y": 180 },
+    // "facing=west":  { "model": "examplemod:block/example_block", "y": 270 }
+  }
+}

@@ -1,0 +1,17 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.2 | forge/1.19.2/tag/item_tag.json | mapping: Mojang official | provenance: adapted from official loader MDK/docs
+// ============================================================================
+{
+    // ============================================================
+    // 物品标签 - Forge 1.19.2
+    // ============================================================
+    // 位置：data/examplemod/tags/items/example_item_tag.json
+    // 配方可直接引用标签："tag": "examplemod:example_item_tag"。
+    // ============================================================
+    "replace": false,
+    "values": [
+        "minecraft:diamond",
+        "minecraft:emerald",
+        "examplemod:example_item"
+    ]
+}

@@ -1,0 +1,22 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.2 | forge/26.3/recipe/shapeless_recipe.json | mapping: Mojang official | provenance: adapted from official loader MDK/docs
+// ============================================================================
+{
+    // ============================================================
+    // 无序合成 - Forge 26.3
+    // ============================================================
+    // 位置：data/examplemod/recipes/shapeless_recipe.json
+    // crafting_shapeless：只看材料集合，不看摆放位置。
+    // ============================================================
+    "type": "minecraft:crafting_shapeless",
+    // ingredients：材料列表；每项用 "item" 或 "tag"
+    "ingredients": [
+        { "item": "minecraft:diamond" },
+        { "item": "minecraft:emerald" },
+        { "tag": "minecraft:logs" }
+    ],
+    "result": {
+        "item": "examplemod:example_item",
+        "count": 1
+    }
+}

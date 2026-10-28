@@ -1,0 +1,29 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.0 | fabric/1.18.2/tag/entity_tag.json | mapping: Yarn | provenance: extracted verbatim from source PDF; Chinese annotations unrecoverable (no ToUnicode)
+// ============================================================================
+{
+    // ============================================================
+    //  - Fabric 1.18.2
+    // ============================================================
+    // : data/examplemod/tags/entity_types/example_entity_tag.json
+    // :
+    //   minecraft:skeletons
+    //   minecraft:raiders
+    //   minecraft:beehives
+    //   minecraft:arrows
+    //   minecraft:impact_projectiles
+    //   minecraft:fall_damage_immune
+    //   minecraft:freezable_hurt_type
+    //   minecraft:freeze_immune_entity_type
+    // :
+    // 1. : data/<mod_id>/tags/entity_types/
+    // 2. ID
+    // 3.  EntityType.getTag()
+    // ============================================================
+    "replace": false,
+    "values": [
+        "minecraft:zombie",
+        "minecraft:skeleton",
+        "examplemod:example_entity"
+    ]
+}

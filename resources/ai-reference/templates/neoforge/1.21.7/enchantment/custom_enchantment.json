@@ -1,0 +1,54 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.2 | neoforge/1.21.7/enchantment/custom_enchantment.json | mapping: Mojang official | provenance: adapted from official loader MDK/docs
+// ============================================================================
+{
+    // ============================================================
+    // 自定义附魔（数据驱动）- NeoForge 1.21.7
+    // ============================================================
+    // 位置：data/examplemod/enchantment/example_enchantment.json
+    // 重要：1.21 起附魔改为数据驱动，不再是 Java Enchantment 子类；
+    // 放入该目录即自动注册，无需任何代码。描述与名称走翻译键：
+    //   enchantment.examplemod.example_enchantment（assets/examplemod/lang/en_us.json）
+    // ============================================================
+    // 附魔名称（可用 translate 或 literal）
+    "description": {
+        "translate": "enchantment.examplemod.example_enchantment"
+    },
+    // 可附魔物品：物品 ID、列表或标签（#minecraft:enchantable/* 系列标签）
+    "supported_items": "#minecraft:enchantable/weapon",
+    // 附魔台抽取权重（原版锋利 10）
+    "weight": 10,
+    // 最大等级
+    "max_level": 3,
+    // 附魔台最小消耗曲线：10 + (等级-1) * 15
+    "min_cost": {
+        "base": 10,
+        "per_level_above_first": 15
+    },
+    // 附魔台最大消耗曲线
+    "max_cost": {
+        "base": 40,
+        "per_level_above_first": 10
+    },
+    // 铁砧合并消耗
+    "anvil_cost": 2,
+    // 生效槽位
+    "slots": [
+        "mainhand"
+    ],
+    // 效果：伤害加成 = 1.0 + 0.5 * (等级-1)
+    "effects": {
+        "minecraft:damage": [
+            {
+                "effect": {
+                    "type": "minecraft:add",
+                    "value": {
+                        "type": "minecraft:linear",
+                        "base": 1.0,
+                        "per_level_above_first": 0.5
+                    }
+                }
+            }
+        ]
+    }
+}

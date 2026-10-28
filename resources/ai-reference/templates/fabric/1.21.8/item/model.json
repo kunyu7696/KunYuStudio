@@ -1,0 +1,24 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.0 | fabric/1.21.8/item/model.json | mapping: Yarn | provenance: extracted verbatim from source PDF; Chinese annotations unrecoverable (no ToUnicode)
+// ============================================================================
+{
+  "//": [
+    "model.json —  JSON Fabric 1.21.8",
+    "assets/<modid>/models/item/<item_name>.json",
+    " example_item examplemod",
+    "assets/<modid>/textures/item/<item_name>.png",
+    "",
+    "parent ",
+    "  - item/generated      ///",
+    "  - item/handheld       //",
+    "  - item/handheld_rods  //",
+    "  - builtin/entity       3D/",
+    "",
+    "textures.layer0 <>:<> examplemod:item/example_item",
+    "layer0  layer1layer2 "
+  ],
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "examplemod:item/example_item"
+  }
+}

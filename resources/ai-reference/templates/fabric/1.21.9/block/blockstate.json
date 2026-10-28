@@ -1,0 +1,52 @@
+// ============================================================================
+// KunYuEcosystem AI Reference v3.0 | fabric/1.21.9/block/blockstate.json | mapping: Yarn | provenance: extracted verbatim from source PDF; Chinese annotations unrecoverable (no ToUnicode)
+// ============================================================================
+{
+  // ================================================================
+  //  JSON  (Fabric 1.21.9)
+  // ================================================================
+  // src/main/resources/assets/examplemod/blockstates/<block_name>.json
+  //  mod_id
+  // blockstate JSON
+  //    BlockState  facing=north, powered=false
+  //   model
+  //   1. "variants"
+  //   2. "multipart"
+  //       +
+  //    variants
+  // Minecraft  GSON  JSON
+  //        //
+  // ================================================================
+  // "variants"
+
+  //  BlockState
+  "variants": {
+    //  ""
+    // "examplemod:block/<block_name>" .json
+    // "model"  assets/examplemod/models/block/<model_name>.json
+    //    "block/"
+    //   "x": 0/90/180    ——  X
+    //   "y": 0/90/180/270 ——  Y
+    //   "uvlock": true/false ——  UV
+    //       true
+    //   - model  "block/"
+    //   -  blockstate
+    //   - / Java  BlockState
+    //      "facing=north"  "facing"
+    "": {
+      "model": "examplemod:block/example_block"
+    }
+    // ----  ----
+    //  facing
+    //   "facing=north": { "model": "examplemod:block/example_block" },
+    //   "facing=east":  { "model": "examplemod:block/example_block", "y": 90 },
+    //   "facing=south": { "model": "examplemod:block/example_block", "y": 180 },
+    //   "facing=west":  { "model": "examplemod:block/example_block", "y": 270 },
+    //  powered /
+    //   "facing=north,powered=true":  { "model": "examplemod:block/example_block_powered" },
+    //   "facing=north,powered=false": { "model": "examplemod:block/example_block" },
+    //   ...
+    //  "="  ","
+    //  BlockState
+  }
+}
