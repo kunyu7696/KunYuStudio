@@ -141,7 +141,7 @@ jobs:
       # merge-multiple：三份 artifact 平铺进同一目录。文件名互不冲突
       # （setup.exe / *.dmg / *.AppImage 按平台不同名；latest.yml / latest-mac.yml /
       # latest-linux.yml 亦不同名），故可直接作为一次发布的全量资产。
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: artifacts
           merge-multiple: true
