@@ -18,23 +18,12 @@ updates:
           - vitest
           - '@vitest/*'
     ignore:
-      # 构建链大版本由人工统一升级：这些包互相锁 peer / Node 下限，
-      # bot 逐个升级只会产出必然失败的孤立 PR（实测：vite 8 被 electron-vite 5 的
-      # peer ^5||^6||^7 拦截；coverage-v8 5 要求 vitest 5.0.5；chokidar 6 要求 Node >=22.22）。
-      # 升级时删除对应条目并一次性改齐 peer 组合。
-      - dependency-name: vite
-        update-types:
-          - version-update:semver-major
-      - dependency-name: electron-vite
-        update-types:
-          - version-update:semver-major
-      - dependency-name: vitest
-        update-types:
-          - version-update:semver-major
-      - dependency-name: '@vitest/coverage-v8'
-        update-types:
-          - version-update:semver-major
-      - dependency-name: chokidar
+      # 一刀切：所有依赖的大版本升级不自动提 PR，由人工统一升级。
+      # 原因：构建链互相锁 peer / Node 下限，bot 逐个升级只会产出必然失败的
+      # 孤立 PR（实测：typescript 7 被 @typescript-eslint peer <6.1.0 拦截；
+      # npm 12 要求 Node ^22.22；vite 8 被 electron-vite 5 peer 拦截）。
+      # 升级时临时注释本条，一次性改齐 peer 组合后再恢复。
+      - dependency-name: '*'
         update-types:
           - version-update:semver-major
 
