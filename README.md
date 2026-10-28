@@ -1,6 +1,6 @@
 # KunYu Studio
 
-> 原 KunYuEcosystem（坤舆生态）。
+> 原 KunYuEcosystem。
 
 Minecraft 模组与整合包的可视化开发工作台：把「写模组」从手写 Java/JSON 变成
 「AI 生成 → 沙盒验证 → 一键导出」的闭环。桌面应用（Electron），Windows 优先。

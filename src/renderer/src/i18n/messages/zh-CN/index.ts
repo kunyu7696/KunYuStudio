@@ -54,7 +54,7 @@ const zhCN = {
     menuHelpOnboarding: '新手引导',
     menuHelpDsh: 'DSH 插件与桌宠',
     menuHelpAbout: '关于 KunYu Studio',
-    aboutBody: '版本 {version}\nMinecraft 模组与整合包可视化开发工具\n曾用名：KunYuEcosystem（坤舆生态）',
+    aboutBody: '版本 {version}\nMinecraft 模组与整合包可视化开发工具\n曾用名：KunYuEcosystem',
     aboutConfirm: '知道了'
   },
   activity: {
@@ -314,7 +314,7 @@ const zhCN = {
       whatB: '。它帮助用户编写模组代码、生成资源包、编辑模型，',
       whatStrong2: '不分发 Minecraft 游戏本体，不绕过任何正版验证渠道',
       whatC: '。',
-      formerName: '曾用名：KunYuEcosystem（坤舆生态）。',
+      formerName: '曾用名：KunYuEcosystem。',
       ugcTitle: '用户生成内容',
       ugcA: '用户通过本工具生成的模组、资源包、模型等内容，',
       ugcStrong: '其著作权归原作者所有',

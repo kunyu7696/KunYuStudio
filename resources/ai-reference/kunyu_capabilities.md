@@ -6,7 +6,7 @@
 
 ## 一、这是什么
 
-KunYu Studio（曾用名：KunYuEcosystem，坤舆生态）是桌面端 Minecraft 模组开发工作站（Electron 应用），
+KunYu Studio（曾用名：KunYuEcosystem）是桌面端 Minecraft 模组开发工作站（Electron 应用），
 把「内容编辑 → 代码/资源生成 → 真实编译 → 启动验证 → 构建导出」整条链路收在一个应用里，
 并内置 AI 助手（即你）辅助开发。支持 Fabric / Forge / NeoForge 三种加载器，
 MC 版本覆盖 1.16.5 ~ 1.21.11 及 26.x 快照线（以版本矩阵登记为准，beta 组合禁用）。

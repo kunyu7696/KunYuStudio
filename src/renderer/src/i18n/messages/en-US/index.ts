@@ -322,7 +322,7 @@ const enUS: Messages = {
       whatB: '. It helps you write mod code, generate resource packs and edit models; ',
       whatStrong2: 'it does not distribute the Minecraft game itself, nor bypass any legitimate verification',
       whatC: '.',
-      formerName: 'Formerly known as KunYuEcosystem (坤舆生态).',
+      formerName: 'Formerly known as KunYuEcosystem.',
       ugcTitle: 'User-generated content',
       ugcA: 'Mods, resource packs, models and other content created with this tool: ',
       ugcStrong: 'copyright belongs to the original authors',
