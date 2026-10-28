@@ -34,12 +34,16 @@ function makeProject(type: ProjectType, id: string): Project {
   }
 }
 
-/** 按项目类型挂载活动栏，返回可见模块名列表 */
-function visibleLabels(type: ProjectType | null): string[] {
+/** 按项目类型挂载活动栏，展开全部分组后返回可见模块名列表 */
+async function visibleLabels(type: ProjectType | null): Promise<string[]> {
   const store = useProjectStore()
   store.projects = type ? [makeProject(type, `p-${type}`)] : []
   store.currentProjectId = type ? `p-${type}` : null
   const w = mount(ActivityBar, { global: { plugins: [ElementPlus] } })
+  // 分组默认折叠（仅创作工坊展开）：先点开全部组头再收集，可见性断言针对注册逻辑而非折叠态
+  for (const h of w.findAll('.ab-grp-h')) {
+    if (h.attributes('aria-expanded') === 'false') await h.trigger('click')
+  }
   return w.findAll('.ab-label').map((n) => n.text())
 }
 
@@ -49,8 +53,8 @@ beforeEach(() => {
 })
 
 describe('ActivityBar · 模块可见性', () => {
-  it('未打开项目：资产库与模组与市场都在主页活动栏', () => {
-    const labels = visibleLabels(null)
+  it('未打开项目：资产库与模组与市场都在主页活动栏', async () => {
+    const labels = await visibleLabels(null)
     expect(labels).toContain('资产库')
     expect(labels).toContain('模组与市场')
     expect(labels).toContain('全流程 AI 制作')
@@ -59,39 +63,39 @@ describe('ActivityBar · 模块可见性', () => {
     expect(labels).not.toContain('整合包组装')
   })
 
-  it('资源库在任意场景都可见（全局库，不绑定项目）', () => {
-    expect(visibleLabels(null)).toContain('资源库')
+  it('资源库在任意场景都可见（全局库，不绑定项目）', async () => {
+    expect(await visibleLabels(null)).toContain('资源库')
     for (const type of ['mod', 'modpack', 'datapack', 'resourcepack', 'shaderpack'] as ProjectType[]) {
-      expect(visibleLabels(type)).toContain('资源库')
+      expect(await visibleLabels(type)).toContain('资源库')
     }
   })
 
-  it('普通 mod 项目：模组与市场不出现，资产库出现', () => {
-    const labels = visibleLabels('mod')
+  it('普通 mod 项目：模组与市场不出现，资产库出现', async () => {
+    const labels = await visibleLabels('mod')
     expect(labels).not.toContain('模组与市场')
     expect(labels).toContain('资产库')
     expect(labels).toContain('数据包编辑器')
   })
 
-  it('打开项目后「全流程 AI 制作」从项目页移除（仅主页保留）', () => {
-    expect(visibleLabels(null)).toContain('全流程 AI 制作')
+  it('打开项目后「全流程 AI 制作」从项目页移除（仅主页保留）', async () => {
+    expect(await visibleLabels(null)).toContain('全流程 AI 制作')
     for (const type of ['mod', 'modpack', 'datapack', 'resourcepack', 'shaderpack'] as ProjectType[]) {
-      expect(visibleLabels(type)).not.toContain('全流程 AI 制作')
+      expect(await visibleLabels(type)).not.toContain('全流程 AI 制作')
     }
   })
 
-  it('整合包项目：模组与市场出现（其余项目类型下都不出现）', () => {
-    expect(visibleLabels('modpack')).toContain('模组与市场')
+  it('整合包项目：模组与市场出现（其余项目类型下都不出现）', async () => {
+    expect(await visibleLabels('modpack')).toContain('模组与市场')
     for (const type of ['datapack', 'resourcepack', 'shaderpack'] as ProjectType[]) {
-      expect(visibleLabels(type)).not.toContain('模组与市场')
+      expect(await visibleLabels(type)).not.toContain('模组与市场')
     }
   })
 
-  it('光影包编辑器只在光影包项目里出现（模组项目已移除）', () => {
-    expect(visibleLabels('shaderpack')).toContain('光影包编辑器')
+  it('光影包编辑器只在光影包项目里出现（模组项目已移除）', async () => {
+    expect(await visibleLabels('shaderpack')).toContain('光影包编辑器')
     for (const type of ['mod', 'modpack', 'datapack', 'resourcepack'] as ProjectType[]) {
-      expect(visibleLabels(type)).not.toContain('光影包编辑器')
+      expect(await visibleLabels(type)).not.toContain('光影包编辑器')
     }
-    expect(visibleLabels(null)).not.toContain('光影包编辑器')
+    expect(await visibleLabels(null)).not.toContain('光影包编辑器')
   })
 })

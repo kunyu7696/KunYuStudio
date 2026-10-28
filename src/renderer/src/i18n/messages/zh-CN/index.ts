@@ -59,7 +59,17 @@ const zhCN = {
   },
   activity: {
     label: '活动栏',
-    ai: 'AI 助手'
+    ai: 'AI 助手',
+    search: '搜索模块',
+    searchPlaceholder: '输入模块名…',
+    searchEmpty: '无匹配模块',
+    groups: {
+      create: '创作工坊',
+      content: '内容库',
+      aiDebug: 'AI 与调试',
+      release: '发布交付',
+      ext: '扩展与生态'
+    }
   },
   sidebar: {
     backToProjects: '返回项目列表',

@@ -64,7 +64,17 @@ const enUS: Messages = {
   },
   activity: {
     label: 'Activity bar',
-    ai: 'AI assistant'
+    ai: 'AI assistant',
+    search: 'Search modules',
+    searchPlaceholder: 'Type a module name…',
+    searchEmpty: 'No matching modules',
+    groups: {
+      create: 'Create',
+      content: 'Content',
+      aiDebug: 'AI & Debug',
+      release: 'Release',
+      ext: 'Extensions'
+    }
   },
   sidebar: {
     backToProjects: 'Back to project list',
