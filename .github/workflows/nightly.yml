@@ -12,7 +12,7 @@ jobs:
     name: observer mod 真机构建（Gradle + JDK17）
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-java@v4
         with:
@@ -39,7 +39,7 @@ jobs:
     name: 打包冒烟（electron-vite build）
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v4
         with:
