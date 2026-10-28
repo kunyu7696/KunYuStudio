@@ -43,7 +43,7 @@
     "electron-store": "^9.0.0",
     "electron-updater": "^6.8.11",
     "mcdev-mcp": "^2.2.1",
-    "npm": "^10.9.0",
+    "npm": "^12.2.1",
     "pngjs": "^7.0.0",
     "smol-toml": "^1.9.1",
     "undici": "^8.12.3"
