@@ -327,7 +327,7 @@ export function registerAiChatHandlers(ctx: IpcContext): void {
     if (res.ok && notice) return { ...res, data: { ...res.data, content: notice + res.data.content } }
     return res
   })
-  // 坤舆应用能力清单（AI 助手自我认知）：渲染层 chat 链路的系统提示词在前端组装，
+  // KunYuStudio 应用能力清单（AI 助手自我认知）：渲染层 chat 链路的系统提示词在前端组装，
   // 清单由 main 从参考包读取经 IPC 下发；参考包缺失时返回 null，前端静默缺省
   ipcMain.handle(IpcChannels.AI_KUNYU_CAPABILITIES, () =>
     getReferenceService().getKunyuCapabilities()

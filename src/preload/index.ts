@@ -377,7 +377,7 @@ const api: IpcApi = {
     },
     chatStop: (streamId) => ipcRenderer.invoke(IpcChannels.AI_CHAT_STOP, streamId),
     cueContext: (input) => ipcRenderer.invoke(IpcChannels.AI_CUE_CONTEXT, input),
-    /** 坤舆应用能力清单（自我认知语料）；参考包缺失时返回 null */
+    /** KunYuStudio 应用能力清单（自我认知语料）；参考包缺失时返回 null */
     kunyuCapabilities: () => ipcRenderer.invoke(IpcChannels.AI_KUNYU_CAPABILITIES)
   },
   aiRef: {

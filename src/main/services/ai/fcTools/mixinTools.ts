@@ -404,7 +404,7 @@ export function builtinMixinTools(deps: ToolRegistryDeps): RegisteredTool[] {
         `\nimport ${targetClass};\n\n` +
         `/**\n * ${mixinName} — 注入 ${targetSimple}#${params.method}（${injection} @ ${params.at}）。\n` +
         ` * 端侧：${isClient ? 'client（须注册进 mixins.json 的 client 数组）' : '通用（mixins 数组）'}\n` +
-        ` * 由坤舆 mixin_scaffold 生成，TODO 项补全后用 gradle_build 真编译验证。\n */\n` +
+        ` * 由 KunYuStudio mixin_scaffold 生成，TODO 项补全后用 gradle_build 真编译验证。\n */\n` +
         `@Mixin(${targetSimple}.class)\npublic class ${mixinName} {\n\n${body.join('\n')}\n}\n`,
       warnings
     }

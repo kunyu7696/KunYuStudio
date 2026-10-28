@@ -21,7 +21,7 @@ const zhCN = {
     loading: '加载中…'
   },
   topbar: {
-    logoAlt: '坤舆图标',
+    logoAlt: 'KunYuStudio 图标',
     noProject: '未打开项目',
     build: '构建',
     runningGame: '游戏运行中',

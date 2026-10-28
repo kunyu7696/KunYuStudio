@@ -1,7 +1,7 @@
 /**
  * B1 联网检索能力：web_fetch。
  *
- * 背景：坤舆 Agent 此前的检索全部离线（参考包/知识库/mcdata），超出本地语料
+ * 背景：KunYuStudio Agent 此前的检索全部离线（参考包/知识库/mcdata），超出本地语料
  * （上游 API 变更、社区新模组教程、Wiki 新页面）即失能。本片段给模型一个
  * 零配置的联网抓取出口——undici 已是依赖，代理/超时语义复用 httpUtil，
  * 无需用户装任何 MCP 或 Python 环境。

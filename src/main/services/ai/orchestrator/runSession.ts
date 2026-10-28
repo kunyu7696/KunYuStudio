@@ -543,7 +543,7 @@ export async function runOrchestratorSession(
   if (plan.intent === 'chat') {
     emit('understand', { type: 'phase', phase: 'running', action: '正在组织回答…' })
     const base = reference.getSystemPromptBase() ?? ''
-    // 自我认知语料：回答「坤舆是什么/有哪些功能/怎么用」的事实来源（参考包未收录则缺省不注入）
+    // 自我认知语料：回答「KunYuStudio 是什么/有哪些功能/怎么用」的事实来源（参考包未收录则缺省不注入）
     const capabilities = reference.getKunyuCapabilities()
     const { content: answer, reasoning } = await ask(
       [

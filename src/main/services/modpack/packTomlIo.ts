@@ -146,7 +146,7 @@ export function buildIndexToml(files: IndexTomlFile[]): string {
       ...(f.pack ? { pack: f.pack } : {})
     }))
   }
-  return '# 由坤舆在组装时自动生成（文件清单快照），请勿手工编辑。\n' + stringify(doc)
+  return '# 由 KunYuStudio 在组装时自动生成（文件清单快照），请勿手工编辑。\n' + stringify(doc)
 }
 
 /** 组装成功后把文件清单快照落到项目根 index.toml */

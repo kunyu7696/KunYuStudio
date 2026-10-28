@@ -7,7 +7,7 @@
  * - 混合分词：英文/标识符按词，中文按 2-gram；标题命中加权
  * - 零依赖、零网络、零模型，结果可解释（返回命中词与片段）
  *
- * 语料为坤舆原创中文摘要（非第三方文档转载），随包离线分发。
+ * 语料为 KunYuStudio 原创中文摘要（非第三方文档转载），随包离线分发。
  */
 import { existsSync, readdirSync, readFileSync, watch } from 'node:fs'
 import { join, extname } from 'node:path'

@@ -72,7 +72,7 @@ node scripts/run-vitest.cjs run src/shared/modeler/__tests__/mesh.spec.ts
   版本日期除外）；
 - 署名统一「kunyu (睏欤)」，不用真实姓名；
 - 涉及开源社区（Fabric / Forge / NeoForge / Blockbench / minecraft-data 等）
-  的表述保持谦逊、充分致谢；坤舆大量受益于这些社区的开放成果；
+  的表述保持谦逊、充分致谢；KunYuStudio 大量受益于这些社区的开放成果；
 - 建模器相关实现遵循 clean-room：不读不抄 Blockbench 源码，只依据官方 wiki
   与公开格式规范独立实现；
 - 文档以代码实测为准：数字（通道数、工具数、模板数）改动后同步更新文档。

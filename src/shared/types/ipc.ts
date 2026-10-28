@@ -240,7 +240,7 @@ export const IpcChannels = {
   AI_CHAT_STREAM: 'ai:chat-stream',
   AI_CHAT_STOP: 'ai:chat-stop',
   AI_STREAM_EVENT: 'ai:stream-event',
-  /** 坤舆应用能力清单（AI 助手自我认知语料，main 读参考包 kunyu_capabilities.md） */
+  /** KunYuStudio 应用能力清单（AI 助手自我认知语料，main 读参考包 kunyu_capabilities.md） */
   AI_KUNYU_CAPABILITIES: 'ai:kunyu-capabilities',
   /** 知识库语料包状态：指纹一致性、登记版本、过期天数 */
   KNOWLEDGE_PACK_STATUS: 'knowledge:pack-status',
@@ -1310,7 +1310,7 @@ export interface IpcApi {
     ): Promise<import('./ai').AiResult<import('./ai').AiChatResponse>>
     /** 中断进行中的流式请求（主进程 abort 上游连接） */
     chatStop(streamId: string): Promise<void>
-    /** 坤舆应用能力清单（AI 自我认知语料，main 读参考包 kunyu_capabilities.md）；缺失返回 null */
+    /** KunYuStudio 应用能力清单（AI 自我认知语料，main 读参考包 kunyu_capabilities.md）；缺失返回 null */
     kunyuCapabilities(): Promise<string | null>
     /**
      * M3：仓库级上下文检索（供 CUE 补全注入参考）。

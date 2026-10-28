@@ -2,7 +2,7 @@
 
 > 原 KunYuEcosystem（坤舆生态）。
 >
-> 本文描述坤舆的技术架构：进程模型、目录分层、IPC 约定、核心数据模型、
+> 本文描述 KunYuStudio 的技术架构：进程模型、目录分层、IPC 约定、核心数据模型、
 > 端到端数据流、版本矩阵与安全模型。功能清单见 [FEATURES.md](FEATURES.md)，
 > AI 子系统详见 [AI-PIPELINE.md](AI-PIPELINE.md)。
 

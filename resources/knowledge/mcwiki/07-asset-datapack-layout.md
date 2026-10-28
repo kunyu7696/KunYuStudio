@@ -44,4 +44,4 @@ data/<ns>/
 ## 校验
 
 - 启动日志三类错误：`Failed to load datapack`（JSON 结构）、`Couldn't parse ...`（字段值）、`Missing ... referenced by`（引用目标不存在，如配方产物未注册）
-- 坤舆生成器统一 stripBom 读写，手编文件也要避开 UTF-8 BOM 导致解析失败
+- KunYuStudio 生成器统一 stripBom 读写，手编文件也要避开 UTF-8 BOM 导致解析失败

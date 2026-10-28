@@ -84,7 +84,7 @@ extraResources:
     to: mcdata
     filter:
       - '**/*'
-  # P0 离线知识源②③：Fabric 开发文档 / MC 中文开发百科（坤舆原创语料）
+  # P0 离线知识源②③：Fabric 开发文档 / MC 中文开发百科（KunYuStudio 原创语料）
   - from: resources/knowledge
     to: knowledge
     filter:

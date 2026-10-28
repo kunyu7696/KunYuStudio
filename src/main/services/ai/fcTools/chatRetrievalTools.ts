@@ -252,7 +252,7 @@ export function builtinRetrievalTools(deps: ToolRegistryDeps): RegisteredTool[] 
     makeKnowledgeTool(
       'fabric_docs_search',
       'fabric',
-      '检索坤舆内置的 Fabric 1.20.1 离线开发文档（原创中文摘要，Yarn 映射）：' +
+      '检索 KunYuStudio 内置的 Fabric 1.20.1 离线开发文档（原创中文摘要，Yarn 映射）：' +
         '工程结构/注册系统/事件回调/网络包/ScreenHandler 容器/NBT 持久化/Mixin 注入/实体 AI/' +
         '标签与数据包/战利品表/世界生成/客户端渲染。写 Fabric 代码前先检索对应篇章核对 API 用法。'
     ))
@@ -260,7 +260,7 @@ export function builtinRetrievalTools(deps: ToolRegistryDeps): RegisteredTool[] 
     makeKnowledgeTool(
       'mc_wiki_search',
       'mcwiki',
-      '检索坤舆内置的 Minecraft 中文开发百科（原创术语词条，离线）：命名空间/属性系统/伤害类型/' +
+      '检索 KunYuStudio 内置的 Minecraft 中文开发百科（原创术语词条，离线）：命名空间/属性系统/伤害类型/' +
         'AI 目标/合成配方/进度/资源包与数据包结构/粒子声音文本/附魔与状态效果/命令与 mcfunction/' +
         '食物饱食/GameTest。需要解释原版机制或确认术语时使用；查具体注册名与数值用 mc_data_lookup。'
     ))
@@ -268,7 +268,7 @@ export function builtinRetrievalTools(deps: ToolRegistryDeps): RegisteredTool[] 
     makeKnowledgeTool(
       'kubejs_docs_search',
       'kubejs',
-      '检索坤舆内置的 KubeJS 脚本文档（离线速查）：ServerEvents.recipes 配方事件（添加/移除/替换）/' +
+      '检索 KunYuStudio 内置的 KubeJS 脚本文档（离线速查）：ServerEvents.recipes 配方事件（添加/移除/替换）/' +
         'StartupEvents.registry 物品与方块注册（builder 链、类型、食物、工具/盔甲 tier、创造栏）/' +
         'ServerEvents.tags 标签编辑（add/remove/标签套标签/行为标签/正则批量）/' +
         'BlockEvents/ItemEvents 交互事件（可取消性、1.18.2 旧语法对照）/' +

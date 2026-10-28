@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "corpusVersion": "2026.10.24",
-  "generatedAt": "2026-10-24",
+  "corpusVersion": "2026.10.28",
+  "generatedAt": "2026-10-28",
   "files": [
     {
       "path": "fabric/01-mod-basics.md",
@@ -120,8 +120,8 @@
     },
     {
       "path": "mcwiki/07-asset-datapack-layout.md",
-      "sha256": "736a871ee2185955ed27b3f5eac70b4503c0a962fa798e4498590f27522c3a68",
-      "bytes": 1955
+      "sha256": "071e2a158b392ed39abeac97671ef73c9c7d242d74781060604dece2c032721e",
+      "bytes": 1961
     },
     {
       "path": "mcwiki/08-particles-sounds-text.md",
@@ -145,8 +145,8 @@
     },
     {
       "path": "mcwiki/12-gametest.md",
-      "sha256": "d89b36ed57db064f349cb10826b0509698f26da1b34a7a8253331bdec564275b",
-      "bytes": 2317
+      "sha256": "44e5d50b039cc389d921f38a43b1631c0ae8e3caaf3d476a358b161b1edc532a",
+      "bytes": 2324
     },
     {
       "path": "mcwiki/13-resourcepack-basics.md",
@@ -179,5 +179,5 @@
       "bytes": 3432
     }
   ],
-  "fingerprint": "65a368f09ab656997050efc5c9546fd5ca37147dafa78971e87bcf7c3c483b69"
+  "fingerprint": "aab424b8f03f6bfd078dab6817e794fef74fc9dd7ba8cf90c8c793400264eee4"
 }

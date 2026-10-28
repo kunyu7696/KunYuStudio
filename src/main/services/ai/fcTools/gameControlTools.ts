@@ -228,7 +228,7 @@ export function builtinGameControlTools(deps: ToolRegistryDeps): RegisteredTool[
         name: 'mc_screenshot',
         description:
           '捕获游戏当前帧 PNG（kunyu-observer）。用于游戏内视觉复核流程；返回体仅给字节数摘要，' +
-          '画面由坤舆视觉复核通道消费。需要结构化现场信息时用 mc_state。',
+          '画面由 KunYuStudio 视觉复核通道消费。需要结构化现场信息时用 mc_state。',
         parameters: { type: 'object', properties: {}, required: [] }
       }
     },
@@ -802,7 +802,7 @@ export function builtinGameControlTools(deps: ToolRegistryDeps): RegisteredTool[
         return {
           ok: false,
           text: '',
-          error: '当前会话未启用启动通道：请在坤舆界面使用「一键运行」启动开发客户端，再用 mc_state 核验。'
+          error: '当前会话未启用启动通道：请在 KunYuStudio 界面使用「一键运行」启动开发客户端，再用 mc_state 核验。'
         }
       }
       if (hasActiveRun()) {

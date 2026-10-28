@@ -146,7 +146,7 @@ export interface ReferenceService {
   listTemplates(loader: LoaderId, version: string, types?: readonly ContentType[]): ReferenceManifest['templates']
   readTemplate(id: string): TemplateView | null
   getSystemPromptBase(): string | null
-  /** 坤舆应用自身能力清单（聊天意图注入，AI 自我认知语料） */
+  /** KunYuStudio 应用自身能力清单（聊天意图注入，AI 自我认知语料） */
   getKunyuCapabilities(): string | null
   getFingerprint(comboId: string): VersionFingerprint | null
   /** 合并 overlay 后的组合灯色 */

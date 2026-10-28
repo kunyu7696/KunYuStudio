@@ -1,6 +1,6 @@
 # KunYu AI 子系统（AI Pipeline）
 
-> 本文描述坤舆的 AI 链路：对话入口、五档编排、工具注册表、上下文管理、
+> 本文描述 KunYuStudio 的 AI 链路：对话入口、五档编排、工具注册表、上下文管理、
 > RAG 与三态验收。模块视角的功能清单见 [FEATURES.md](FEATURES.md)。
 
 ---

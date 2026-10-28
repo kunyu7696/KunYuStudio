@@ -126,7 +126,7 @@ describe('index.toml 快照', () => {
       },
       { file: 'overrides/config/x.conf', hash: 'b'.repeat(64), size: 3 }
     ])
-    expect(text).toContain('# 由坤舆在组装时自动生成')
+    expect(text).toContain('# 由 KunYuStudio 在组装时自动生成')
     expect(text).toContain('hash-format = "sha256"')
     expect(text).toContain('file = "run/mods/sodium.jar"')
     expect(text).toContain('platform = "modrinth"')

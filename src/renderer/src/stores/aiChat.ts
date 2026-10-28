@@ -78,7 +78,7 @@ const SYSTEM_PROMPT =
   '代码风格必须与用户当前工程的加载器和映射一致；不确定时明确说明。'
 
 /**
- * 坤舆应用能力清单（AI 自我认知语料）：main 从参考包 kunyu_capabilities.md 读取经 IPC 下发。
+ * KunYuStudio 应用能力清单（AI 自我认知语料）：main 从参考包 kunyu_capabilities.md 读取经 IPC 下发。
  * undefined=未拉取；null=参考包缺失/拉取失败（静默缺省，不阻断问答）。
  * 首次发送前拉一次并常驻缓存——清单是静态文档，随应用更新才变化。
  */
@@ -418,7 +418,7 @@ export const useAiChatStore = defineStore('aiChat', {
         .map((e) => ({ role: e.role, content: e.content }))
 
       let systemContent = SYSTEM_PROMPT
-      // 自我认知语料常驻拼接（有无项目都要能答「坤舆有哪些功能」）
+      // 自我认知语料常驻拼接（有无项目都要能答「KunYuStudio 有哪些功能」）
       const capabilities = kunyuCapabilitiesCache
       if (capabilities) systemContent += `\n\n${capabilities}`
       try {
@@ -513,7 +513,7 @@ export const useAiChatStore = defineStore('aiChat', {
       const startedAt = Date.now()
       this.activeStreamId = streamId
       this.sending = true
-      // 首次发送前拉取坤舆能力清单（自我认知语料），后续走缓存
+      // 首次发送前拉取 KunYuStudio 能力清单（自我认知语料），后续走缓存
       await loadKunyuCapabilities()
       this.entries.push({
         id: genEntryId(),

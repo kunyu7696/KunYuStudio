@@ -49,7 +49,7 @@ public class GoblinGameTest {
 - `./gradlew runGameTestServer`：启动无头服务端跑全部测试，成功退出码 0
 - 单测过滤：`--args='--gatest GOBLIN_TESTS'`（类名/方法名模式，版本相关参数以 loom 文档为准）
 
-## 与坤舆流水线的关系
+## 与 KunYuStudio 流水线的关系
 
 - `.kunyu/content/gametest/*.json` 声明用例时，构建后自动 headless 预跑；无 GameTest 时回退 kunyu-observer 真机探测
 - GameTest 验证「逻辑/属性/AI」；视觉（模型/动画/贴图）仍靠真机截图自审

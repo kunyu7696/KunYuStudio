@@ -232,7 +232,7 @@ const TIER_SETTINGS: Record<OptimizationTier, Array<{ key: string; value: string
 export function buildOptimizationProfile(input: OptimizationProfileInput): string {
   const label = input.tier === 'performance' ? '性能档' : input.tier === 'balanced' ? '均衡档' : '画质档'
   const lines: string[] = [
-    `# 优化 profile（${label}）——坤舆生成，可按机器实况微调`,
+    `# 优化 profile（${label}）——KunYuStudio 生成，可按机器实况微调`,
     `# 键名对齐主流优化模组（Sodium/Rubidium/Iris 兼容层）通用约定。`,
     ''
   ]
