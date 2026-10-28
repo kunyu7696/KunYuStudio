@@ -33,3 +33,9 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # 与 npm 同理：actions 大版本由人工统一升级（checkout/setup-node/upload-artifact
+      # 等大版本跳跃需人工核对 breaking changes，bot PR 在旧仓库均关闭未合并）
+      - dependency-name: '*'
+        update-types:
+          - version-update:semver-major
