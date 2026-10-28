@@ -54,7 +54,7 @@ jobs:
         run: npm run build:win
 
       - name: 上传 Windows 产物
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: win
           # 只取安装包 / 差分块 / 更新元数据；排除 builder-debug.yml 与 *-unpacked 目录
@@ -90,7 +90,7 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
 
       - name: 上传 macOS 产物
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: mac
           path: |
@@ -121,7 +121,7 @@ jobs:
         run: npm run build:linux
 
       - name: 上传 Linux 产物
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: linux
           path: |
