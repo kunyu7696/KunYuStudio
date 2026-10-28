@@ -1,14 +1,13 @@
 <template>
   <nav class="activity-bar" :aria-label="t('activity.label')">
     <div class="ab-group ab-top">
-      <!-- 搜索入口：窄栏放不下输入框，点击展开右侧浮层 -->
+      <!-- 搜索入口：打开全局命令面板（Ctrl+K），模块直达在面板内完成 -->
       <button
         type="button"
         class="ab-item"
-        :class="{ active: searchOpen }"
         :title="t('activity.search')"
         :aria-label="t('activity.search')"
-        @click="toggleSearch"
+        @click="ui.toggleCommandPalette()"
       >
         <el-icon :size="19"><SearchIcon /></el-icon>
         <span class="ab-label">{{ t('activity.search') }}</span>
@@ -42,7 +41,6 @@
         >
           <span class="ab-grp-arrow" :class="{ open: !collapsed.has(grp.id) }">&#9654;</span>
           <span class="ab-grp-name">{{ grp.name }}</span>
-          <span class="ab-grp-cnt">{{ grp.items.length }}</span>
         </button>
         <template v-if="!collapsed.has(grp.id)">
           <button
@@ -90,39 +88,11 @@
         <span class="ab-label">{{ moduleName(mod) }}</span>
       </button>
     </div>
-
-    <!-- 搜索浮层：输入过滤全部可见模块，回车/点击激活并关闭 -->
-    <div v-if="searchOpen" class="ab-search" role="dialog" :aria-label="t('activity.search')">
-      <input
-        ref="searchInput"
-        v-model="query"
-        class="ab-search-input"
-        type="text"
-        :placeholder="t('activity.searchPlaceholder')"
-        @keydown.esc="closeSearch"
-        @keydown.enter="activateFirst"
-      />
-      <div class="ab-search-list">
-        <button
-          v-for="mod in searchResults"
-          :key="mod.id"
-          type="button"
-          class="ab-search-item"
-          @click="activateFromSearch(mod.id)"
-        >
-          <el-icon :size="15"><component :is="mod.icon" /></el-icon>
-          <span>{{ moduleName(mod) }}</span>
-        </button>
-        <div v-if="query && searchResults.length === 0" class="ab-search-empty">
-          {{ t('activity.searchEmpty') }}
-        </div>
-      </div>
-    </div>
   </nav>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { ChatLineRound, Search as SearchIcon } from '@element-plus/icons-vue'
 import { moduleRegistry, type KunYuModule, type ModuleGroupId } from '../../modules'
 import { t, moduleName } from '../../i18n'
@@ -223,40 +193,7 @@ watch(
   }
 )
 
-// ---------- 搜索 ----------
-
-const searchOpen = ref(false)
-const query = ref('')
-const searchInput = ref<HTMLInputElement | null>(null)
-
-const allVisible = computed(() => [...topModules.value, ...bottomModules.value])
-const searchResults = computed(() => {
-  const q = query.value.trim().toLowerCase()
-  if (!q) return allVisible.value
-  return allVisible.value.filter((m) => moduleName(m).toLowerCase().includes(q))
-})
-
-function toggleSearch(): void {
-  searchOpen.value = !searchOpen.value
-  if (searchOpen.value) {
-    query.value = ''
-    nextTick(() => searchInput.value?.focus())
-  }
-}
-
-function closeSearch(): void {
-  searchOpen.value = false
-}
-
-function activateFromSearch(id: string): void {
-  ui.setActiveModule(id)
-  closeSearch()
-}
-
-function activateFirst(): void {
-  const first = searchResults.value[0]
-  if (first) activateFromSearch(first.id)
-}
+// ---------- 搜索：统一走全局命令面板（Ctrl+K），不在窄栏内另起输入框 ----------
 
 // 项目切换后，当前活动模块若不再满足项目资格（如关闭项目、切换到不支持的项目类型），
 // 回退到项目管理。
@@ -354,7 +291,7 @@ watch(
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 0 6px;
+  padding: 0 5px;
   border: none;
   background: transparent;
   color: var(--ky-text-dim);
@@ -386,77 +323,5 @@ watch(
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.ab-grp-cnt {
-  margin-left: auto;
-  flex-shrink: 0;
-  font-size: 9px;
-  opacity: 0.7;
-}
-
-/* ---------- 搜索浮层 ---------- */
-
-.ab-search {
-  position: absolute;
-  left: calc(100% + 4px);
-  top: 0;
-  width: 220px;
-  z-index: 100;
-  background: var(--ky-bg-sidebar);
-  border: 1px solid var(--ky-border);
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
-  padding: 8px;
-}
-
-.ab-search-input {
-  width: 100%;
-  height: 30px;
-  padding: 0 10px;
-  border: 1px solid var(--ky-border);
-  border-radius: 6px;
-  background: var(--ky-bg);
-  color: var(--ky-text);
-  font-size: 13px;
-  outline: none;
-  box-sizing: border-box;
-}
-
-.ab-search-input:focus {
-  border-color: var(--ky-accent);
-}
-
-.ab-search-list {
-  margin-top: 6px;
-  max-height: 320px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-}
-
-.ab-search-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 10px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--ky-text);
-  font-size: 13px;
-  cursor: pointer;
-  text-align: left;
-}
-
-.ab-search-item:hover {
-  background: var(--ky-bg-hover);
-}
-
-.ab-search-empty {
-  padding: 12px 10px;
-  font-size: 12px;
-  color: var(--ky-text-dim);
-  text-align: center;
 }
 </style>

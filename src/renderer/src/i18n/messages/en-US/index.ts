@@ -65,9 +65,7 @@ const enUS: Messages = {
   activity: {
     label: 'Activity bar',
     ai: 'AI assistant',
-    search: 'Search modules',
-    searchPlaceholder: 'Type a module name…',
-    searchEmpty: 'No matching modules',
+    search: 'Search modules (Ctrl+K)',
     groups: {
       create: 'Create',
       content: 'Content',

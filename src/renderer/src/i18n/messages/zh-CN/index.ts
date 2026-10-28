@@ -60,9 +60,7 @@ const zhCN = {
   activity: {
     label: '活动栏',
     ai: 'AI 助手',
-    search: '搜索模块',
-    searchPlaceholder: '输入模块名…',
-    searchEmpty: '无匹配模块',
+    search: '搜索模块（Ctrl+K）',
     groups: {
       create: '创作工坊',
       content: '内容库',
