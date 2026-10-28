@@ -66,6 +66,7 @@ const enUS: Messages = {
     label: 'Activity bar',
     ai: 'AI assistant',
     search: 'Search modules (Ctrl+K)',
+    hideModule: 'Hide "{name}"',
     groups: {
       create: 'Create',
       content: 'Content',
@@ -148,6 +149,10 @@ const enUS: Messages = {
   settings: {
     generalTitle: 'General',
     generalDesc: 'Basic interface and workflow preferences. Changes apply immediately.',
+    activityModules: 'Activity bar modules',
+    activityModulesDesc: 'Right-click a module in the activity bar to hide it; hidden modules remain reachable via the Ctrl+K command palette.',
+    restoreAllModules: 'Restore all',
+    noHiddenModules: 'No hidden modules',
     appearance: 'Appearance',
     themeMode: 'Theme',
     themeModeDesc: 'Dark, classic light, or follow the operating system light/dark setting.',

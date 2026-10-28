@@ -53,6 +53,7 @@
             :aria-label="moduleName(mod)"
             :aria-current="mod.id === ui.activeModuleId"
             @click="ui.setActiveModule(mod.id)"
+            @contextmenu.prevent="openModMenu($event, mod)"
           >
             <el-icon :size="19"><component :is="mod.icon" /></el-icon>
             <span class="ab-label">{{ moduleName(mod) }}</span>
@@ -88,6 +89,17 @@
         <span class="ab-label">{{ moduleName(mod) }}</span>
       </button>
     </div>
+
+    <!-- 模块右键菜单：隐藏入口（恢复在 设置→常规→活动栏模块） -->
+    <Teleport to="body">
+      <div v-if="modMenu" class="ab-ctx-mask" @click="modMenu = null" @contextmenu.prevent="modMenu = null">
+        <div class="ab-ctx" :style="{ left: modMenu.x + 'px', top: modMenu.y + 'px' }" @click.stop>
+          <button type="button" class="ab-ctx-item" @click="hideFromMenu">
+            {{ t('activity.hideModule', { name: modMenu.name }) }}
+          </button>
+        </div>
+      </div>
+    </Teleport>
   </nav>
 </template>
 
@@ -117,9 +129,9 @@ function isEligible(mod: KunYuModule): boolean {
   return true
 }
 
-/** 是否在活动栏显示：满足项目资格即可 */
+/** 是否在活动栏显示：满足项目资格且未被用户隐藏（命令面板不受隐藏影响） */
 function isVisible(mod: KunYuModule): boolean {
-  return isEligible(mod)
+  return isEligible(mod) && !ui.hiddenModules.includes(mod.id)
 }
 
 const topModules = computed(() => moduleRegistry.list('top').filter(isVisible))
@@ -194,6 +206,20 @@ watch(
 )
 
 // ---------- 搜索：统一走全局命令面板（Ctrl+K），不在窄栏内另起输入框 ----------
+
+// ---------- 右键隐藏（仅分组内模块；恢复走 设置→常规） ----------
+
+const modMenu = ref<{ x: number; y: number; id: string; name: string } | null>(null)
+
+function openModMenu(e: MouseEvent, mod: KunYuModule): void {
+  modMenu.value = { x: e.clientX, y: e.clientY, id: mod.id, name: moduleName(mod) }
+}
+
+function hideFromMenu(): void {
+  if (!modMenu.value) return
+  ui.hideModule(modMenu.value.id)
+  modMenu.value = null
+}
 
 // 项目切换后，当前活动模块若不再满足项目资格（如关闭项目、切换到不支持的项目类型），
 // 回退到项目管理。
@@ -323,5 +349,40 @@ watch(
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ---------- 右键菜单 ---------- */
+
+.ab-ctx-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 3100;
+}
+
+.ab-ctx {
+  position: fixed;
+  background: var(--ky-bg-sidebar);
+  border: 1px solid var(--ky-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  padding: 4px;
+  min-width: 150px;
+}
+
+.ab-ctx-item {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ky-text);
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ab-ctx-item:hover {
+  background: var(--ky-bg-hover);
 }
 </style>

@@ -42,6 +42,13 @@ export const SETTINGS_INDEX: SettingIndexEntry[] = [
     labelKey: 'settings.autosave',
     keywords: ['autosave', 'auto save', '保存', '写盘']
   },
+  {
+    id: 'general-activity-modules',
+    category: 'general',
+    sectionKey: 'settings.activityModules',
+    labelKey: 'settings.activityModules',
+    keywords: ['activity bar', 'sidebar', 'hide module', '活动栏', '侧栏', '隐藏模块', '恢复模块']
+  },
 
   // ---------- 编辑器 ----------
   {
