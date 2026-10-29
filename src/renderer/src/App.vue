@@ -72,6 +72,18 @@
         <span class="modlib-reopen-text">{{ t('app.modlibTitle') }}</span>
       </button>
       <AiAssistantPanel v-show="ui.aiPanelVisible" />
+      <!-- AI 助手收起态：右缘细竖条，点击展开（活动栏底部不再放 AI 入口） -->
+      <button
+        v-if="!ui.aiPanelVisible"
+        type="button"
+        class="ai-reopen"
+        :title="t('app.aiReopen')"
+        :aria-label="t('app.aiReopen')"
+        @click="ui.toggleAiPanel()"
+      >
+        <span class="ai-reopen-arrow">&#8249;</span>
+        <span class="ai-reopen-text">{{ t('activity.ai') }}</span>
+      </button>
     </div>
 
     <!-- 常驻状态栏（参考 VS Code） -->
@@ -459,6 +471,38 @@ function onGlobalKeyDown(e: KeyboardEvent): void {
 .modlib-reopen-text {
   writing-mode: vertical-rl;
   letter-spacing: 2px;
+}
+
+/* AI 助手收起态：右缘细竖条（与 Mod 库把手同款，贴在窗口右边框） */
+.ai-reopen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 0;
+  width: 22px;
+  flex-shrink: 0;
+  border: none;
+  border-left: 1px solid var(--ky-border);
+  background: var(--ky-bg-sidebar);
+  color: var(--ky-text-secondary, var(--el-text-color-secondary));
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.ai-reopen:hover {
+  background: var(--ky-bg-hover);
+  color: var(--el-text-color-primary);
+}
+
+.ai-reopen-text {
+  writing-mode: vertical-rl;
+  letter-spacing: 2px;
+}
+
+.ai-reopen-arrow {
+  font-size: 11px;
+  line-height: 1;
 }
 </style>
 

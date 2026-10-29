@@ -16,7 +16,8 @@ const enUS: Messages = {
     bootstrapLater: 'Later (continue in background)',
     bootstrapDismiss: 'Later',
     modlibReopen: 'Expand library',
-    modlibTitle: 'Library'
+    modlibTitle: 'Library',
+    aiReopen: 'Expand AI assistant'
   },
   common: {
     cancel: 'Cancel',

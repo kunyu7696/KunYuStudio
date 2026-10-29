@@ -12,7 +12,8 @@ const zhCN = {
     bootstrapLater: '稍后（后台继续下载）',
     bootstrapDismiss: '稍后',
     modlibReopen: '展开资源库',
-    modlibTitle: '资源库'
+    modlibTitle: '资源库',
+    aiReopen: '展开 AI 助手'
   },
   common: {
     cancel: '取消',

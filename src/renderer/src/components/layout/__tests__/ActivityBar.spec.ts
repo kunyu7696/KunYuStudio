@@ -149,4 +149,26 @@ describe('ActivityBar · 项目管理分组', () => {
     const labels = w.findAll('.ab-label').map((n) => n.text())
     expect(labels).not.toContain('项目管理')
   })
+
+  it('已打开项目时底部常驻「返回项目列表」，点击关闭当前项目', async () => {
+    const store = useProjectStore()
+    store.projects = [makeProject('mod', 'p1')]
+    store.currentProjectId = 'p1'
+    const w = mount(ActivityBar, { global: { plugins: [ElementPlus] } })
+
+    const back = w.find('.ab-back')
+    expect(back.exists()).toBe(true)
+    expect(back.text()).toContain('返回项目列表')
+
+    await back.trigger('click')
+    expect(store.currentProjectId).toBeNull()
+  })
+
+  it('未打开项目时不渲染返回入口', async () => {
+    const store = useProjectStore()
+    store.projects = [makeProject('mod', 'p1')]
+    store.currentProjectId = null
+    const w = mount(ActivityBar, { global: { plugins: [ElementPlus] } })
+    expect(w.find('.ab-back').exists()).toBe(false)
+  })
 })

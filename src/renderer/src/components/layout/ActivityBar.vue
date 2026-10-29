@@ -92,17 +92,17 @@
     </div>
 
     <div class="ab-bottom">
+      <!-- 已打开项目：常驻「返回项目列表」出口，点击关闭当前项目回到主界面 -->
       <button
+        v-if="projectStore.currentProject"
         type="button"
-        class="ab-item"
-        :class="{ active: ui.aiPanelVisible }"
-        :title="t('activity.ai')"
-        :aria-label="t('activity.ai')"
-        :aria-current="ui.aiPanelVisible"
-        @click="ui.toggleAiPanel()"
+        class="ab-item ab-back"
+        :title="`${t('sidebar.backToProjects')}（${projectStore.currentProject.name}）`"
+        :aria-label="t('sidebar.backToProjects')"
+        @click="projectStore.closeCurrent()"
       >
-        <span class="ab-mark"><span class="ab-dot" /></span>
-        <span class="ab-label">{{ t('activity.ai') }}</span>
+        <span class="ab-mark"><span class="ab-back-glyph">&#171;</span></span>
+        <span class="ab-label">{{ t('sidebar.backToProjects') }}</span>
       </button>
       <button
         v-for="mod in bottomModules"
@@ -364,6 +364,7 @@ watch(
 .ab-panel {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -372,16 +373,40 @@ watch(
 
 /* 顶部组可滚动，底部常驻项固定；nav 自身不裁剪，保证右键菜单可伸出栏外 */
 .ab-top {
-  flex: 1;
+  flex: 1 1 0;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 6px 0;
-  scrollbar-width: thin;
+}
+
+/* 细滚动条常显（悬停加深），让「还能往下滚」一眼可见 */
+.ab-top::-webkit-scrollbar {
+  width: 8px;
+}
+
+.ab-top::-webkit-scrollbar-thumb {
+  background: var(--ky-border);
+  border-radius: 4px;
+}
+
+.ab-top::-webkit-scrollbar-thumb:hover {
+  background: var(--ky-text-dim);
 }
 
 .ab-bottom {
   flex-shrink: 0;
   padding: 6px 0 10px;
+}
+
+/* 返回项目列表：常驻出口，用强调色区分于模块项 */
+.ab-back {
+  color: var(--ky-accent);
+}
+
+.ab-back-glyph {
+  font-size: 13px;
+  line-height: 1;
 }
 
 /* ---------- 行（常驻项 / 分组子项统一外观） ---------- */
