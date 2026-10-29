@@ -160,7 +160,6 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
 import { useModelerStore } from '../../stores/modeler'
 import {
-  cubeWorldCorners,
   documentAabb,
   rotateNodes,
   scaleNodes,
@@ -169,12 +168,11 @@ import {
 } from '../../../../shared/modeler/transform'
 import { ancestorRotationQuat, composeBoneLocalRotation } from '../../../../shared/modeler/quat'
 import { effectiveSelection, patchNode, subtreeIds } from '../../../../shared/modeler/document'
-import { isVisible } from '../../../../shared/modeler/query'
+import { isEffectivelyLocked } from '../../../../shared/modeler/query'
 import { effectiveFaceBindings } from '../../../../shared/modeler/uv'
 import {
   buildMeshEdges,
   meshEdgeKey,
-  meshWorldVertices,
   translateMeshVertices
 } from '../../../../shared/modeler/mesh'
 import { sampleAnimation } from '../../../../shared/modeler/anim'
@@ -224,6 +222,16 @@ import {
   type SubEditCtx,
   type SubEditVisuals
 } from './viewport/subEditVisuals'
+import {
+  isChainVisible,
+  nodesInMarquee,
+  pickMeshFaceAt as pickMeshFaceAtCore,
+  pickMeshModelPoint as pickMeshModelPointCore,
+  pickMeshSurfaceAt as pickMeshSurfaceAtCore,
+  pickNodeAt,
+  pickVertexAt as pickVertexAtCore,
+  type PickCtx
+} from './viewport/picking'
 
 type ToolMode = 'translate' | 'rotate' | 'scale' | 'paint' | 'weight'
 
@@ -1323,21 +1331,21 @@ function onObjectChange(): void {
 
 const raycaster = new THREE.Raycaster()
 raycaster.params.Points = { threshold: 0.04 } // 顶点句柄拾取容差（世界单位；B4-3）
-const ndc = new THREE.Vector2()
 let downX = 0
 let downY = 0
 
-/** 节点自身或任一祖先被锁定 = 有效锁定（禁止视口变换） */
-function isEffectivelyLocked(d: ModelDocument, id: NodeId): boolean {
-  let cur: string | null = id
-  let guard = 0
-  while (cur && guard++ < 256) {
-    const node: ModelNode | undefined = d.nodes[cur]
-    if (!node) return false
-    if (node.locked) return true
-    cur = node.parent
+/** 拾取上下文快照（three 单例 + 场景索引；实现见 viewport/picking） */
+function pickCtx(): PickCtx {
+  return {
+    canvas: canvasRef.value,
+    camera,
+    raycaster,
+    pickMeshes,
+    nodeObjects,
+    doc: store.doc,
+    visuals: subEdit,
+    weightOverlay
   }
-  return false
 }
 
 function modifierActive(e: PointerEvent | MouseEvent): boolean {
@@ -1479,28 +1487,12 @@ function onPointerUp(e: PointerEvent): void {
 }
 
 function pickAt(clientX: number, clientY: number): NodeId | null {
-  const canvas = canvasRef.value
-  if (!canvas || !camera) return null
-  const rect = canvas.getBoundingClientRect()
-  ndc.x = ((clientX - rect.left) / rect.width) * 2 - 1
-  ndc.y = -((clientY - rect.top) / rect.height) * 2 + 1
-  raycaster.setFromCamera(ndc, camera)
-  const hits = raycaster.intersectObjects(pickMeshes, false)
-  const hit = hits.find((h) => isChainVisible(h.object))
-  return hit ? (hit.object.userData.nodeId as NodeId) : null
+  return pickNodeAt(pickCtx(), clientX, clientY)
 }
 
 /** 顶点模式拾取（B4-3）：raycast 顶点句柄 Points → 顶点下标 */
 function pickVertexAt(clientX: number, clientY: number): number | null {
-  const canvas = canvasRef.value
-  if (!canvas || !camera || !subEdit.vertexPoints) return null
-  const rect = canvas.getBoundingClientRect()
-  ndc.x = ((clientX - rect.left) / rect.width) * 2 - 1
-  ndc.y = -((clientY - rect.top) / rect.height) * 2 + 1
-  raycaster.setFromCamera(ndc, camera)
-  const hits = raycaster.intersectObject(subEdit.vertexPoints, false)
-  const idx = hits[0]?.index
-  return idx === undefined ? null : idx
+  return pickVertexAtCore(pickCtx(), clientX, clientY)
 }
 
 /**
@@ -1508,23 +1500,7 @@ function pickVertexAt(clientX: number, clientY: number): number | null {
  * 经 userData.triToFace 回映射为 node.faces 面下标。
  */
 function pickMeshFaceAt(clientX: number, clientY: number): number | null {
-  const canvas = canvasRef.value
-  if (!canvas || !camera) return null
-  const id = store.meshEditTarget
-  const outer = id ? nodeObjects.get(id) : undefined
-  if (!outer) return null
-  const rect = canvas.getBoundingClientRect()
-  ndc.x = ((clientX - rect.left) / rect.width) * 2 - 1
-  ndc.y = -((clientY - rect.top) / rect.height) * 2 + 1
-  raycaster.setFromCamera(ndc, camera)
-  const meshes = outer.children.filter(
-    (c): c is THREE.Mesh => c instanceof THREE.Mesh && c !== subEdit.faceOverlay && c !== subEdit.knifeMarker
-  )
-  const hits = raycaster.intersectObjects(meshes, false)
-  const hit = hits.find((h) => h.faceIndex !== undefined)
-  if (!hit || hit.faceIndex == null) return null
-  const map = hit.object.userData.triToFace as number[] | undefined
-  return map?.[hit.faceIndex] ?? null
+  return pickMeshFaceAtCore(pickCtx(), store.meshEditTarget, clientX, clientY)
 }
 
 /**
@@ -1532,34 +1508,7 @@ function pickMeshFaceAt(clientX: number, clientY: number): number | null {
  * 父空间换算：outer.worldToLocal(世界交点) 得 (v−origin)/16，乘 16 再加回 origin。
  */
 function pickMeshSurfaceAt(clientX: number, clientY: number): { face: number; point: Vec3 } | null {
-  const canvas = canvasRef.value
-  if (!canvas || !camera) return null
-  const id = store.meshEditTarget
-  const node = id ? store.doc?.nodes[id] : undefined
-  const outer = id ? nodeObjects.get(id) : undefined
-  if (!node || !isMeshNode(node) || !outer) return null
-  const rect = canvas.getBoundingClientRect()
-  if (rect.width === 0 || rect.height === 0) return null
-  ndc.x = ((clientX - rect.left) / rect.width) * 2 - 1
-  ndc.y = -((clientY - rect.top) / rect.height) * 2 + 1
-  raycaster.setFromCamera(ndc, camera)
-  outer.updateWorldMatrix(true, false)
-  const meshes = outer.children.filter(
-    (c): c is THREE.Mesh => c instanceof THREE.Mesh && c !== subEdit.faceOverlay && c !== subEdit.knifeMarker
-  )
-  const hit = raycaster.intersectObjects(meshes, false).find((h) => h.faceIndex !== undefined)
-  if (!hit || hit.faceIndex == null) return null
-  const face = (hit.object.userData.triToFace as number[] | undefined)?.[hit.faceIndex] ?? null
-  if (face === null) return null
-  const local = outer.worldToLocal(hit.point.clone())
-  return {
-    face,
-    point: [
-      local.x * 16 + node.origin[0],
-      local.y * 16 + node.origin[1],
-      local.z * 16 + node.origin[2]
-    ]
-  }
+  return pickMeshSurfaceAtCore(pickCtx(), store.meshEditTarget, clientX, clientY)
 }
 
 /**
@@ -1623,39 +1572,7 @@ function applyMarquee(
   if (!d || !canvas || !camera) return
   const stageRect = canvas.getBoundingClientRect()
   if (stageRect.width === 0 || stageRect.height === 0) return
-  const minX = Math.min(rect.x1, rect.x2)
-  const maxX = Math.max(rect.x1, rect.x2)
-  const minY = Math.min(rect.y1, rect.y2)
-  const maxY = Math.max(rect.y1, rect.y2)
-  const v = new THREE.Vector3()
-  const hitIds: NodeId[] = []
-
-  for (const node of Object.values(d.nodes)) {
-    if (!isVisible(d, node.id) || isEffectivelyLocked(d, node.id)) continue
-    let hit = false
-    for (const nid of subtreeIds(d, node.id)) {
-      const n = d.nodes[nid]
-      if (!n) continue
-      const pts: Vec3[] = []
-      if (isCubeNode(n)) pts.push(...cubeWorldCorners(d, n))
-      else if (isMeshNode(n)) pts.push(...meshWorldVertices(d, n))
-      else if (isLocatorNode(n)) pts.push(worldPivotOf(d, nid))
-      for (const p of pts) {
-        v.set(p[0] / 16 - 0.5, p[1] / 16 - 0.5, p[2] / 16 - 0.5)
-        v.project(camera)
-        if (v.z < -1 || v.z > 1) continue // 相机后方
-        const px = ((v.x + 1) / 2) * stageRect.width
-        const py = ((1 - v.y) / 2) * stageRect.height
-        if (px >= minX && px <= maxX && py >= minY && py <= maxY) {
-          hit = true
-          break
-        }
-      }
-      if (hit) break
-    }
-    if (hit) hitIds.push(node.id)
-  }
-
+  const hitIds = nodesInMarquee(d, camera, stageRect, rect)
   store.selection = additive ? Array.from(new Set([...store.selection, ...hitIds])) : hitIds
 }
 
@@ -1749,16 +1666,6 @@ function onPointerLeave(): void {
     marquee.value = null
     if (orbit) orbit.enabled = true
   }
-}
-
-/** 对象链可见性（Raycaster 不按 visible 过滤，需手动检查） */
-function isChainVisible(obj: THREE.Object3D): boolean {
-  let cur: THREE.Object3D | null = obj
-  while (cur) {
-    if (!cur.visible) return false
-    cur = cur.parent
-  }
-  return true
 }
 
 /* ------------------------------------------------------------------ */
@@ -2031,28 +1938,7 @@ function syncWeightOverlay(): void {
  * 与切刀拾取同源，但只返回点（权重笔刷不需要面下标）。
  */
 function pickMeshModelPoint(clientX: number, clientY: number): Vec3 | null {
-  const canvas = canvasRef.value
-  if (!canvas || !camera) return null
-  const node = editingMesh.value
-  const outer = node ? nodeObjects.get(node.id) : undefined
-  if (!node || !outer) return null
-  const rect = canvas.getBoundingClientRect()
-  if (rect.width === 0 || rect.height === 0) return null
-  ndc.x = ((clientX - rect.left) / rect.width) * 2 - 1
-  ndc.y = -((clientY - rect.top) / rect.height) * 2 + 1
-  raycaster.setFromCamera(ndc, camera)
-  outer.updateWorldMatrix(true, false)
-  const excluded = new Set<THREE.Object3D>()
-  if (subEdit.faceOverlay) excluded.add(subEdit.faceOverlay)
-  if (subEdit.knifeMarker) excluded.add(subEdit.knifeMarker)
-  if (weightOverlay) excluded.add(weightOverlay)
-  const meshes = outer.children.filter(
-    (c): c is THREE.Mesh => c instanceof THREE.Mesh && !excluded.has(c)
-  )
-  const hit = raycaster.intersectObjects(meshes, false).find((h) => h.faceIndex !== undefined)
-  if (!hit) return null
-  const local = outer.worldToLocal(hit.point.clone())
-  return [local.x * 16 + node.origin[0], local.y * 16 + node.origin[1], local.z * 16 + node.origin[2]]
+  return pickMeshModelPointCore(pickCtx(), editingMesh.value, clientX, clientY)
 }
 
 /**

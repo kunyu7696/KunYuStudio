@@ -40,6 +40,19 @@ export function visibleNodeIds(doc: ModelDocument): string[] {
   return Object.keys(doc.nodes).filter((id) => isVisible(doc, id))
 }
 
+/** 节点自身或任一祖先被锁定 = 有效锁定（禁止视口变换；节点不存在 = false） */
+export function isEffectivelyLocked(doc: ModelDocument, id: string): boolean {
+  let cur: string | null = id
+  let guard = 0
+  while (cur && guard++ < 256) {
+    const node: ModelNode | undefined = doc.nodes[cur]
+    if (!node) return false
+    if (node.locked) return true
+    cur = node.parent
+  }
+  return false
+}
+
 /* ------------------------------------------------------------------ */
 /* 射线-AABB                                                            */
 /* ------------------------------------------------------------------ */
