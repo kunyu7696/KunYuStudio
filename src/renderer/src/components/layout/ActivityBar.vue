@@ -19,7 +19,26 @@
 
     <div v-show="!navCollapsed" class="ab-panel">
     <div class="ab-top">
-      <!-- 常驻项（无分组）：项目管理等，左侧圆点标识 -->
+      <!-- 项目管理：常驻分组，内含创建/导入与项目列表（原侧边栏列表迁入） -->
+      <div v-if="projectModule" class="ab-grp">
+        <button
+          type="button"
+          class="ab-grp-h"
+          :title="moduleName(projectModule)"
+          :aria-label="moduleName(projectModule)"
+          :aria-expanded="!projectCollapsed"
+          @click="toggleProjectGroup"
+        >
+          <span class="ab-mark">
+            <span class="ab-caret" :class="{ open: !projectCollapsed }">&#9654;</span>
+          </span>
+          <span class="ab-grp-name">{{ moduleName(projectModule) }}</span>
+          <span class="ab-grp-cnt">{{ projectStore.projects.length }}</span>
+        </button>
+        <ProjectNavSection v-if="!projectCollapsed" />
+      </div>
+
+      <!-- 常驻项（无分组）：左侧圆点标识 -->
       <button
         v-for="mod in ungroupedTop"
         :key="mod.id"
@@ -123,9 +142,35 @@ import { moduleRegistry, type KunYuModule, type ModuleGroupId } from '../../modu
 import { t, moduleName } from '../../i18n'
 import { useUiStore } from '../../stores/ui'
 import { useProjectStore } from '../../stores/project'
+import ProjectNavSection from './ProjectNavSection.vue'
 
 const ui = useUiStore()
 const projectStore = useProjectStore()
+
+/** 项目管理模块（注册表里为无分组常驻项，这里改为专用分组渲染） */
+const projectModule = moduleRegistry.get('project-manager')
+
+const PROJECT_OPEN_KEY = 'kunyu.activitybar.projectOpen'
+
+/** 项目管理分组展开态（默认展开：项目列表是主页入口） */
+function loadProjectOpen(): boolean {
+  try {
+    return localStorage.getItem(PROJECT_OPEN_KEY) !== '0'
+  } catch {
+    return true
+  }
+}
+
+const projectCollapsed = ref(!loadProjectOpen())
+
+function toggleProjectGroup(): void {
+  projectCollapsed.value = !projectCollapsed.value
+  try {
+    localStorage.setItem(PROJECT_OPEN_KEY, projectCollapsed.value ? '0' : '1')
+  } catch {
+    // 存储不可用时静默降级为会话内状态
+  }
+}
 
 /**
  * 模块是否满足当前项目状态（requireProject / homeOnly / projectTypes）
@@ -147,7 +192,13 @@ function isVisible(mod: KunYuModule): boolean {
   return isEligible(mod) && !ui.hiddenModules.includes(mod.id)
 }
 
-const topModules = computed(() => moduleRegistry.list('top').filter(isVisible))
+const topModules = computed(() =>
+  moduleRegistry
+    .list('top')
+    .filter(isVisible)
+    // 项目管理走上方专用分组渲染（含创建/导入/项目列表），不再作为普通常驻项
+    .filter((m) => m.id !== 'project-manager')
+)
 const bottomModules = computed(() => moduleRegistry.list('bottom').filter(isVisible))
 
 // ---------- 分组（纯渲染层，默认只展开创作工坊，折叠状态持久化） ----------

@@ -158,7 +158,9 @@ const cryptoPlaintext = ref(false)
 /** 项目管理与统一编辑器固定显示文件树；注册了 sidebarLoader 的模块显示侧边栏 */
 const showSideBar = computed(() => {
   if (ui.activeModuleId === 'settings') return false
-  if (ui.activeModuleId === 'project-manager' || ui.activeModuleId === 'unified') return true
+  // 项目管理无打开项目时：项目列表在活动栏，侧边栏让位给内容区
+  if (ui.activeModuleId === 'project-manager') return Boolean(projectStore.currentProject)
+  if (ui.activeModuleId === 'unified') return true
   return Boolean(moduleRegistry.get(ui.activeModuleId)?.sidebarLoader)
 })
 

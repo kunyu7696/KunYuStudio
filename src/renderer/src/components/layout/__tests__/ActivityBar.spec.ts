@@ -120,3 +120,33 @@ describe('ActivityBar · 折叠', () => {
     expect(localStorage.getItem('kunyu.activitybar.collapsed')).toBe('0')
   })
 })
+
+describe('ActivityBar · 项目管理分组', () => {
+  it('项目管理为可折叠分组：含创建/导入入口与项目列表，折叠后隐藏并持久化', async () => {
+    const store = useProjectStore()
+    store.projects = [makeProject('mod', 'p1'), makeProject('modpack', 'p2')]
+    store.currentProjectId = null
+    const w = mount(ActivityBar, { global: { plugins: [ElementPlus] } })
+
+    const head = w.findAll('.ab-grp-h').find((h) => h.text().includes('项目管理'))
+    expect(head).toBeTruthy()
+    // 组头右侧数量与项目数一致
+    expect(head!.find('.ab-grp-cnt').text()).toBe('2')
+
+    // 分组内入口顺序：创建项目 → 导入项目；随后是项目条目
+    expect(w.findAll('.pn-row').map((r) => r.text())).toEqual(['创建项目', '导入项目'])
+    expect(w.findAll('.pn-proj')).toHaveLength(2)
+    expect(w.find('.pn-proj-name').text()).toContain('mod-项目')
+
+    await head!.trigger('click')
+    expect(w.findAll('.pn-proj')).toHaveLength(0)
+    expect(w.findAll('.pn-row')).toHaveLength(0)
+    expect(localStorage.getItem('kunyu.activitybar.projectOpen')).toBe('0')
+  })
+
+  it('项目管理不再作为普通常驻项渲染（避免与分组重复）', async () => {
+    const w = mount(ActivityBar, { global: { plugins: [ElementPlus] } })
+    const labels = w.findAll('.ab-label').map((n) => n.text())
+    expect(labels).not.toContain('项目管理')
+  })
+})

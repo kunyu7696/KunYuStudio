@@ -34,3 +34,6 @@ coverage/
 
 # 一次性本地评审工作区
 .kyreview*/
+
+# 本地界面调试截图
+.screenshots/
