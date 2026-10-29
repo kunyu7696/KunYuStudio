@@ -1,19 +1,7 @@
 <template>
   <nav class="activity-bar" :aria-label="t('activity.label')">
-    <div class="ab-group ab-top">
-      <!-- 搜索入口：打开全局命令面板（Ctrl+K），模块直达在面板内完成 -->
-      <button
-        type="button"
-        class="ab-item"
-        :title="t('activity.search')"
-        :aria-label="t('activity.search')"
-        @click="ui.toggleCommandPalette()"
-      >
-        <el-icon :size="19"><SearchIcon /></el-icon>
-        <span class="ab-label">{{ t('activity.search') }}</span>
-      </button>
-
-      <!-- 不分组常驻项（项目管理）保持在最前 -->
+    <div class="ab-top">
+      <!-- 常驻项（无分组）：项目管理等，左侧圆点标识 -->
       <button
         v-for="mod in ungroupedTop"
         :key="mod.id"
@@ -24,12 +12,13 @@
         :aria-label="moduleName(mod)"
         :aria-current="mod.id === ui.activeModuleId"
         @click="ui.setActiveModule(mod.id)"
+        @contextmenu.prevent="openModMenu($event, mod)"
       >
-        <el-icon :size="19"><component :is="mod.icon" /></el-icon>
+        <span class="ab-mark"><span class="ab-dot" /></span>
         <span class="ab-label">{{ moduleName(mod) }}</span>
       </button>
 
-      <!-- 分组：组头可折叠，折叠状态持久化 -->
+      <!-- 分组：组头 = 折叠箭头 + 组名 + 数量 -->
       <div v-for="grp in groupedTop" :key="grp.id" class="ab-grp">
         <button
           type="button"
@@ -39,8 +28,11 @@
           :aria-expanded="!collapsed.has(grp.id)"
           @click="toggleGroup(grp.id)"
         >
-          <span class="ab-grp-arrow" :class="{ open: !collapsed.has(grp.id) }">&#9654;</span>
+          <span class="ab-mark">
+            <span class="ab-caret" :class="{ open: !collapsed.has(grp.id) }">&#9654;</span>
+          </span>
           <span class="ab-grp-name">{{ grp.name }}</span>
+          <span class="ab-grp-cnt">{{ grp.items.length }}</span>
         </button>
         <template v-if="!collapsed.has(grp.id)">
           <button
@@ -55,14 +47,14 @@
             @click="ui.setActiveModule(mod.id)"
             @contextmenu.prevent="openModMenu($event, mod)"
           >
-            <el-icon :size="19"><component :is="mod.icon" /></el-icon>
+            <span class="ab-mark"></span>
             <span class="ab-label">{{ moduleName(mod) }}</span>
           </button>
         </template>
       </div>
     </div>
 
-    <div class="ab-group ab-bottom">
+    <div class="ab-bottom">
       <button
         type="button"
         class="ab-item"
@@ -72,7 +64,7 @@
         :aria-current="ui.aiPanelVisible"
         @click="ui.toggleAiPanel()"
       >
-        <el-icon :size="19"><ChatLineRound /></el-icon>
+        <span class="ab-mark"><span class="ab-dot" /></span>
         <span class="ab-label">{{ t('activity.ai') }}</span>
       </button>
       <button
@@ -83,9 +75,11 @@
         :class="{ active: mod.id === ui.activeModuleId }"
         :title="moduleName(mod)"
         :aria-label="moduleName(mod)"
+        :aria-current="mod.id === ui.activeModuleId"
         @click="ui.setActiveModule(mod.id)"
+        @contextmenu.prevent="openModMenu($event, mod)"
       >
-        <el-icon :size="19"><component :is="mod.icon" /></el-icon>
+        <span class="ab-mark"><span class="ab-dot" /></span>
         <span class="ab-label">{{ moduleName(mod) }}</span>
       </button>
     </div>
@@ -105,7 +99,6 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { ChatLineRound, Search as SearchIcon } from '@element-plus/icons-vue'
 import { moduleRegistry, type KunYuModule, type ModuleGroupId } from '../../modules'
 import { t, moduleName } from '../../i18n'
 import { useUiStore } from '../../stores/ui'
@@ -205,7 +198,7 @@ watch(
   }
 )
 
-// ---------- 搜索：统一走全局命令面板（Ctrl+K），不在窄栏内另起输入框 ----------
+// ---------- 搜索：统一走全局命令面板（Ctrl+K），不在栏内另起输入框 ----------
 
 // ---------- 右键隐藏（仅分组内模块；恢复走 设置→常规） ----------
 
@@ -245,42 +238,42 @@ watch(
   justify-content: space-between;
   background: var(--ky-bg-sidebar);
   border-right: 1px solid var(--ky-border);
+  user-select: none;
 }
 
-.ab-group {
-  display: flex;
-  flex-direction: column;
-}
-
-/* 顶部组可滚动，底部 AI/设置固定；nav 自身不裁剪，保证搜索浮层可伸出栏外 */
+/* 顶部组可滚动，底部常驻项固定；nav 自身不裁剪，保证右键菜单可伸出栏外 */
 .ab-top {
-  overflow-y: auto;
+  flex: 1;
   min-height: 0;
+  overflow-y: auto;
+  padding: 6px 0;
   scrollbar-width: thin;
 }
 
+.ab-bottom {
+  flex-shrink: 0;
+  padding: 6px 0 10px;
+}
+
+/* ---------- 行（常驻项 / 分组子项统一外观） ---------- */
+
 .ab-item {
   position: relative;
-  width: var(--ky-activitybar-w);
-  height: 44px;
-  min-height: 0;
-  flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 0;
+  width: 100%;
+  height: 34px;
+  padding: 0 12px 0 8px;
   border: none;
   background: transparent;
-  color: var(--ky-text-dim);
+  color: var(--ky-text-sub);
+  font-size: 13.5px;
+  line-height: 1;
+  text-align: left;
   cursor: pointer;
   transition:
     color 0.15s ease,
     background 0.15s ease;
-}
-
-/* 模块名隐藏，hover 靠原生 title tooltip 显示 */
-.ab-label {
-  display: none;
 }
 
 .ab-item:hover {
@@ -288,42 +281,61 @@ watch(
   background: var(--ky-bg-hover);
 }
 
+/* 选中态：左侧指示条 + 淡色底 */
 .ab-item.active {
-  color: var(--ky-accent);
-  background: color-mix(in srgb, var(--ky-accent) 10%, transparent);
+  color: var(--ky-text);
+  background: var(--ky-accent-soft);
 }
 
-/* 选中态左侧指示条 */
 .ab-item.active::before {
   content: '';
   position: absolute;
   left: 0;
-  top: 10px;
-  bottom: 10px;
-  width: 2px;
-  border-radius: 0 2px 2px 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
   background: var(--ky-accent);
+}
+
+/* 行首标记槽：常驻项放圆点，子项留空保持文字对齐 */
+.ab-mark {
+  width: 18px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ab-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ky-accent);
+  opacity: 0.85;
+}
+
+.ab-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* ---------- 分组头 ---------- */
 
-.ab-grp {
-  border-top: 1px solid var(--ky-border);
-}
-
 .ab-grp-h {
-  width: 100%;
-  height: 26px;
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 0 5px;
+  width: 100%;
+  height: 34px;
+  padding: 0 12px 0 8px;
   border: none;
   background: transparent;
-  color: var(--ky-text-dim);
+  color: var(--ky-text-sub);
+  font-size: 13.5px;
+  text-align: left;
   cursor: pointer;
-  font-size: 10px;
-  letter-spacing: 0.02em;
   transition:
     color 0.15s ease,
     background 0.15s ease;
@@ -334,21 +346,29 @@ watch(
   background: var(--ky-bg-hover);
 }
 
-.ab-grp-arrow {
+.ab-caret {
   font-size: 8px;
-  width: 10px;
-  flex-shrink: 0;
+  color: var(--ky-text-dim);
   transition: transform 0.12s ease;
 }
 
-.ab-grp-arrow.open {
+.ab-caret.open {
   transform: rotate(90deg);
 }
 
 .ab-grp-name {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.ab-grp-cnt {
+  flex-shrink: 0;
+  margin-left: 8px;
+  font-size: 12px;
+  color: var(--ky-text-dim);
 }
 
 /* ---------- 右键菜单 ---------- */
