@@ -4,6 +4,7 @@ import type { SettingsCategory } from '../components/settings/category'
 
 const ACTIVE_MODULE_KEY = 'kunyu:active-module'
 const SIDEBAR_WIDTH_KEY = 'kunyu:sidebar-width'
+const SIDEBAR_COLLAPSED_KEY = 'kunyu:sidebar-collapsed'
 const AI_PANEL_WIDTH_KEY = 'kunyu:ai-panel-width'
 const MOD_LIBRARY_VISIBLE_KEY = 'kunyu:mod-library-visible'
 const HIDDEN_MODULES_KEY = 'kunyu:hidden-modules'
@@ -24,7 +25,7 @@ function readHiddenModules(): string[] {
     return []
   }
 }
-const DEFAULT_SIDEBAR_WIDTH = 280   // 从 240 加宽：文件树需要完整显示长路径
+const DEFAULT_SIDEBAR_WIDTH = 260   // 从 280 略收窄：宽栏活动栏占位后留给文件树的余地
 const DEFAULT_AI_PANEL_WIDTH = 400  // 从 340 加宽：AI 助手内容更透气
 const AI_PANEL_MIN = 280
 const AI_PANEL_MAX = 560
@@ -52,6 +53,11 @@ function readModLibraryVisible(): boolean {
   return raw === null ? true : raw === '1'
 }
 
+/** 文件树侧边栏折叠态（默认展开） */
+function readSidebarCollapsed(): boolean {
+  return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1'
+}
+
 /**
  * 界面级状态：当前活动模块、侧边栏宽度、右侧 AI 助手面板开关/宽度、设置页分类。
  * 除 AI 助手面板开关外均持久化到 localStorage，重启后恢复。
@@ -62,6 +68,7 @@ export const useUiStore = defineStore('ui', {
   state: () => ({
     activeModuleId: readStoredModule(),
     sidebarWidth: readStoredSidebarWidth(),
+    sidebarCollapsed: readSidebarCollapsed(),
     aiPanelVisible: false,
     aiPanelWidth: readAiPanelWidth(),
     /** Mod 库面板开关（仅整合包项目可见） */
@@ -117,6 +124,12 @@ export const useUiStore = defineStore('ui', {
       const clamped = Math.min(max, Math.max(min, Math.round(width)))
       this.sidebarWidth = clamped
       localStorage.setItem(SIDEBAR_WIDTH_KEY, String(clamped))
+    },
+
+    /** 折叠/展开文件树侧边栏（折叠后留一条把手可恢复） */
+    toggleSidebarCollapsed(): void {
+      this.sidebarCollapsed = !this.sidebarCollapsed
+      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, this.sidebarCollapsed ? '1' : '0')
     },
 
     /** 打开项目时主动展开 AI 助手面板（不常驻：仅项目会话内可见） */

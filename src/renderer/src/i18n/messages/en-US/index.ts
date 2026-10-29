@@ -65,6 +65,8 @@ const enUS: Messages = {
   activity: {
     label: 'Activity bar',
     ai: 'AI assistant',
+    collapse: 'Collapse activity bar',
+    expand: 'Expand activity bar',
     search: 'Search modules (Ctrl+K)',
     hideModule: 'Hide "{name}"',
     groups: {
@@ -78,6 +80,8 @@ const enUS: Messages = {
   sidebar: {
     backToProjects: 'Back to project list',
     title: 'Sidebar',
+    collapse: 'Collapse sidebar',
+    expand: 'Expand sidebar',
     refreshTree: 'Refresh file tree',
     createProject: 'Create project',
     importProject: 'Import project',

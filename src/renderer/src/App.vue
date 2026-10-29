@@ -40,7 +40,18 @@
     </div>
     <div class="app-body">
       <ActivityBar />
-      <SideBar v-if="showSideBar" />
+      <SideBar v-if="showSideBar && !ui.sidebarCollapsed" />
+      <!-- 侧边栏收起态：细竖条常驻原位置，点击展开（折叠按钮在侧边栏左缘） -->
+      <button
+        v-else-if="showSideBar"
+        type="button"
+        class="sidebar-reopen"
+        :title="t('sidebar.expand')"
+        :aria-label="t('sidebar.expand')"
+        @click="ui.toggleSidebarCollapsed()"
+      >
+        <span class="sidebar-reopen-arrow">›</span>
+      </button>
       <!-- 中间编辑列：底部终端只占编辑区宽度（不横贯到 AI 助手），可折叠 -->
       <div class="app-main">
         <!-- 编辑区：标签页、内容、终端 -->
@@ -399,6 +410,27 @@ function onGlobalKeyDown(e: KeyboardEvent): void {
 .app-main-content {
   flex: 1;
   min-height: 0;
+}
+
+/* 侧边栏收起态把手：细竖条常驻原位置，点击展开 */
+.sidebar-reopen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  border-right: 1px solid var(--ky-border);
+  background: var(--ky-bg-sidebar);
+  color: var(--ky-text-dim);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.sidebar-reopen:hover {
+  background: var(--ky-bg-hover);
+  color: var(--ky-accent);
 }
 
 /* Mod 库收起态把手：细竖条常驻右栏位置，点击展开 */

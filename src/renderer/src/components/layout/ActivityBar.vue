@@ -1,5 +1,23 @@
 <template>
-  <nav class="activity-bar" :aria-label="t('activity.label')">
+  <nav
+    class="activity-bar"
+    :class="{ collapsed: navCollapsed }"
+    :style="navCollapsed ? { width: '12px' } : undefined"
+    :aria-label="t('activity.label')"
+  >
+    <!-- 左缘折叠条：竖向常驻，收起后仅剩此条 -->
+    <button
+      type="button"
+      class="ab-fold"
+      :title="navCollapsed ? t('activity.expand') : t('activity.collapse')"
+      :aria-label="navCollapsed ? t('activity.expand') : t('activity.collapse')"
+      :aria-expanded="!navCollapsed"
+      @click="toggleCollapsed"
+    >
+      <span class="ab-fold-arrow">{{ navCollapsed ? '›' : '‹' }}</span>
+    </button>
+
+    <div v-show="!navCollapsed" class="ab-panel">
     <div class="ab-top">
       <!-- 常驻项（无分组）：项目管理等，左侧圆点标识 -->
       <button
@@ -84,6 +102,8 @@
       </button>
     </div>
 
+    </div>
+
     <!-- 模块右键菜单：隐藏入口（恢复在 设置→常规→活动栏模块） -->
     <Teleport to="body">
       <div v-if="modMenu" class="ab-ctx-mask" @click="modMenu = null" @contextmenu.prevent="modMenu = null">
@@ -142,6 +162,27 @@ const GROUP_I18N: Record<ModuleGroupId, string> = {
   ext: 'ext'
 }
 const COLLAPSED_KEY = 'kunyu.activitybar.collapsedGroups'
+const NAV_COLLAPSED_KEY = 'kunyu.activitybar.collapsed'
+
+/** 活动栏整体折叠（左缘竖条点击切换；收起后仅留 12px 竖条） */
+function loadNavCollapsed(): boolean {
+  try {
+    return localStorage.getItem(NAV_COLLAPSED_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+const navCollapsed = ref(loadNavCollapsed())
+
+function toggleCollapsed(): void {
+  navCollapsed.value = !navCollapsed.value
+  try {
+    localStorage.setItem(NAV_COLLAPSED_KEY, navCollapsed.value ? '1' : '0')
+  } catch {
+    // 存储不可用时静默降级为会话内状态
+  }
+}
 
 function loadCollapsed(): Set<ModuleGroupId> {
   try {
@@ -234,11 +275,48 @@ watch(
   width: var(--ky-activitybar-w);
   flex-shrink: 0;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  flex-direction: row;
   background: var(--ky-bg-sidebar);
   border-right: 1px solid var(--ky-border);
   user-select: none;
+  transition: width 0.16s ease;
+}
+
+/* 左缘折叠条 */
+.ab-fold {
+  width: 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-right: 1px solid var(--ky-border);
+  background: transparent;
+  color: var(--ky-text-dim);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.ab-fold:hover {
+  color: var(--ky-accent);
+  background: var(--ky-bg-hover);
+}
+
+.ab-fold-arrow {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.ab-panel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
 }
 
 /* 顶部组可滚动，底部常驻项固定；nav 自身不裁剪，保证右键菜单可伸出栏外 */

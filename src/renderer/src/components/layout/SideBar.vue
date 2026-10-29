@@ -1,5 +1,15 @@
 <template>
   <aside class="side-bar" :style="{ width: `${ui.sidebarWidth}px` }">
+    <!-- 左缘折叠按钮：悬停侧边栏时浮现，点击收起（收起后由 App 的细竖条恢复） -->
+    <button
+      type="button"
+      class="sb-fold"
+      :title="t('sidebar.collapse')"
+      :aria-label="t('sidebar.collapse')"
+      @click="ui.toggleSidebarCollapsed()"
+    >
+      <span class="sb-fold-arrow">‹</span>
+    </button>
     <header class="sb-header">
       <!-- 返回按钮：只有打开项目时才显示，退出当前项目回到卡片列表 -->
       <button
@@ -379,6 +389,39 @@ onMounted(() => {
   background: var(--ky-bg-sidebar);
   border-right: 1px solid var(--ky-border);
   min-width: 0;
+}
+
+/* 左缘折叠按钮：默认隐藏，悬停侧边栏时浮现 */
+.sb-fold {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 11;
+  width: 10px;
+  height: 46px;
+  padding: 0;
+  border: none;
+  border-radius: 0 4px 4px 0;
+  background: transparent;
+  color: var(--ky-text-dim);
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 0.15s ease,
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.side-bar:hover .sb-fold,
+.sb-fold:focus-visible {
+  opacity: 1;
+}
+
+.sb-fold:hover {
+  background: var(--ky-bg-hover);
+  color: var(--ky-accent);
 }
 
 .sb-header {

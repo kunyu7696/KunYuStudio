@@ -99,3 +99,24 @@ describe('ActivityBar · 模块可见性', () => {
     expect(await visibleLabels(null)).not.toContain('光影包编辑器')
   })
 })
+
+describe('ActivityBar · 折叠', () => {
+  it('默认展开；点左缘折叠条收起为 12px 竖条，再点恢复并持久化', async () => {
+    const store = useProjectStore()
+    store.projects = []
+    store.currentProjectId = null
+    const w = mount(ActivityBar, { global: { plugins: [ElementPlus] } })
+    const nav = w.find('.activity-bar')
+    expect(nav.attributes('style')).toBeUndefined()
+
+    await w.find('.ab-fold').trigger('click')
+    expect(nav.attributes('style')).toContain('12px')
+    expect(w.find('.ab-panel').attributes('style')).toContain('display: none')
+    expect(localStorage.getItem('kunyu.activitybar.collapsed')).toBe('1')
+
+    await w.find('.ab-fold').trigger('click')
+    expect(nav.attributes('style')).toBeUndefined()
+    expect(w.find('.ab-panel').attributes('style') ?? '').not.toContain('display: none')
+    expect(localStorage.getItem('kunyu.activitybar.collapsed')).toBe('0')
+  })
+})

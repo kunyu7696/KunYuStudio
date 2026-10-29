@@ -60,6 +60,8 @@ const zhCN = {
   activity: {
     label: '活动栏',
     ai: 'AI 助手',
+    collapse: '收起活动栏',
+    expand: '展开活动栏',
     search: '搜索模块（Ctrl+K）',
     hideModule: '隐藏「{name}」',
     groups: {
@@ -73,6 +75,8 @@ const zhCN = {
   sidebar: {
     backToProjects: '返回项目列表',
     title: '侧边栏',
+    collapse: '收起侧边栏',
+    expand: '展开侧边栏',
     refreshTree: '刷新文件树',
     createProject: '创建项目',
     importProject: '导入项目',
