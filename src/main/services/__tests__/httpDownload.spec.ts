@@ -37,8 +37,13 @@ describe('httpDownload 断点续传', () => {
         if (!range) {
           // 第一次：只发一半就断开连接（模拟弱网中断）
           res.writeHead(200, { 'Content-Length': String(BODY.length) })
-          res.write(BODY.subarray(0, BODY.length / 2))
-          setTimeout(() => res.destroy(), 10)
+          // 半包写入回调触发（内核已接收）后再断连：CI 慢机若在客户端读到字节前就收到
+          // RST，fileSize 仍为 0、续传起点丢失，会多打一次无 Range 请求（曾出现
+          // 「expected 3 to be 2」的 flake）。延迟到客户端把半包读进写流后断连，保证
+          // 首次失败时半成品已落盘、续传请求必带 Range。
+          res.write(BODY.subarray(0, BODY.length / 2), () => {
+            setTimeout(() => res.destroy(), 200)
+          })
           return
         }
         const start = Number(/bytes=(\d+)-/.exec(range)?.[1] ?? 0)
