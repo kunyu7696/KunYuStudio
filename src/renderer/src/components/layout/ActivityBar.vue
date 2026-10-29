@@ -178,12 +178,14 @@ function toggleProjectGroup(): void {
  * - homeOnly：必须未打开项目（主页活动栏专用入口）
  * - projectTypes：已打开项目时限定项目类型；未打开项目时由 requireProject 决定，
  *   这样带 projectTypes 但不带 requireProject 的模块（如模组与市场）主页活动栏也可见
+ * - 整合包项目：右侧常驻「资源库」面板已覆盖资源库功能，活动栏不再重复入口
  */
 function isEligible(mod: KunYuModule): boolean {
   const type = projectStore.currentProject?.type
   if (mod.requireProject && !type) return false
   if (mod.homeOnly && type) return false
   if (mod.projectTypes && type && !mod.projectTypes.includes(type)) return false
+  if (mod.id === 'modlib' && type === 'modpack') return false
   return true
 }
 

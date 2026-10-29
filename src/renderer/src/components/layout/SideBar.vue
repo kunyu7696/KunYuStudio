@@ -31,8 +31,8 @@
         <template v-else>{{ ui.activeModule ? moduleName(ui.activeModule) : t('sidebar.title') }}</template>
       </span>
 
-      <!-- 头部操作：项目管理/统一编辑器下可用；创建/导入入口在活动栏「项目管理」分组 -->
-      <div v-if="ui.activeModuleId === 'project-manager' || ui.activeModuleId === 'unified'" class="sb-head-actions">
+      <!-- 头部操作：显示文件树的模块可用刷新（创建/导入入口在活动栏「项目管理」分组） -->
+      <div v-if="showFileTree" class="sb-head-actions">
         <button v-if="hasProject" type="button" class="sb-head-btn" :title="t('sidebar.refreshTree')" @click="refreshTree">
           <el-icon :size="15"><Refresh /></el-icon>
         </button>
@@ -111,11 +111,16 @@ const sidebarComponent = computed(() => resolveSidebar(moduleRegistry.get(ui.act
 
 const hasProject = computed(() => Boolean(projectStore.currentProject))
 
-/** 项目管理与统一编辑器：侧栏固定显示项目文件树 */
+/**
+ * 侧栏显示项目文件树：项目管理 / 工坊，以及「自身没有专属侧栏」的模块
+ * （如整合包组装、建模器）——项目内随时可按文件树打开代码，不因切模块而丢树
+ */
 const showFileTree = computed(
   () =>
     hasProject.value &&
-    (ui.activeModuleId === 'project-manager' || ui.activeModuleId === 'unified')
+    (ui.activeModuleId === 'project-manager' ||
+      ui.activeModuleId === 'unified' ||
+      !moduleRegistry.get(ui.activeModuleId)?.sidebarLoader)
 )
 
 async function refreshTree(): Promise<void> {

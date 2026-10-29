@@ -63,11 +63,12 @@ describe('ActivityBar · 模块可见性', () => {
     expect(labels).not.toContain('整合包组装')
   })
 
-  it('资源库在任意场景都可见（全局库，不绑定项目）', async () => {
+  it('资源库在未打开项目与普通项目中可见，整合包项目内不出现（右侧常驻面板已覆盖）', async () => {
     expect(await visibleLabels(null)).toContain('资源库')
-    for (const type of ['mod', 'modpack', 'datapack', 'resourcepack', 'shaderpack'] as ProjectType[]) {
+    for (const type of ['mod', 'datapack', 'resourcepack', 'shaderpack'] as ProjectType[]) {
       expect(await visibleLabels(type)).toContain('资源库')
     }
+    expect(await visibleLabels('modpack')).not.toContain('资源库')
   })
 
   it('普通 mod 项目：模组与市场不出现，资产库出现', async () => {

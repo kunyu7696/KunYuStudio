@@ -173,7 +173,9 @@ const showSideBar = computed(() => {
   // 项目管理无打开项目时：项目列表在活动栏，侧边栏让位给内容区
   if (ui.activeModuleId === 'project-manager') return Boolean(projectStore.currentProject)
   if (ui.activeModuleId === 'unified') return true
-  return Boolean(moduleRegistry.get(ui.activeModuleId)?.sidebarLoader)
+  if (moduleRegistry.get(ui.activeModuleId)?.sidebarLoader) return true
+  // 其余模块（整合包组装、建模器等）：打开项目时侧栏回落为项目文件树，避免切模块就丢树
+  return Boolean(projectStore.currentProject)
 })
 
 /** Mod 库面板：仅当前项目为整合包且面板开关开启时显示 */
