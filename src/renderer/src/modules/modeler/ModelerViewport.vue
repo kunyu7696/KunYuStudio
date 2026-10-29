@@ -170,13 +170,12 @@ import {
 import { ancestorRotationQuat, composeBoneLocalRotation } from '../../../../shared/modeler/quat'
 import { effectiveSelection, patchNode, subtreeIds } from '../../../../shared/modeler/document'
 import { isVisible } from '../../../../shared/modeler/query'
-import { effectiveFaceBindings, rotateUvCorners } from '../../../../shared/modeler/uv'
+import { effectiveFaceBindings } from '../../../../shared/modeler/uv'
 import {
   buildMeshEdges,
   meshEdgeKey,
   meshWorldVertices,
-  translateMeshVertices,
-  triangulateFace
+  translateMeshVertices
 } from '../../../../shared/modeler/mesh'
 import { sampleAnimation } from '../../../../shared/modeler/anim'
 import { animationPlayer } from './core/animationPlayer'
@@ -186,7 +185,6 @@ import { isCubeNode, isGroupNode, isLocatorNode, isMeshNode } from '../../../../
 import { weightPreviewColor } from '../../../../shared/modeler/weights'
 import { fitView } from './preview/modelPreviewScene'
 import {
-  BOX_FACE_BY_INDEX,
   computePaintGrid,
   createStrokeState,
   bucketFillAt as bucketFillCore,
@@ -205,6 +203,27 @@ import {
   throttledWeightSample,
   type WeightCtx
 } from './viewport/weightPaint'
+import {
+  disposeAllTextures,
+  disposeTextureMats,
+  pruneTextures as pruneTexturesCore,
+  type TexCacheCtx,
+  type TexEntry
+} from './viewport/textureCache'
+import {
+  buildNodeObject as buildNodeObjectCore,
+  type NodeBuildCtx
+} from './viewport/nodeBuilder'
+import {
+  clearSubEditHandles,
+  createSubEditVisuals,
+  syncEdgeHandles as syncEdgeHandlesCore,
+  syncFaceOverlay as syncFaceOverlayCore,
+  syncKnifeMarker as syncKnifeMarkerCore,
+  syncVertexHandles as syncVertexHandlesCore,
+  type SubEditCtx,
+  type SubEditVisuals
+} from './viewport/subEditVisuals'
 
 type ToolMode = 'translate' | 'rotate' | 'scale' | 'paint' | 'weight'
 
@@ -345,37 +364,22 @@ let lineMat: THREE.LineBasicMaterial | null = null
 const nodeObjects = new Map<NodeId, THREE.Object3D>()
 /** 可拾取 mesh（cube 主体 + locator 标记），userData.nodeId 标识 */
 let pickMeshes: THREE.Mesh[] = []
-/** 顶点模式句柄（THREE.Points，挂目标 mesh 的 outer 组，随节点变换同步；B4-3） */
-let vertexPoints: THREE.Points | null = null
-/** 面模式选中面叠加（半透明三角面片；B4-3） */
-let faceOverlay: THREE.Mesh | null = null
-/** 边模式句柄（全边 LineSegments，顶点色标选中；v3 C1） */
-let edgeLines: THREE.LineSegments | null = null
-/** 切刀锚点标记（小球，首击点；v3 C2） */
-let knifeMarker: THREE.Mesh | null = null
+/** 网格子对象编辑可视化槽位（B4-3/v3：顶点句柄 Points、选中面叠加、边句柄、切刀锚点；实现见 viewport/subEditVisuals） */
+const subEdit: SubEditVisuals = createSubEditVisuals()
 /** 选中高亮线框（挂在被选 cube mesh 上） */
 let highlightLines: THREE.LineSegments[] = []
 
-/* ---- 贴图缓存（跨重建复用；绘画直接在 canvas 上落笔） ---- */
-interface TexEntry {
-  id: TextureId
-  w: number
-  h: number
-  /** 显示画布（烘焙结果，THREE.CanvasTexture 绑定） */
-  canvas: HTMLCanvasElement
-  ctx: CanvasRenderingContext2D
-  tex: THREE.CanvasTexture
-  /** 已加载进 canvas 的 data URL（与文档一致时跳过重载，避免绘画提交后闪烁） */
-  loadedData: string
-  /** 绘画画布（多层模式 = 活动层像素；单层模式 = 与 canvas 同一对象） */
-  paintCanvas: HTMLCanvasElement
-  paintCtx: CanvasRenderingContext2D
-  /** 绘画画布已加载的 data URL（活动层像素） */
-  loadedPaintData: string
-}
+/* ---- 贴图缓存（跨重建复用；绘画直接在 canvas 上落笔；实现见 viewport/textureCache） ---- */
 const texEntries = new Map<TextureId, TexEntry>()
 /** 贴图 → 共享材质（同贴图多 cube 复用） */
 const texMats = new Map<TextureId, THREE.MeshLambertMaterial>()
+/** 贴图缓存上下文（文档/活动层实时快照） */
+const texCacheCtx: TexCacheCtx = {
+  entries: texEntries,
+  mats: texMats,
+  getDoc: () => store.doc,
+  getActiveLayerId: () => store.activeLayerId
+}
 
 /** 参考图平面（B3-1）：refId → { mesh, tex } */
 const refPlanes = new Map<string, { mesh: THREE.Mesh; tex: THREE.Texture }>()
@@ -445,30 +449,17 @@ function applyAnimationOverlay(): void {
 /* 场景构建                                                            */
 /* ------------------------------------------------------------------ */
 
-/** 卸载文档中已删除的贴图条目 */
-function pruneTextures(): void {
-  const d = store.doc
-  const keep = new Set(d ? Object.keys(d.textures) : [])
-  for (const [id, entry] of texEntries) {
-    if (!keep.has(id)) {
-      entry.tex.dispose()
-      texEntries.delete(id)
-    }
-  }
-}
-
 function clearSceneModel(): void {
   clearPaintGrid()
   clearSubEditVisuals()
   for (const d of disposables) d.dispose()
   disposables = []
-  for (const m of texMats.values()) m.dispose()
-  texMats.clear()
+  disposeTextureMats(texCacheCtx)
   nodeObjects.clear()
   animOverlaid.clear()
   pickMeshes = []
   clearHighlights()
-  pruneTextures()
+  pruneTexturesCore(texCacheCtx)
   if (modelRoot) {
     modelRoot.parent?.remove(modelRoot)
     modelRoot = null
@@ -792,32 +783,24 @@ let pendingWeights: Map<number, number> | null = null
 /** 上次落墨屏幕点（位移节流；笔画结束清空） */
 let lastWeightAt: { x: number; y: number } | null = null
 
+/** 子对象编辑可视化快照（store 切片 + 场景索引；实现见 viewport/subEditVisuals） */
+function subEditCtx(): SubEditCtx {
+  return {
+    visuals: subEdit,
+    nodeObjects,
+    doc: store.doc,
+    editMode: store.editMode,
+    meshEditTarget: store.meshEditTarget,
+    vertexSelection: store.vertexSelection,
+    faceSelection: store.faceSelection,
+    edgeSelection: store.edgeSelection,
+    knifeAnchor: store.knifeAnchor
+  }
+}
+
 /** 释放并移除顶点句柄与面叠加（重建/切模式/切选中前调用） */
 function clearSubEditVisuals(): void {
-  if (vertexPoints) {
-    vertexPoints.parent?.remove(vertexPoints)
-    vertexPoints.geometry.dispose()
-    ;(vertexPoints.material as THREE.Material).dispose()
-    vertexPoints = null
-  }
-  if (faceOverlay) {
-    faceOverlay.parent?.remove(faceOverlay)
-    faceOverlay.geometry.dispose()
-    ;(faceOverlay.material as THREE.Material).dispose()
-    faceOverlay = null
-  }
-  if (edgeLines) {
-    edgeLines.parent?.remove(edgeLines)
-    edgeLines.geometry.dispose()
-    ;(edgeLines.material as THREE.Material).dispose()
-    edgeLines = null
-  }
-  if (knifeMarker) {
-    knifeMarker.parent?.remove(knifeMarker)
-    knifeMarker.geometry.dispose()
-    ;(knifeMarker.material as THREE.Material).dispose()
-    knifeMarker = null
-  }
+  clearSubEditHandles(subEdit)
   if (weightOverlay) {
     weightOverlay.parent?.remove(weightOverlay)
     weightOverlay.geometry.dispose()
@@ -829,119 +812,17 @@ function clearSubEditVisuals(): void {
 
 /** 边句柄：目标 mesh 全部唯一边 → THREE.LineSegments（选中边高亮；随节点 outer 组变换） */
 function syncEdgeHandles(): void {
-  if (edgeLines) {
-    edgeLines.parent?.remove(edgeLines)
-    edgeLines.geometry.dispose()
-    ;(edgeLines.material as THREE.Material).dispose()
-    edgeLines = null
-  }
-  if (store.editMode !== 'edge') return
-  const id = store.meshEditTarget
-  const node = id ? store.doc?.nodes[id] : undefined
-  const outer = id ? nodeObjects.get(id) : undefined
-  if (!node || !isMeshNode(node) || !outer) return
-  const sel = new Set(store.edgeSelection)
-  const cSel = new THREE.Color(SELECT_COLOR)
-  const cNor = new THREE.Color(0x9aa3b2)
-  const pos: number[] = []
-  const col: number[] = []
-  for (const e of buildMeshEdges(node)) {
-    const va = node.vertices[e.a]!
-    const vb = node.vertices[e.b]!
-    pos.push(
-      (va[0] - node.origin[0]) / 16, (va[1] - node.origin[1]) / 16, (va[2] - node.origin[2]) / 16,
-      (vb[0] - node.origin[0]) / 16, (vb[1] - node.origin[1]) / 16, (vb[2] - node.origin[2]) / 16
-    )
-    const c = sel.has(meshEdgeKey(e.a, e.b)) ? cSel : cNor
-    col.push(c.r, c.g, c.b, c.r, c.g, c.b)
-  }
-  if (pos.length === 0) return
-  const geo = new THREE.BufferGeometry()
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3))
-  geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3))
-  const mat = new THREE.LineBasicMaterial({ vertexColors: true, depthTest: false })
-  edgeLines = new THREE.LineSegments(geo, mat)
-  edgeLines.renderOrder = 1000
-  outer.add(edgeLines)
+  syncEdgeHandlesCore(subEditCtx())
 }
 
 /** 顶点句柄：目标 mesh 全部顶点 → THREE.Points（选中顶点高亮；随节点 outer 组变换） */
 function syncVertexHandles(): void {
-  if (vertexPoints) {
-    vertexPoints.parent?.remove(vertexPoints)
-    vertexPoints.geometry.dispose()
-    ;(vertexPoints.material as THREE.Material).dispose()
-    vertexPoints = null
-  }
-  if (store.editMode !== 'vertex') return
-  const id = store.meshEditTarget
-  const node = id ? store.doc?.nodes[id] : undefined
-  const outer = id ? nodeObjects.get(id) : undefined
-  if (!node || !isMeshNode(node) || !outer) return
-  const sel = new Set(store.vertexSelection)
-  const cSel = new THREE.Color(SELECT_COLOR)
-  const cNor = new THREE.Color(0xf2f4f8)
-  const pos: number[] = []
-  const col: number[] = []
-  node.vertices.forEach((v, i) => {
-    pos.push((v[0] - node.origin[0]) / 16, (v[1] - node.origin[1]) / 16, (v[2] - node.origin[2]) / 16)
-    const c = sel.has(i) ? cSel : cNor
-    col.push(c.r, c.g, c.b)
-  })
-  const geo = new THREE.BufferGeometry()
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3))
-  geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3))
-  const mat = new THREE.PointsMaterial({
-    size: 0.045,
-    vertexColors: true,
-    sizeAttenuation: true,
-    depthTest: false
-  })
-  vertexPoints = new THREE.Points(geo, mat)
-  vertexPoints.renderOrder = 999
-  outer.add(vertexPoints)
+  syncVertexHandlesCore(subEditCtx())
 }
 
 /** 选中面叠加：选中 MeshFace 三角化 → 半透明面片（polygonOffset 防 z-fight） */
 function syncFaceOverlay(): void {
-  if (faceOverlay) {
-    faceOverlay.parent?.remove(faceOverlay)
-    faceOverlay.geometry.dispose()
-    ;(faceOverlay.material as THREE.Material).dispose()
-    faceOverlay = null
-  }
-  if (store.editMode !== 'face') return
-  const id = store.meshEditTarget
-  const node = id ? store.doc?.nodes[id] : undefined
-  const outer = id ? nodeObjects.get(id) : undefined
-  if (!node || !isMeshNode(node) || !outer || store.faceSelection.length === 0) return
-  const sel = new Set(store.faceSelection)
-  const positions: number[] = []
-  node.faces.forEach((face, fi) => {
-    if (!sel.has(fi)) return
-    for (const tri of triangulateFace(face)) {
-      for (const slot of tri) {
-        const v = node.vertices[face.vertices[slot]!]
-        if (!v) continue
-        positions.push((v[0] - node.origin[0]) / 16, (v[1] - node.origin[1]) / 16, (v[2] - node.origin[2]) / 16)
-      }
-    }
-  })
-  if (positions.length === 0) return
-  const geo = new THREE.BufferGeometry()
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
-  const mat = new THREE.MeshBasicMaterial({
-    color: SELECT_COLOR,
-    transparent: true,
-    opacity: 0.4,
-    side: THREE.DoubleSide,
-    depthWrite: false,
-    polygonOffset: true,
-    polygonOffsetFactor: -2
-  })
-  faceOverlay = new THREE.Mesh(geo, mat)
-  faceOverlay.renderOrder = 998
-  outer.add(faceOverlay)
+  syncFaceOverlayCore(subEditCtx())
 }
 
 /**
@@ -949,27 +830,7 @@ function syncFaceOverlay(): void {
  * 局部坐标 = (父空间点 − origin)/16，与网格几何同系。
  */
 function syncKnifeMarker(): void {
-  if (knifeMarker) {
-    knifeMarker.parent?.remove(knifeMarker)
-    knifeMarker.geometry.dispose()
-    ;(knifeMarker.material as THREE.Material).dispose()
-    knifeMarker = null
-  }
-  const anchor = store.editMode === 'knife' ? store.knifeAnchor : null
-  const id = store.meshEditTarget
-  const node = id ? store.doc?.nodes[id] : undefined
-  const outer = id ? nodeObjects.get(id) : undefined
-  if (!anchor || !node || !isMeshNode(node) || !outer) return
-  const geo = new THREE.SphereGeometry(0.06, 12, 8)
-  const mat = new THREE.MeshBasicMaterial({ color: SELECT_COLOR, depthTest: false })
-  knifeMarker = new THREE.Mesh(geo, mat)
-  knifeMarker.position.set(
-    (anchor.point[0] - node.origin[0]) / 16,
-    (anchor.point[1] - node.origin[1]) / 16,
-    (anchor.point[2] - node.origin[2]) / 16
-  )
-  knifeMarker.renderOrder = 1001
-  outer.add(knifeMarker)
+  syncKnifeMarkerCore(subEditCtx())
 }
 
 /** 顶点句柄 + 面叠加 + 边句柄 + 切刀标记 + 权重热力一并同步（选择/模式/文档变化后调用） */
@@ -981,283 +842,23 @@ function syncSubEditVisuals(): void {
   syncWeightOverlay()
 }
 
-/** 确保贴图 canvas 条目存在且内容与文档一致（data 变化时异步重载） */
-function ensureTextureEntry(tex: { id: TextureId; width: number; height: number; data: string }): TexEntry {
-  let entry = texEntries.get(tex.id)
-  if (!entry) {
-    const canvas = document.createElement('canvas')
-    canvas.width = tex.width
-    canvas.height = tex.height
-    const ctx = canvas.getContext('2d')
-    if (!ctx) throw new Error('无法创建贴图画布上下文')
-    const t = new THREE.CanvasTexture(canvas)
-    t.magFilter = THREE.NearestFilter
-    t.minFilter = THREE.NearestFilter
-    t.generateMipmaps = false
-    t.colorSpace = THREE.SRGBColorSpace
-    entry = {
-      id: tex.id,
-      w: tex.width,
-      h: tex.height,
-      canvas,
-      ctx,
-      tex: t,
-      loadedData: '',
-      paintCanvas: canvas,
-      paintCtx: ctx,
-      loadedPaintData: ''
-    }
-    texEntries.set(tex.id, entry)
+/** 节点构建上下文（共享几何/材质与收集器快照；实现见 viewport/nodeBuilder） */
+function nodeBuildCtx(): NodeBuildCtx {
+  return {
+    nodeObjects,
+    pickMeshes,
+    disposables,
+    boxGeo: boxGeo!,
+    markerGeo: markerGeo!,
+    cubeMat: cubeMat!,
+    markerMat: markerMat!,
+    tex: texCacheCtx
   }
-  if (entry.loadedData !== tex.data) {
-    const dataUrl = tex.data
-    const img = new Image()
-    img.onload = () => {
-      entry.ctx.clearRect(0, 0, entry.w, entry.h)
-      entry.ctx.drawImage(img, 0, 0, entry.w, entry.h)
-      entry.loadedData = dataUrl
-      entry.tex.needsUpdate = true
-      // 多层模式下：显示画布更新后，绘画画布同步为活动层像素
-      syncPaintCanvas(entry)
-    }
-    img.src = dataUrl
-  }
-  return entry
 }
 
-/** 多层模式下同步绘画画布为活动层像素（无层时绘画画布 = 显示画布） */
-function syncPaintCanvas(entry: TexEntry): void {
-  const d = store.doc
-  if (!d) return
-  const tex = d.textures[entry.id]
-  if (!tex || !tex.layers || tex.layers.length === 0) {
-    // 单层模式：绘画画布与显示画布同一对象
-    entry.paintCanvas = entry.canvas
-    entry.paintCtx = entry.ctx
-    entry.loadedPaintData = entry.loadedData
-    return
-  }
-  // 多层模式：绘画画布独立，加载活动层像素
-  if (entry.paintCanvas === entry.canvas) {
-    // 首次创建独立绘画画布
-    const pc = document.createElement('canvas')
-    pc.width = entry.w
-    pc.height = entry.h
-    const pctx = pc.getContext('2d')
-    if (!pctx) return
-    entry.paintCanvas = pc
-    entry.paintCtx = pctx
-  }
-  const activeLayer = tex.layers.find((l) => l.id === store.activeLayerId) ?? tex.layers[0]
-  if (!activeLayer) return
-  if (entry.loadedPaintData === activeLayer.data) return
-  const img = new Image()
-  img.onload = () => {
-    entry.paintCtx.clearRect(0, 0, entry.w, entry.h)
-    entry.paintCtx.drawImage(img, 0, 0, entry.w, entry.h)
-    entry.loadedPaintData = activeLayer.data
-  }
-  img.src = activeLayer.data
-}
-
-/** 共享贴图材质（须在 ensureTextureEntry 之后调用） */
-function textureMaterial(texId: TextureId): THREE.MeshLambertMaterial | null {
-  const cached = texMats.get(texId)
-  if (cached) return cached
-  const entry = texEntries.get(texId)
-  if (!entry) return null
-  const m = new THREE.MeshLambertMaterial({
-    map: entry.tex,
-    transparent: true,
-    alphaTest: 0.02, // 仅剔除全透明像素，半透明像素正常渲染
-    side: THREE.FrontSide
-  })
-  texMats.set(texId, m)
-  return m
-}
-
-/** 文档节点 → 场景对象（含父子层级映射，见模块头注释） */
+/** 文档节点 → 场景对象（含父子层级映射，见 viewport/nodeBuilder 模块头注释） */
 function buildNodeObject(d: ModelDocument, node: ModelNode): THREE.Object3D {
-  const outer = new THREE.Group()
-  outer.userData.nodeId = node.id
-  outer.visible = node.visible
-  nodeObjects.set(node.id, outer)
-
-  if (isCubeNode(node)) {
-    outer.position.set(node.origin[0] / 16, node.origin[1] / 16, node.origin[2] / 16)
-    outer.rotation.set(
-      node.rotation[0] * DEG2RAD,
-      node.rotation[1] * DEG2RAD,
-      node.rotation[2] * DEG2RAD
-    )
-    const mesh = buildCubeMesh(d, node)
-    pickMeshes.push(mesh)
-    outer.add(mesh)
-  } else if (isMeshNode(node)) {
-    outer.position.set(node.origin[0] / 16, node.origin[1] / 16, node.origin[2] / 16)
-    outer.rotation.set(
-      node.rotation[0] * DEG2RAD,
-      node.rotation[1] * DEG2RAD,
-      node.rotation[2] * DEG2RAD
-    )
-    for (const m of buildMeshMeshes(d, node)) {
-      pickMeshes.push(m)
-      outer.add(m)
-    }
-  } else if (isGroupNode(node)) {
-    outer.position.set(node.origin[0] / 16, node.origin[1] / 16, node.origin[2] / 16)
-    outer.rotation.set(
-      node.rotation[0] * DEG2RAD,
-      node.rotation[1] * DEG2RAD,
-      node.rotation[2] * DEG2RAD
-    )
-    if (node.scale) outer.scale.set(node.scale[0], node.scale[1], node.scale[2])
-    // inner 承担 T(−origin)，使子节点原始坐标直接映射（父链连续空间语义）
-    const inner = new THREE.Group()
-    inner.position.set(-node.origin[0] / 16, -node.origin[1] / 16, -node.origin[2] / 16)
-    outer.add(inner)
-    for (const cid of node.children) {
-      const child = d.nodes[cid]
-      if (child) inner.add(buildNodeObject(d, child))
-    }
-  } else if (isLocatorNode(node)) {
-    outer.position.set(node.position[0] / 16, node.position[1] / 16, node.position[2] / 16)
-    const marker = new THREE.Mesh(markerGeo!, markerMat!)
-    marker.userData.nodeId = node.id
-    pickMeshes.push(marker)
-    outer.add(marker)
-  }
-  return outer
-}
-
-/**
- * 立方体 mesh：任一面绑定贴图 → per-cube 克隆 BoxGeometry 写 UV + 贴图材质数组；
- * 否则共享灰盒。UV 映射细节见模块头注释。
- */
-function buildCubeMesh(d: ModelDocument, node: ModelNode & { type: 'cube' }): THREE.Mesh {
-  const cx = (node.from[0] + node.to[0]) / 2
-  const cy = (node.from[1] + node.to[1]) / 2
-  const cz = (node.from[2] + node.to[2]) / 2
-  const position: Vec3 = [
-    (cx - node.origin[0]) / 16,
-    (cy - node.origin[1]) / 16,
-    (cz - node.origin[2]) / 16
-  ]
-  const scale: Vec3 = [
-    Math.abs(node.to[0] - node.from[0]) / 16,
-    Math.abs(node.to[1] - node.from[1]) / 16,
-    Math.abs(node.to[2] - node.from[2]) / 16
-  ]
-
-  const resolved = effectiveFaceBindings(node, d.settings.uvMode)
-  const usedTexIds = new Set<TextureId>()
-  for (const b of Object.values(resolved)) {
-    if (b?.texture && d.textures[b.texture]) usedTexIds.add(b.texture)
-  }
-
-  if (usedTexIds.size === 0) {
-    const mesh = new THREE.Mesh(boxGeo!, cubeMat!)
-    mesh.position.set(position[0], position[1], position[2])
-    mesh.scale.set(scale[0], scale[1], scale[2])
-    mesh.userData.nodeId = node.id
-    return mesh
-  }
-
-  const geo = boxGeo!.clone()
-  const uvAttr = geo.attributes.uv as THREE.BufferAttribute
-  const faceMats: THREE.Material[] = []
-  for (let fi = 0; fi < 6; fi++) {
-    const faceName = BOX_FACE_BY_INDEX[fi]!
-    const binding = resolved[faceName]
-    const texId = binding?.texture && d.textures[binding.texture] ? binding.texture : null
-    const texMeta = texId ? d.textures[texId] : undefined
-    let corners: Vec2[] = [
-      [0, 0],
-      [0, 0],
-      [0, 0],
-      [0, 0]
-    ]
-    if (texMeta && binding?.uv) {
-      ensureTextureEntry(texMeta)
-      corners = rotateUvCorners(binding.uv, binding.rotation ?? 0)
-    }
-    // corners = [TL, TR, BR, BL]（像素坐标，v 向下）；BoxGeometry 面内顶点序 [TL, TR, BL, BR]
-    const order = [0, 1, 3, 2]
-    for (let vi = 0; vi < 4; vi++) {
-      const p = corners[order[vi]!]!
-      uvAttr.setXY(fi * 4 + vi, texMeta ? p[0] / texMeta.width : 0, texMeta ? 1 - p[1] / texMeta.height : 0)
-    }
-    faceMats.push((texId ? textureMaterial(texId) : null) ?? cubeMat!)
-  }
-  uvAttr.needsUpdate = true
-
-  const mesh = new THREE.Mesh(geo, faceMats)
-  mesh.position.set(position[0], position[1], position[2])
-  mesh.scale.set(scale[0], scale[1], scale[2])
-  mesh.userData.nodeId = node.id
-  disposables.push(geo)
-  return mesh
-}
-
-/**
- * 网格节点 → 场景 mesh 列表（B4-1）：按贴图分组，每组一个 BufferGeometry
- * （非索引化逐三角写顶点，computeVertexNormals 得平直法线）。
- * 顶点以「相对 origin 的父空间坐标 /16」存储——外层 Group 已承载 origin/rotation，
- * 与立方体 mesh 的「单位盒 scale + 相对 origin 偏移」同构。
- * userData.triToFace（B4-3）：三角序号 → node.faces 面下标（面模式 raycast 回映射用）。
- */
-function buildMeshMeshes(d: ModelDocument, node: MeshNode): THREE.Mesh[] {
-  // 按贴图分组面下标（null = 无贴图灰面）
-  const groups = new Map<TextureId | null, number[]>()
-  node.faces.forEach((face, fi) => {
-    const texId = face.texture && d.textures[face.texture] ? face.texture : null
-    const list = groups.get(texId) ?? []
-    list.push(fi)
-    groups.set(texId, list)
-  })
-
-  const out: THREE.Mesh[] = []
-  for (const [texId, faceIdxList] of groups) {
-    const texMeta = texId ? d.textures[texId] : undefined
-    if (texMeta) ensureTextureEntry(texMeta)
-    const positions: number[] = []
-    const uvs: number[] = []
-    const triToFace: number[] = []
-    for (const fi of faceIdxList) {
-      const face = node.faces[fi]!
-      for (const tri of triangulateFace(face)) {
-        triToFace.push(fi)
-        for (const slot of tri) {
-          const vi = face.vertices[slot]!
-          const v = node.vertices[vi]
-          if (!v) continue // 越界下标由文档校验报告，渲染层静默跳过
-          positions.push(
-            (v[0] - node.origin[0]) / 16,
-            (v[1] - node.origin[1]) / 16,
-            (v[2] - node.origin[2]) / 16
-          )
-          const uv = face.uv[slot]
-          if (texMeta && uv) {
-            uvs.push(uv[0] / texMeta.width, 1 - uv[1] / texMeta.height)
-          } else {
-            uvs.push(0, 0)
-          }
-        }
-      }
-    }
-    if (positions.length === 0) continue
-    const geo = new THREE.BufferGeometry()
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
-    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
-    geo.computeVertexNormals()
-    const mat = (texId ? textureMaterial(texId) : null) ?? cubeMat!
-    const mesh = new THREE.Mesh(geo, mat)
-    mesh.userData.nodeId = node.id
-    mesh.userData.triToFace = triToFace
-    disposables.push(geo)
-    out.push(mesh)
-  }
-  return out
+  return buildNodeObjectCore(nodeBuildCtx(), d, node)
 }
 
 function rebuildScene(): void {
@@ -1892,12 +1493,12 @@ function pickAt(clientX: number, clientY: number): NodeId | null {
 /** 顶点模式拾取（B4-3）：raycast 顶点句柄 Points → 顶点下标 */
 function pickVertexAt(clientX: number, clientY: number): number | null {
   const canvas = canvasRef.value
-  if (!canvas || !camera || !vertexPoints) return null
+  if (!canvas || !camera || !subEdit.vertexPoints) return null
   const rect = canvas.getBoundingClientRect()
   ndc.x = ((clientX - rect.left) / rect.width) * 2 - 1
   ndc.y = -((clientY - rect.top) / rect.height) * 2 + 1
   raycaster.setFromCamera(ndc, camera)
-  const hits = raycaster.intersectObject(vertexPoints, false)
+  const hits = raycaster.intersectObject(subEdit.vertexPoints, false)
   const idx = hits[0]?.index
   return idx === undefined ? null : idx
 }
@@ -1917,7 +1518,7 @@ function pickMeshFaceAt(clientX: number, clientY: number): number | null {
   ndc.y = -((clientY - rect.top) / rect.height) * 2 + 1
   raycaster.setFromCamera(ndc, camera)
   const meshes = outer.children.filter(
-    (c): c is THREE.Mesh => c instanceof THREE.Mesh && c !== faceOverlay && c !== knifeMarker
+    (c): c is THREE.Mesh => c instanceof THREE.Mesh && c !== subEdit.faceOverlay && c !== subEdit.knifeMarker
   )
   const hits = raycaster.intersectObjects(meshes, false)
   const hit = hits.find((h) => h.faceIndex !== undefined)
@@ -1944,7 +1545,7 @@ function pickMeshSurfaceAt(clientX: number, clientY: number): { face: number; po
   raycaster.setFromCamera(ndc, camera)
   outer.updateWorldMatrix(true, false)
   const meshes = outer.children.filter(
-    (c): c is THREE.Mesh => c instanceof THREE.Mesh && c !== faceOverlay && c !== knifeMarker
+    (c): c is THREE.Mesh => c instanceof THREE.Mesh && c !== subEdit.faceOverlay && c !== subEdit.knifeMarker
   )
   const hit = raycaster.intersectObjects(meshes, false).find((h) => h.faceIndex !== undefined)
   if (!hit || hit.faceIndex == null) return null
@@ -2442,8 +2043,8 @@ function pickMeshModelPoint(clientX: number, clientY: number): Vec3 | null {
   raycaster.setFromCamera(ndc, camera)
   outer.updateWorldMatrix(true, false)
   const excluded = new Set<THREE.Object3D>()
-  if (faceOverlay) excluded.add(faceOverlay)
-  if (knifeMarker) excluded.add(knifeMarker)
+  if (subEdit.faceOverlay) excluded.add(subEdit.faceOverlay)
+  if (subEdit.knifeMarker) excluded.add(subEdit.knifeMarker)
   if (weightOverlay) excluded.add(weightOverlay)
   const meshes = outer.children.filter(
     (c): c is THREE.Mesh => c instanceof THREE.Mesh && !excluded.has(c)
@@ -2729,8 +2330,7 @@ onBeforeUnmount(() => {
   clearPaintGrid()
   clearSceneModel()
   clearRefPlanes()
-  for (const entry of texEntries.values()) entry.tex.dispose()
-  texEntries.clear()
+  disposeAllTextures(texCacheCtx)
   renderer?.dispose()
 })
 </script>
