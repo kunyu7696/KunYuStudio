@@ -219,6 +219,7 @@ import {
   syncFaceOverlay as syncFaceOverlayCore,
   syncKnifeMarker as syncKnifeMarkerCore,
   syncVertexHandles as syncVertexHandlesCore,
+  syncWeightOverlay as syncWeightOverlayCore,
   type SubEditCtx,
   type SubEditVisuals
 } from './viewport/subEditVisuals'
@@ -593,8 +594,6 @@ function clearHighlights(): void {
 /* 网格子对象编辑可视化（B4-3）：顶点句柄 / 选中面叠加                    */
 /* ------------------------------------------------------------------ */
 
-/** 权重热力叠加：目标 mesh 顶点着色 Points（显示影响分布；随 outer 组变换） */
-let weightOverlay: THREE.Points | null = null
 /** 本笔累积：顶点下标 → 落笔量（按 mode 语义累积）；抬起时一次性提交为单条命令 */
 let pendingWeights: Map<number, number> | null = null
 /** 上次落墨屏幕点（位移节流；笔画结束清空） */
@@ -618,12 +617,6 @@ function subEditCtx(): SubEditCtx {
 /** 释放并移除顶点句柄与面叠加（重建/切模式/切选中前调用） */
 function clearSubEditVisuals(): void {
   clearSubEditHandles(subEdit)
-  if (weightOverlay) {
-    weightOverlay.parent?.remove(weightOverlay)
-    weightOverlay.geometry.dispose()
-    ;(weightOverlay.material as THREE.Material).dispose()
-    weightOverlay = null
-  }
   pendingWeights = null
 }
 
@@ -1153,7 +1146,7 @@ function pickCtx(): PickCtx {
     nodeObjects,
     doc: store.doc,
     visuals: subEdit,
-    weightOverlay
+    weightOverlay: subEdit.weightOverlay
   }
 }
 
@@ -1703,43 +1696,14 @@ function previewWeight(node: MeshNode, index: number): number {
 
 /** 顶点权重热力着色对象（showWeights 开启时；挂 outer 组，局部坐标 = (v−origin)/16） */
 function syncWeightOverlay(): void {
-  if (weightOverlay) {
-    weightOverlay.parent?.remove(weightOverlay)
-    weightOverlay.geometry.dispose()
-    ;(weightOverlay.material as THREE.Material).dispose()
-    weightOverlay = null
-  }
-  if (gizmoMode.value !== 'weight' || !showWeights.value) return
   const node = editingMesh.value
-  const outer = node ? nodeObjects.get(node.id) : undefined
-  if (!node || !outer) return
-  const pos: number[] = []
-  const col: number[] = []
-  for (let i = 0; i < node.vertices.length; i++) {
-    const v = node.vertices[i]!
-    pos.push(
-      (v[0] - node.origin[0]) / 16,
-      (v[1] - node.origin[1]) / 16,
-      (v[2] - node.origin[2]) / 16
-    )
-    const [r, g, b] = weightPreviewColor(previewWeight(node, i))
-    col.push(r, g, b)
-  }
-  if (pos.length === 0) return
-  const geo = new THREE.BufferGeometry()
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3))
-  geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3))
-  const mat = new THREE.PointsMaterial({
-    size: 0.14,
-    sizeAttenuation: true,
-    vertexColors: true,
-    depthTest: false,
-    transparent: true,
-    opacity: 0.95
+  syncWeightOverlayCore({
+    visuals: subEdit,
+    nodeObjects,
+    enabled: gizmoMode.value === 'weight' && showWeights.value,
+    node,
+    colorOf: (i) => (node ? weightPreviewColor(previewWeight(node, i)) : [0, 0, 0])
   })
-  weightOverlay = new THREE.Points(geo, mat)
-  weightOverlay.renderOrder = 1002
-  outer.add(weightOverlay)
 }
 
 /**

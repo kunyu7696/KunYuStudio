@@ -1,11 +1,12 @@
 /**
  * 网格子对象编辑可视化纯逻辑（自 ModelerViewport.vue 抽离，行为保持逐字一致）：
- * 顶点句柄 Points / 选中面叠加 Mesh / 边句柄 LineSegments / 切刀锚点标记的同步与释放。
+ * 顶点句柄 Points / 选中面叠加 Mesh / 边句柄 LineSegments / 切刀锚点标记 /
+ * 权重热力 Points 的同步与释放。
  * three 对象登记在宿主注入的 visuals 槽位中（对象引用共享，置空即同步回宿主）；
  * store 切片以快照参数传入，本模块不持有 Vue 响应式状态。
  */
 import * as THREE from 'three'
-import type { ModelDocument, NodeId, Vec3 } from '../../../../../shared/modeler/types'
+import type { MeshNode, ModelDocument, NodeId, Vec3 } from '../../../../../shared/modeler/types'
 import { isMeshNode } from '../../../../../shared/modeler/types'
 import { buildMeshEdges, meshEdgeKey, triangulateFace } from '../../../../../shared/modeler/mesh'
 
@@ -21,10 +22,11 @@ export interface SubEditVisuals {
   faceOverlay: THREE.Mesh | null
   edgeLines: THREE.LineSegments | null
   knifeMarker: THREE.Mesh | null
+  weightOverlay: THREE.Points | null
 }
 
 export function createSubEditVisuals(): SubEditVisuals {
-  return { vertexPoints: null, faceOverlay: null, edgeLines: null, knifeMarker: null }
+  return { vertexPoints: null, faceOverlay: null, edgeLines: null, knifeMarker: null, weightOverlay: null }
 }
 
 /** 同步函数依赖的宿主上下文（store 切片快照 + 场景索引） */
@@ -50,12 +52,13 @@ function clearSlot(visuals: SubEditVisuals, key: keyof SubEditVisuals): void {
   visuals[key] = null
 }
 
-/** 释放并移除顶点句柄/面叠加/边句柄/切刀标记（重建/切模式/切选中前调用） */
+/** 释放并移除顶点句柄/面叠加/边句柄/切刀标记/权重热力（重建/切模式/切选中前调用） */
 export function clearSubEditHandles(visuals: SubEditVisuals): void {
   clearSlot(visuals, 'vertexPoints')
   clearSlot(visuals, 'faceOverlay')
   clearSlot(visuals, 'edgeLines')
   clearSlot(visuals, 'knifeMarker')
+  clearSlot(visuals, 'weightOverlay')
 }
 
 /** 边句柄：目标 mesh 全部唯一边 → THREE.LineSegments（选中边高亮；随节点 outer 组变换） */
@@ -185,4 +188,53 @@ export function syncKnifeMarker(ctx: SubEditCtx): void {
   marker.renderOrder = 1001
   ctx.visuals.knifeMarker = marker
   outer.add(marker)
+}
+
+/** 权重热力着色依赖的宿主上下文（颜色由宿主按 previewWeight + 色带算出） */
+export interface WeightOverlayCtx {
+  visuals: SubEditVisuals
+  nodeObjects: Map<NodeId, THREE.Object3D>
+  /** 是否显示（权重模式且 showWeights 开启） */
+  enabled: boolean
+  /** 目标网格节点（null = 无目标） */
+  node: MeshNode | null
+  /** 顶点下标 → 热力颜色（r/g/b，0–1） */
+  colorOf: (index: number) => Vec3
+}
+
+/** 顶点权重热力着色对象（挂 outer 组，局部坐标 = (v−origin)/16） */
+export function syncWeightOverlay(ctx: WeightOverlayCtx): void {
+  clearSlot(ctx.visuals, 'weightOverlay')
+  if (!ctx.enabled) return
+  const node = ctx.node
+  const outer = node ? ctx.nodeObjects.get(node.id) : undefined
+  if (!node || !outer) return
+  const pos: number[] = []
+  const col: number[] = []
+  for (let i = 0; i < node.vertices.length; i++) {
+    const v = node.vertices[i]!
+    pos.push(
+      (v[0] - node.origin[0]) / 16,
+      (v[1] - node.origin[1]) / 16,
+      (v[2] - node.origin[2]) / 16
+    )
+    const [r, g, b] = ctx.colorOf(i)
+    col.push(r, g, b)
+  }
+  if (pos.length === 0) return
+  const geo = new THREE.BufferGeometry()
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3))
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3))
+  const mat = new THREE.PointsMaterial({
+    size: 0.14,
+    sizeAttenuation: true,
+    vertexColors: true,
+    depthTest: false,
+    transparent: true,
+    opacity: 0.95
+  })
+  const overlay = new THREE.Points(geo, mat)
+  overlay.renderOrder = 1002
+  ctx.visuals.weightOverlay = overlay
+  outer.add(overlay)
 }
