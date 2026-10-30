@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import type { FileNode } from '../../../shared/types/fs'
 import { useSettingsStore } from './settings'
+import { pluginLanguageForExtension } from '../monaco/languageExtensionRegistry'
 
 /** 编辑器标签页状态 */
 export interface EditorTab {
@@ -81,8 +82,10 @@ export function extToLanguage(ext: string): string {
     case 'properties':
       return 'ini'
     case 'txt':
-    default:
       return 'plaintext'
+    default:
+      // 插件语言：声明式着色插件注册的扩展名映射（如 .snbt）；未命中回退纯文本
+      return pluginLanguageForExtension(ext) ?? 'plaintext'
   }
 }
 

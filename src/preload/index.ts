@@ -493,7 +493,8 @@ const api: IpcApi = {
     toggleMcp: (id, enabled) => ipcRenderer.invoke(IpcChannels.PLUGIN_TOGGLE_MCP, id, enabled),
     testMcp: (cfg) => ipcRenderer.invoke(IpcChannels.PLUGIN_TEST_MCP, cfg),
     listMarket: (query) => ipcRenderer.invoke(IpcChannels.PLUGIN_LIST_MARKET, query),
-    installMarket: (req) => ipcRenderer.invoke(IpcChannels.PLUGIN_INSTALL_MARKET, req)
+    installMarket: (req) => ipcRenderer.invoke(IpcChannels.PLUGIN_INSTALL_MARKET, req),
+    listRendererPlugins: () => ipcRenderer.invoke(IpcChannels.PLUGIN_LIST_RENDERER)
   },
   dsh: {
     getState: () => ipcRenderer.invoke(IpcChannels.DSH_GET_STATE),

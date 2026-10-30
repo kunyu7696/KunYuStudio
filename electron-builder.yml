@@ -95,6 +95,12 @@ extraResources:
     to: dsh-plugins
     filter:
       - '**/*'
+  # 渲染层声明式插件内置示例（snbt-colors 语言着色）；
+  # 用户/第三方插件放 userData/plugins，不随包分发
+  - from: resources/plugins
+    to: plugins
+    filter:
+      - '**/*'
   # dsh-pet 桌宠适配层（dsh-pet-kunyu/lib：纯 ESM JS，主进程运行时动态 import）
   - from: dsh-pet-kunyu/lib
     to: dsh-pet-kunyu/lib

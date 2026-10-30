@@ -5,6 +5,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { monaco, currentMonacoTheme } from '../../monaco/setup'
+import { registerPluginLanguages } from '../../monaco/pluginLanguages'
 import { lintJava, toMonacoMarkers } from '../../monaco/javaLint'
 import {
   buildImportEdit,
@@ -27,6 +28,9 @@ import {
   type ChangePointTracker
 } from '../../monaco/cue'
 import type { CueSettings } from '../../../../shared/types/settings'
+
+// 声明式语言着色插件：首次打开编辑器时注册进 Monaco（幂等，失败静默不阻塞编辑）
+void registerPluginLanguages()
 
 /** M4：import 诊断独立 marker owner（与 kunyu-java-lint 区分，不进 M2 修改点） */
 const IMPORT_MARKER_OWNER = 'kunyu-java-import'

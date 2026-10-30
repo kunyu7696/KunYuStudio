@@ -9,6 +9,7 @@ import {
 } from '../../services/ai/mcpClient'
 import { resolveMcpCwd } from '../../services/ai/mcpSandbox'
 import { queryMarket, toCustomServerInit } from '../../services/ai/marketService'
+import { listRendererPlugins } from '../../services/plugins/rendererPluginService'
 import { isCertifiedIdentifier } from '../../../shared/mcpTrust'
 import type { IpcContext } from '../context'
 import type { CustomMcpServer } from '../../../shared/types/settings'
@@ -174,6 +175,21 @@ export function registerPluginHandlers(ctx: IpcContext): void {
       return { ok: true, serverId, toolCount }
     } catch (err) {
       return { ok: false, error: err instanceof Error ? err.message : String(err) }
+    }
+  })
+
+  // 渲染层声明式插件（语言着色贡献点）：扫描内置示例 + userData/plugins。
+  // 纯 JSON 零代码执行，无需信任门；坏插件不拖垮整体（结果内逐个带 error）。
+  ipcMain.handle(IpcChannels.PLUGIN_LIST_RENDERER, async () => {
+    try {
+      return await listRendererPlugins()
+    } catch (err) {
+      return {
+        ok: false,
+        plugins: [],
+        userPluginsDir: '',
+        errors: [{ pluginDir: '-', error: err instanceof Error ? err.message : String(err) }]
+      }
     }
   })
 }

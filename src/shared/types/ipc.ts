@@ -446,6 +446,8 @@ export const IpcChannels = {
   PLUGIN_TEST_MCP: 'plugin:test-mcp',
   PLUGIN_LIST_MARKET: 'plugin:list-market',
   PLUGIN_INSTALL_MARKET: 'plugin:install-market',
+  /** 渲染层声明式插件（语言着色贡献点）：扫描内置 + 用户插件目录 */
+  PLUGIN_LIST_RENDERER: 'plugin:list-renderer',
   // DSH（DeepSeek Harness）社区插件兼容宿主
   DSH_GET_STATE: 'dsh:get-state',
   DSH_INSTALL_PLUGIN: 'dsh:install-plugin',
@@ -1855,6 +1857,8 @@ export interface IpcApi {
     listMarket(query?: import('./plugin').MarketQuery): Promise<import('./plugin').PluginMarketListResult>
     /** 从市场安装插件（写入自定义 MCP server 并立即启用） */
     installMarket(req: import('./plugin').MarketInstallRequest): Promise<import('./plugin').PluginInstallResult>
+    /** 扫描渲染层声明式插件（内置示例 + userData/plugins；纯 JSON 零代码执行） */
+    listRendererPlugins(): Promise<import('./rendererPlugin').RendererPluginListResult>
   }
   /** DSH 社区插件兼容宿主：精选目录 + 安装/卸载 + 加载状态（工具桥接进 AI 循环） */
   dsh: {

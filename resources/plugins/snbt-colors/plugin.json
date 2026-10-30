@@ -1,0 +1,30 @@
+{
+  "id": "kunyu.snbt-colors",
+  "name": "SNBT 语法着色",
+  "version": "1.0.0",
+  "description": "官方示例插件：为 FTB 任务书等 .snbt 文件提供语法着色——键名、字符串、数字、布尔、注释各自分色。",
+  "author": "KunYu Studio",
+  "contributes": {
+    "languages": [
+      {
+        "id": "snbt",
+        "aliases": ["SNBT", "snbt"],
+        "extensions": [".snbt"],
+        "configuration": {
+          "comments": { "lineComment": "#" },
+          "brackets": [
+            ["{", "}"],
+            ["[", "]"]
+          ],
+          "autoClosingPairs": [
+            { "open": "{", "close": "}" },
+            { "open": "[", "close": "]" },
+            { "open": "\"", "close": "\"" },
+            { "open": "'", "close": "'" }
+          ]
+        },
+        "monarch": "language.json"
+      }
+    ]
+  }
+}

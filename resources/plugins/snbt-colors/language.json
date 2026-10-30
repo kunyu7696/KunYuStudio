@@ -1,0 +1,17 @@
+{
+  "defaultToken": "",
+  "tokenPostfix": ".snbt",
+  "tokenizer": {
+    "root": [
+      ["#.*$", "comment"],
+      ["\"([^\"\\\\]|\\\\.)*\"", "string"],
+      ["'([^'\\\\]|\\\\.)*'", "string"],
+      ["-?\\d+\\.\\d+([eE][-+]?\\d+)?[fd]?", "number.float"],
+      ["-?\\d+[bsl]?", "number"],
+      ["\\b(true|false)\\b", "keyword"],
+      ["[a-zA-Z_][\\w-]*(?=\\s*:)", "type"],
+      ["[{}\\[\\]]", "@brackets"],
+      ["[:,;]", "delimiter"]
+    ]
+  }
+}
