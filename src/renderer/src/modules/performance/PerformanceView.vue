@@ -332,9 +332,11 @@ async function manualImport(kind: 'jar' | 'jfr' | 'spark'): Promise<void> {
       mcVersion: ctx.value.mcVersion
     })
     await store.load()
-    r.ok
-      ? ElMessage.success(t('performance.msg.jarAdded', { name: r.modId ?? r.fileName }))
-      : ElMessage.error(r.error ?? t('performance.msg.jarFailed'))
+    if (r.ok) {
+      ElMessage.success(t('performance.msg.jarAdded', { name: r.modId ?? r.fileName }))
+    } else {
+      ElMessage.error(r.error ?? t('performance.msg.jarFailed'))
+    }
     return
   }
 
@@ -350,9 +352,11 @@ async function manualImport(kind: 'jar' | 'jfr' | 'spark'): Promise<void> {
       mcVersion: ctx.value.mcVersion || undefined
     })
     await store.load()
-    r.ok
-      ? ElMessage.success(t('performance.msg.jfrAttributed', { n: r.profilesUpdated }))
-      : ElMessage.error(r.error ?? t('performance.msg.jfrFailed'))
+    if (r.ok) {
+      ElMessage.success(t('performance.msg.jfrAttributed', { n: r.profilesUpdated }))
+    } else {
+      ElMessage.error(r.error ?? t('performance.msg.jfrFailed'))
+    }
     return
   }
 
@@ -367,9 +371,11 @@ async function manualImport(kind: 'jar' | 'jfr' | 'spark'): Promise<void> {
     mcVersion: ctx.value.mcVersion || undefined
   })
   await store.load()
-  r.ok
-    ? ElMessage.success(t('performance.msg.sparkAttributed', { n: r.profilesUpdated }))
-    : ElMessage.error(r.error ?? t('performance.msg.sparkFailed'))
+  if (r.ok) {
+    ElMessage.success(t('performance.msg.sparkAttributed', { n: r.profilesUpdated }))
+  } else {
+    ElMessage.error(r.error ?? t('performance.msg.sparkFailed'))
+  }
 }
 
 /** 评级文案 */

@@ -192,12 +192,9 @@ export function planModpack(input: PlannerInput): PlannerResult {
   const packSummaries: ContentPackSummary[] = []
   const packs = [...(input.packs ?? [])].sort((a, b) => a.packId.localeCompare(b.packId))
   for (const pack of packs) {
-    let fileCount = 0
-    let jarCount = 0
     if (pack.enabled) {
       const owner = `内容包 ${pack.packId}`
       for (const rel of pack.overrideFiles) {
-        const before = zipItems.length
         push(
           {
             name: posix.join('overrides', rel),
@@ -206,12 +203,9 @@ export function planModpack(input: PlannerInput): PlannerResult {
           },
           owner
         )
-        if (zipItems.length > before) fileCount++
       }
       for (const jar of pack.jarFiles) {
-        const before = zipItems.length
         push({ name: posix.join('overrides/mods', jar.fileName), from: 'file', sourceRel: jar.sourceRel }, owner)
-        if (zipItems.length > before) jarCount++
       }
       curseforgeFiles.push(...pack.curseforgeFiles)
       modrinthFiles.push(...pack.modrinthFiles)

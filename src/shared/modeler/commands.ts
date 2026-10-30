@@ -301,7 +301,7 @@ export function commandFromTransform(
 /* 命令栈                                                              */
 /* ------------------------------------------------------------------ */
 
-export interface ExecuteOptions extends CommandExtras {}
+export type ExecuteOptions = CommandExtras
 
 export interface CommandStackOptions {
   /** 撤销历史上限（默认 200 步） */

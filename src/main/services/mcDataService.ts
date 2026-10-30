@@ -392,6 +392,7 @@ function scoreMatch(q: string, e: McDataEntry): number {
 export function defaultMcDataRoot(): string {
   // app 仅在 electron 主进程可用；测试/工具环境回退 cwd
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- 故意的环境探测，不能改静态 import
     const { app } = require('electron') as typeof import('electron')
     if (isPackagedRuntime(app)) return join(process.resourcesPath, 'mcdata')
   } catch {

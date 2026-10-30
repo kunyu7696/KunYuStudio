@@ -1,9 +1,9 @@
 /**
  * 领域事实层单测——结构化槽读写、上限、去重、prompt 行渲染。
  */
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   FACTS_LIMITS,
@@ -65,8 +65,6 @@ describe('项目事实槽', () => {
   })
 
   it('损坏的 JSON 文件读取返回空事实（不抛异常）', () => {
-    const { writeFileSync, mkdirSync } = require('node:fs') as typeof import('node:fs')
-    const { dirname } = require('node:path') as typeof import('node:path')
     const file = join(root, '.kunyu/project-facts.json')
     mkdirSync(dirname(file), { recursive: true })
     writeFileSync(file, '{broken json', 'utf-8')

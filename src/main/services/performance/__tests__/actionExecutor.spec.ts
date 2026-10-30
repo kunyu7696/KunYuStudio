@@ -1,7 +1,7 @@
 /**
  * TR-16.1：安全动作执行器——仅勾选动作产生变化、越界 / 危险路径被拒、回执与实际一致。
  */
-import { mkdtempSync, mkdirSync, existsSync, writeFileSync, readFileSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, existsSync, rmSync, writeFileSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
@@ -26,7 +26,6 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  const { rmSync } = require('node:fs') as typeof import('node:fs')
   rmSync(dir, { recursive: true, force: true })
 })
 

@@ -4,7 +4,7 @@
  * 重点测 parseGameTestReport 纯函数：纯通过 / 纯失败 / 混合 / 简化前缀 / 无输出 / 多种 Fabric 1.20.1 输出格式。
  * runGameTestServer 涉及子进程，仅测防御路径（gradlew 缺失、活跃任务）。
  */
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
@@ -199,8 +199,7 @@ describe('listGameTestJsonFiles', () => {
     try {
       const gametestDir = join(dir, '.kunyu', 'content', 'gametest')
       // mkdirSync 在 fsService 之外手动建
-      const fs = require('node:fs')
-      fs.mkdirSync(gametestDir, { recursive: true })
+      mkdirSync(gametestDir, { recursive: true })
       writeFileSync(join(gametestDir, 'a.json'), '{}')
       writeFileSync(join(gametestDir, 'b.json'), '{}')
       writeFileSync(join(gametestDir, 'ignore.txt'), 'nope')

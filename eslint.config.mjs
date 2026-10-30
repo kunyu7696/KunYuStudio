@@ -1,13 +1,29 @@
-// ESLint 最平配置（P2-J）：仅开 no-use-before-define（TS 感知版）。
-// 用户要求：「最平」= 不引入 recommended 规则集，只抓「先使用后定义」这一类隐蔽 bug
-//（TDZ 黑屏事故曾因此产生：ref/computed 在声明前被函数引用）。
-// 第三周项13：.vue 纳入覆盖——vue-eslint-parser 解析 SFC，
-// <script>/<script setup> 块仍交给 TS parser，规则与 .ts 完全一致，不新增 vue 规则集。
+// ESLint 配置（阶段1：接入 @typescript-eslint/recommended，error 级）。
+// 历史：P2-J 仅开 no-use-before-define（TDZ 黑屏事故教训）；
+// 阶段1 审计存量 73 条后清零修复，直接转 error 防新增。
+// 约定：
+// - no-unused-vars 放行 `_` 前缀（有意未使用的参数/变量/catch 绑定，标准约定）
+// - no-explicit-any 显式关闭——阶段2 统计存量后再定 warn/error（勿提前开启）
+// - 测试文件保留 no-use-before-define 豁免（describe 回调引用外层 let 是常见模式）
 import tsParser from '@typescript-eslint/parser'
 import tsPlugin from '@typescript-eslint/eslint-plugin'
 import vueParser from 'vue-eslint-parser'
 
-const noUseBeforeDefine = {
+const rules = {
+  // recommended 规则集整体接入（error 级）
+  ...tsPlugin.configs.recommended.rules,
+  // `_` 前缀视为有意未使用
+  '@typescript-eslint/no-unused-vars': [
+    'error',
+    {
+      argsIgnorePattern: '^_',
+      varsIgnorePattern: '^_',
+      caughtErrorsIgnorePattern: '^_',
+      destructuredArrayIgnorePattern: '^_'
+    }
+  ],
+  // 阶段2 再定级（先统计存量），现在保持关闭
+  '@typescript-eslint/no-explicit-any': 'off',
   // TS 感知版：正确处理类型导入、函数提升、类声明合并等场景
   '@typescript-eslint/no-use-before-define': [
     'error',
@@ -31,7 +47,7 @@ export default [
       parserOptions: { ecmaVersion: 'latest', sourceType: 'module' }
     },
     plugins: { '@typescript-eslint': tsPlugin },
-    rules: noUseBeforeDefine
+    rules
   },
   {
     files: ['src/**/*.vue'],
@@ -45,7 +61,7 @@ export default [
       }
     },
     plugins: { '@typescript-eslint': tsPlugin },
-    rules: noUseBeforeDefine
+    rules
   },
   {
     // 测试文件放宽：先声明 helper 再使用是常见模式（describe 回调内引用外层 let）

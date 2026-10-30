@@ -16,6 +16,8 @@ import { isPackagedRuntime } from '../runtimeEnv'
 /** dev：resources/knowledge；prod：process.resourcesPath/knowledge */
 export function defaultKnowledgeRoot(): string {
   try {
+    // 运行时探测：非 electron 环境（vitest/脚本）require 会抛错，catch 后回退 cwd
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- 故意的环境探测，不能改静态 import
     const { app } = require('electron') as typeof import('electron')
     if (isPackagedRuntime(app)) return join(process.resourcesPath, 'knowledge')
   } catch {

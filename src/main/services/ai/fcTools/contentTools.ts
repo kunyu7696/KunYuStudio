@@ -963,7 +963,7 @@ export function builtinContentTools(deps: ToolRegistryDeps): RegisteredTool[] {
             preview,
           data: { shape, painted: result.painted, tones: result.tones, png: rel }
         }
-      } catch (err) {
+      } catch {
         // 语义资产不存在时不再要求先 content_upsert——直接进入纹理直出：
         // 把像素画 PNG 落到约定路径（model → textures/model/<id>.png，item → textures/item/<id>.png），
         // 让模型/物品 JSON 中形如 <modid>:model/<id> 的贴图引用立即闭合（run#9 零贴图回归）。

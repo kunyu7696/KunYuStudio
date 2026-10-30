@@ -517,6 +517,7 @@ function applyDocPatch(patch: DocumentPatch): void {
  * 但保留供注释说明与未来回归测试。
  */
 // @ts-expect-error 供注释说明用，无直接调用
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- 文档性保留（见上方注释）
 function isTransformOnlyPatch(_patch: DocumentPatch): boolean {
   return true
 }

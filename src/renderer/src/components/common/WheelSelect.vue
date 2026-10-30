@@ -87,7 +87,11 @@ const displayLabel = computed(() => {
 })
 
 function toggle(): void {
-  expanded.value ? collapse() : expand()
+  if (expanded.value) {
+    collapse()
+  } else {
+    expand()
+  }
 }
 
 function expand(): void {

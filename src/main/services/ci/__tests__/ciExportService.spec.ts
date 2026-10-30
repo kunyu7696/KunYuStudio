@@ -7,7 +7,7 @@
  * 注意：ciExportService 依赖 fsService.assertWithinRoot（项目根注册），
  * 测试中先 registerProjectRoot 再操作。
  */
-import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -62,7 +62,6 @@ describe('getCiConfig / setCiConfig', () => {
 
   it('带 BOM 的 config 文件能正确 parse', () => {
     const configPath = join(root, '.kunyu', 'ci-config.json')
-    const { writeFileSync } = require('node:fs')
     // 写一个带 BOM 的 JSON
     const json = JSON.stringify(createDefaultCiConfig('forge'))
     writeFileSync(configPath, '\uFEFF' + json, 'utf8')
@@ -73,7 +72,6 @@ describe('getCiConfig / setCiConfig', () => {
 
   it('坏 JSON → null', () => {
     const configPath = join(root, '.kunyu', 'ci-config.json')
-    const { writeFileSync } = require('node:fs')
     writeFileSync(configPath, 'not json {{{', 'utf8')
     expect(getCiConfig(root)).toBeNull()
   })
