@@ -14,6 +14,8 @@ import type {
   TemplateProvenance
 } from '../../../shared/types/aiReference'
 import type { ComboHealth } from '../../../shared/types/monitor'
+import type { ProjectEdition } from '../../../shared/types/project'
+import { resolveEditionProfile } from '../../../shared/types/edition'
 
 /** 单次注入模板硬上限（PDF p433：MAX_INJECTION_TEMPLATES = 5） */
 export const MAX_INJECTION_TEMPLATES = 5
@@ -56,6 +58,8 @@ const CONTENT_TYPE_KEYWORDS: Array<{ type: ContentType; words: string[] }> = [
 export interface PromptContext {
   loader: LoaderId
   mcVersion: string
+  /** 目标版本预留位（基岩窗口）：当前调用方不传，resolveEditionProfile 恒回落 Java 画像 */
+  edition?: ProjectEdition
   javaVersion?: string
   yarnVersion?: string
   modId?: string
@@ -316,6 +320,9 @@ export function createContextBuilder(service: ReferenceService): ContextBuilder 
     },
 
     buildSystemPrompt(ctx) {
+      // 版本画像（基岩预留窗口）：Java-only 段落（映射声明等）按画像开关；
+      // 当前恒返回 Java 画像，装配输出与此前逐字节一致
+      const edition = resolveEditionProfile(ctx.edition)
       const base = service.getSystemPromptBase()
       const health = this.getHealthStatus(ctx.loader, ctx.mcVersion)
       const types =
@@ -371,7 +378,9 @@ export function createContextBuilder(service: ReferenceService): ContextBuilder 
         JAVA_VERSION: javaVersion,
         MOD_ID: modId,
         PACKAGE_NAME: packageName,
-        MAPPING_DECLARATION: this.buildMappingDeclaration(ctx.loader),
+        MAPPING_DECLARATION: edition.hasMappings
+          ? this.buildMappingDeclaration(ctx.loader)
+          : '本版本无字节码映射体系（基岩预留分支，当前不可达）。',
         PROJECT_CONTEXT: projectContext,
         VERSION_FINGERPRINT: this.getVersionFingerprint(ctx.loader, ctx.mcVersion),
         HEALTH_STATUS: healthLabel(health),
