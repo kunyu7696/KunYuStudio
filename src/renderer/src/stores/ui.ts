@@ -2,6 +2,10 @@ import { defineStore } from 'pinia'
 import { moduleRegistry } from '../modules'
 import type { SettingsCategory } from '../components/settings/category'
 
+/** 应用双模式：ide = 工作台（现有布局）；inspire = 灵感台（全屏创意空间） */
+export type AppMode = 'ide' | 'inspire'
+
+const APP_MODE_KEY = 'kunyu:app-mode'
 const ACTIVE_MODULE_KEY = 'kunyu:active-module'
 const SIDEBAR_WIDTH_KEY = 'kunyu:sidebar-width'
 const AI_PANEL_WIDTH_KEY = 'kunyu:ai-panel-width'
@@ -12,6 +16,11 @@ const DEFAULT_SIDEBAR_WIDTH = 280   // 从 240 加宽：文件树需要完整显
 const DEFAULT_AI_PANEL_WIDTH = 400  // 从 340 加宽：AI 助手内容更透气
 const AI_PANEL_MIN = 280
 const AI_PANEL_MAX = 560
+
+/** 读取持久化的应用模式：仅接受合法值，其余回退工作台 */
+function readAppMode(): AppMode {
+  return localStorage.getItem(APP_MODE_KEY) === 'inspire' ? 'inspire' : 'ide'
+}
 
 function readStoredModule(): string {
   const id = localStorage.getItem(ACTIVE_MODULE_KEY)
@@ -44,6 +53,8 @@ function readModLibraryVisible(): boolean {
  */
 export const useUiStore = defineStore('ui', {
   state: () => ({
+    /** 应用模式：工作台 / 灵感台（持久化，重启恢复） */
+    appMode: readAppMode() as AppMode,
     activeModuleId: readStoredModule(),
     sidebarWidth: readStoredSidebarWidth(),
     aiPanelVisible: false,
@@ -66,6 +77,13 @@ export const useUiStore = defineStore('ui', {
   },
 
   actions: {
+    /** 切换应用模式（工作台 ↔ 灵感台） */
+    setAppMode(mode: AppMode): void {
+      if (this.appMode === mode) return
+      this.appMode = mode
+      localStorage.setItem(APP_MODE_KEY, mode)
+    },
+
     setActiveModule(id: string, options?: { rememberForSettings?: boolean }): void {
       const target = moduleRegistry.get(id)
       if (!target || id === this.activeModuleId) return

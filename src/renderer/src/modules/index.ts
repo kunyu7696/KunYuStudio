@@ -9,7 +9,6 @@ import {
   Goods,
   Grid,
   Headset,
-  MagicStick,
   Menu,
   Monitor,
   Picture,
@@ -223,16 +222,8 @@ export function registerBuiltinModules(): void {
     loader: () => import('./views/LauncherView.vue')
   })
 
-  // 半独立功能：主页活动栏专用入口——未打开项目时由 AI 引导创建/选择项目；
-  // 打开项目后由右侧 AI 助手面板与各编辑器承载，本入口从项目页移除
-  moduleRegistry.register({
-    id: 'ai-workflow',
-    name: '全流程 AI 制作',
-    icon: MagicStick,
-    description: 'AI Agent 引导从创意到成品的完整开发流程（主页入口）',
-    homeOnly: true,
-    loader: () => import('./views/AiView.vue')
-  })
+  // 原「全流程 AI 制作」已改造为应用级「灵感台」模式（顶栏双模式切换，见 ui store appMode），
+  // 不再作为活动栏模块注册；AI 极速规划管线（agent:plan）由灵感台视图直接复用
 
   moduleRegistry.register({
     id: 'performance',

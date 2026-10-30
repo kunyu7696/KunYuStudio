@@ -38,7 +38,8 @@
         {{ t('app.bootstrapDismiss') }}
       </button>
     </div>
-    <div class="app-body">
+    <!-- 工作台模式：完整 IDE 布局（v-show 保活——编辑器标签、终端等组件状态在切走时不销毁） -->
+    <div v-show="ui.appMode === 'ide'" class="app-body">
       <ActivityBar />
       <SideBar v-if="showSideBar" />
       <!-- 中间编辑列：底部终端只占编辑区宽度（不横贯到 AI 助手），可折叠 -->
@@ -75,6 +76,9 @@
       </button>
     </div>
 
+    <!-- 灵感台模式：全屏创意空间（应用级双模式之一，与工作台互斥渲染） -->
+    <InspireView v-if="ui.appMode === 'inspire'" />
+
     <!-- 常驻状态栏（参考 VS Code） -->
     <StatusBar />
 
@@ -97,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import en from 'element-plus/es/locale/lang/en'
 import TopBar from './components/layout/TopBar.vue'
@@ -125,6 +129,9 @@ import { moduleRegistry } from './modules'
 import { setThemeMode } from './utils/theme'
 import { t, locale, setLocale } from './i18n'
 import { useRuntimeBootstrap, DEFAULT_MC_VERSION } from './composables/useRuntimeBootstrap'
+
+/** 灵感台：独立大包，仅在切换到灵感台模式时按需加载 */
+const InspireView = defineAsyncComponent(() => import('./modules/inspire/InspireView.vue'))
 
 const ui = useUiStore()
 const projectStore = useProjectStore()

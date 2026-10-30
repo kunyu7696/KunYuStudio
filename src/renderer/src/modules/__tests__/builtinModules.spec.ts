@@ -7,7 +7,7 @@ import { moduleRegistry, registerBuiltinModules } from '../index'
  * - homeOnly：是否只出现在「主页活动栏」（打开项目后隐藏）
  * - projectTypes：已打开项目时限定项目类型（未打开项目不受其影响）
  * - 模组与市场：不要求项目（主页可先逛市场），已打开项目时只保留在整合包项目里
- * - 全流程 AI 制作：只在主页活动栏，项目页里移除
+ * - 灵感台：应用级双模式之一（顶栏切换），不注册为活动栏模块
  * - 资产库（原画廊）：主页活动栏专用（打开项目后隐藏）
  * - 资源库：主页活动栏专用（打开项目后隐藏）
  * - FTB 任务书 / 指南书 / KubeJS 脚本：整合包项目专用
@@ -23,11 +23,10 @@ describe('内置模块注册表 · 主页活动栏可见性', () => {
     expect(market?.name).toBe('模组与市场')
   })
 
-  it('全流程 AI 制作为主页专用入口（打开项目后隐藏）', () => {
-    const ai = moduleRegistry.get('ai-workflow')
-    expect(ai?.homeOnly).toBe(true)
-    expect(ai?.requireProject).toBeFalsy()
-    expect(ai?.projectTypes).toBeUndefined()
+  it('灵感台为应用级双模式，不再注册为活动栏模块', () => {
+    // 原 ai-workflow「全流程 AI 制作」已砍掉，由顶栏「灵感台」模式承载
+    expect(moduleRegistry.get('ai-workflow')).toBeUndefined()
+    expect(moduleRegistry.get('inspire')).toBeUndefined()
   })
 
   it('资产库（原画廊改名）为主页活动栏专用入口（打开项目后隐藏）', () => {

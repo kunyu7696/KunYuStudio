@@ -9,10 +9,11 @@ import type { Project, ProjectType } from '../../../../../shared/types/project'
 
 /**
  * 活动栏模块可见性契约（requireProject / homeOnly / projectTypes 组合）：
- * - 未打开项目：只显示不要求项目的模块 —— 资产库、资源库、模组与市场、全流程 AI 制作、版本与产物等
- * - 打开 mod 项目：模组与市场、全流程 AI 制作、资产库、资源库都不出现（主页已有入口）；光影包编辑器不出现
+ * - 未打开项目：只显示不要求项目的模块 —— 资产库、资源库、模组与市场、版本与产物等
+ * - 打开 mod 项目：模组与市场、资产库、资源库都不出现（主页已有入口）；光影包编辑器不出现
  * - 打开 modpack 项目：模组与市场出现
  * - 打开 shaderpack 项目：光影包编辑器出现
+ * - 灵感台为应用级模式（顶栏切换），任何状态下都不出现在活动栏
  */
 registerBuiltinModules()
 
@@ -53,7 +54,6 @@ describe('ActivityBar · 模块可见性', () => {
     const labels = visibleLabels(null)
     expect(labels).toContain('资产库')
     expect(labels).toContain('模组与市场')
-    expect(labels).toContain('全流程 AI 制作')
     // 要求项目的模块（如数据包编辑器、整合包组装）不出现在主页
     expect(labels).not.toContain('数据包编辑器')
     expect(labels).not.toContain('整合包组装')
@@ -86,8 +86,8 @@ describe('ActivityBar · 模块可见性', () => {
     }
   })
 
-  it('打开项目后「全流程 AI 制作」从项目页移除（仅主页保留）', () => {
-    expect(visibleLabels(null)).toContain('全流程 AI 制作')
+  it('「全流程 AI 制作」已移除（灵感台为应用级模式，不占活动栏）', () => {
+    expect(visibleLabels(null)).not.toContain('全流程 AI 制作')
     for (const type of ['mod', 'modpack', 'datapack', 'resourcepack', 'shaderpack'] as ProjectType[]) {
       expect(visibleLabels(type)).not.toContain('全流程 AI 制作')
     }

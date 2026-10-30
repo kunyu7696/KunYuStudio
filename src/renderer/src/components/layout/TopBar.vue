@@ -46,8 +46,28 @@
       <span class="tb-project-name">{{ projectName || t('topbar.noProject') }}</span>
     </div>
 
-    <!-- 右：操作按钮 -->
+    <!-- 右：模式切换 + 操作按钮 -->
     <div class="tb-right">
+      <!-- 双模式切换：工作台（IDE）/ 灵感台（全屏创意空间） -->
+      <div class="tb-mode" role="group" :aria-label="t('topbar.modeSwitch')">
+        <button
+          type="button"
+          class="tb-mode-opt"
+          :class="{ 'is-active': ui.appMode === 'ide' }"
+          :aria-pressed="ui.appMode === 'ide'"
+          @click="ui.setAppMode('ide')"
+        >{{ t('topbar.modeIde') }}</button>
+        <button
+          type="button"
+          class="tb-mode-opt"
+          :class="{ 'is-active': ui.appMode === 'inspire' }"
+          :aria-pressed="ui.appMode === 'inspire'"
+          @click="ui.setAppMode('inspire')"
+        >{{ t('topbar.modeInspire') }}</button>
+      </div>
+
+      <!-- 工作台专属操作：灵感台模式下隐藏（保存/构建/运行依赖项目上下文） -->
+      <template v-if="ui.appMode === 'ide'">
       <el-button size="small" text :disabled="!projectName" @click="onSave">{{
         t('common.save')
       }}</el-button>
@@ -106,6 +126,7 @@
           <el-icon :size="16"><Monitor /></el-icon>
         </button>
       </div>
+      </template>
 
       <!-- 无边框窗口控制：最小化 / 最大化(还原) / 关闭（macOS 用系统红绿灯，不渲染自定义按钮） -->
       <div v-if="!isDarwin" class="tb-win-controls">
@@ -301,6 +322,8 @@ onBeforeUnmount(() => {
 })
 
 function goProjectManager(): void {
+  // Logo 点击始终回工作台模式的项目管理（灵感台下的"回主页"出口）
+  ui.setAppMode('ide')
   ui.setActiveModule('project-manager')
 }
 
@@ -447,6 +470,31 @@ function onBuildAndRun(): void {
 
 .btn-run {
   font-weight: 600;
+}
+
+/* ---- 双模式切换（工作台 / 灵感台） ---- */
+.tb-mode {
+  display: inline-flex;
+  border: 1px solid var(--ky-border);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-right: 4px;
+}
+
+.tb-mode-opt {
+  border: none;
+  background: transparent;
+  color: var(--ky-text-sub);
+  font-size: 12px;
+  padding: 3px 12px;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.tb-mode-opt.is-active {
+  background: var(--ky-accent);
+  color: #fff;
 }
 
 /* ---- 编辑导航：后退 / 前进 / 终端开关 ---- */

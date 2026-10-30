@@ -179,7 +179,7 @@ export const useAiAgentsStore = defineStore('aiAgents', {
     history: [] as AgentRunRecord[],
     /** 历史任务是否已拉取过（避免每次展开都打 IPC） */
     historyLoaded: false,
-    /** 最近一次运行的最终回复（AiView 制作完成态展示用；resetRun 清空） */
+    /** 最近一次运行的最终回复（制作完成态展示用；resetRun 清空） */
     lastReply: null as string | null,
     /** 本次运行资源预算快照（P1-9 熔断；事件流随带最新用量，resetRun 清空） */
     budget: null as AgentRunBudget | null,
@@ -320,9 +320,9 @@ export const useAiAgentsStore = defineStore('aiAgents', {
     },
 
     /**
-     * 全流程 AI 制作 · 规划阶段驱动 understand 轨道（AiView Step2）。
+     * AI 规划阶段驱动 understand 轨道（原全流程 AI 制作向导 Step2；灵感台暂未复用）。
      * 规划本身走轻量 planner（不进编排器），但用同样的轨道语义让用户看到
-     * AI 正在「拆解任务」；后续 startBuild 调 agents.run() 时 resetRun 会清盘重来。
+     * AI 正在「拆解任务」；后续 agents.run() 时 resetRun 会清盘重来。
      */
     beginPlanning(idea: string): void {
       this.resetRun()
