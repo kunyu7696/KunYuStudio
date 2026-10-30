@@ -700,6 +700,10 @@ watch(
 
 <style scoped>
 .mp-view {
+  /* 根元素必须自成滚动区：内容超高时在视图内滚动（外层 ContentArea overflow:hidden 会裁掉） */
+  height: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
   padding: 20px 24px 40px;
   color: var(--ky-text);
   display: flex;
