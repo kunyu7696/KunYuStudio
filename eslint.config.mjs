@@ -1,10 +1,14 @@
-// ESLint 配置（阶段1：接入 @typescript-eslint/recommended，error 级）。
+// ESLint 配置（阶段2：typed 规则上线）。
 // 历史：P2-J 仅开 no-use-before-define（TDZ 黑屏事故教训）；
-// 阶段1 审计存量 73 条后清零修复，直接转 error 防新增。
+// 阶段1 接入 @typescript-eslint/recommended（error 级），73 条存量清零；
+// 阶段2 接入 typed lint（projectService）：no-floating-promises / no-explicit-any
+// 存量 13 条清零后转 error。
 // 约定：
 // - no-unused-vars 放行 `_` 前缀（有意未使用的参数/变量/catch 绑定，标准约定）
-// - no-explicit-any 显式关闭——阶段2 统计存量后再定 warn/error（勿提前开启）
-// - 测试文件保留 no-use-before-define 豁免（describe 回调引用外层 let 是常见模式）
+// - no-floating-promises 仅 .ts 块开启（typed 规则需类型信息；
+//   .vue SFC 的 typed lint 支持不成熟，脚本块暂不覆盖）
+// - 测试文件放宽：no-use-before-define 豁免（describe 回调引用外层 let 是常见模式）、
+//   no-explicit-any 关闭（夹具/mock 构造宽松，readJsonRel 返回 JSON.parse 结果等）
 import tsParser from '@typescript-eslint/parser'
 import tsPlugin from '@typescript-eslint/eslint-plugin'
 import vueParser from 'vue-eslint-parser'
@@ -22,8 +26,8 @@ const rules = {
       destructuredArrayIgnorePattern: '^_'
     }
   ],
-  // 阶段2 再定级（先统计存量），现在保持关闭
-  '@typescript-eslint/no-explicit-any': 'off',
+  // 阶段2：存量清零后转 error（测试文件在下方豁免块放宽）
+  '@typescript-eslint/no-explicit-any': 'error',
   // TS 感知版：正确处理类型导入、函数提升、类声明合并等场景
   '@typescript-eslint/no-use-before-define': [
     'error',
@@ -44,10 +48,19 @@ export default [
     files: ['src/**/*.ts'],
     languageOptions: {
       parser: tsParser,
-      parserOptions: { ecmaVersion: 'latest', sourceType: 'module' }
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        // typed lint：按文件就近匹配 tsconfig（tsconfig.node.json / tsconfig.web.json）
+        projectService: true
+      }
     },
     plugins: { '@typescript-eslint': tsPlugin },
-    rules
+    rules: {
+      ...rules,
+      // 未处理的 Promise 必须 await / void / .catch（阶段2 typed 规则）
+      '@typescript-eslint/no-floating-promises': 'error'
+    }
   },
   {
     files: ['src/**/*.vue'],
@@ -64,8 +77,12 @@ export default [
     rules
   },
   {
-    // 测试文件放宽：先声明 helper 再使用是常见模式（describe 回调内引用外层 let）
+    // 测试文件放宽：no-use-before-define（describe 回调引用外层 let）、
+    // no-explicit-any（夹具/mock 构造宽松）
     files: ['**/*.spec.ts', '**/*.test.ts', '**/__tests__/**/*.ts'],
-    rules: { '@typescript-eslint/no-use-before-define': 'off' }
+    rules: {
+      '@typescript-eslint/no-use-before-define': 'off',
+      '@typescript-eslint/no-explicit-any': 'off'
+    }
   }
 ]

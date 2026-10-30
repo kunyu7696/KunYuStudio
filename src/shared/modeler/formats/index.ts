@@ -13,6 +13,7 @@ import { javaBlockFormat, javaItemFormat } from './javaBlock'
 import type { FormatDefinition, FormatDowngrade } from './types'
 
 /** 注册表持有的擦除类型：具体格式的产物/输入类型在调用点由 FormatId 断言还原 */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- 有意的类型擦除（unknown 会破坏注册时的逆变匹配）
 type AnyFormatDefinition = FormatDefinition<any, any>
 
 const registry = new Map<FormatId, AnyFormatDefinition>()

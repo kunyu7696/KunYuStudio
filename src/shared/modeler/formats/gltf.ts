@@ -899,8 +899,14 @@ export function gltfToDocument(
 
   /** accessor 类型 → 元素数（规范 §3.6.1） */
   const TYPE_COUNT: Record<string, number> = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT2: 4, MAT3: 9, MAT4: 16 }
+  /** 六种 componentType 的 TypedArray 构造签名（buffer/offset/length 形式） */
+  type TypedArrayCtor = new (
+    buffer: ArrayBufferLike,
+    byteOffset?: number,
+    length?: number
+  ) => Int8Array | Uint8Array | Int16Array | Uint16Array | Uint32Array | Float32Array
   /** componentType → TypedArray 构造函数 + 元素字节数（规范 §3.6.2） */
-  const CT_INFO: Record<number, { TA: any; byte: number; signed: boolean }> = {
+  const CT_INFO: Record<number, { TA: TypedArrayCtor; byte: number; signed: boolean }> = {
     5120: { TA: Int8Array, byte: 1, signed: true },
     5121: { TA: Uint8Array, byte: 1, signed: false },
     5122: { TA: Int16Array, byte: 2, signed: true },

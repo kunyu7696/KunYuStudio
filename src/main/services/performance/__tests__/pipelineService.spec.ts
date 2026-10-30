@@ -189,36 +189,30 @@ jdk.ExecutionSample {
 `
 
 describe('全自动 runFullAuto（静态 + JFR 动态）', () => {
-  it('静态入榜 → JFR 归因合并，进度事件完整', () =>
-    new Promise<void>((done) => {
-      if (!existsSync(javac)) {
-        done()
-        return
-      }
-      const events: PipelineEvent[] = []
-      runFullAuto(
-        repo,
-        {
-          jarPaths: [pathA],
-          loader: 'fabric',
-          mcVersion: '1.20.1',
-          collector: { kind: 'jfr', collect: async () => JFR_SAMPLE }
-        },
-        (e) => events.push(e)
-      ).then((r) => {
-        expect(r.static.succeeded).toBe(1)
-        expect(r.dynamic.ok).toBe(true)
-        expect(r.dynamic.modIds).toContain('mod-a')
-        const profile = repo.getProfile(keyA())
-        expect(profile?.dynamicMetrics?.source).toBe('jfr')
-        expect(profile?.dynamicMetrics?.cpu.topMethods[0]?.className).toBe(
-          'com.examplea.foo.FooA'
-        )
-        expect(profile?.dynamicMetrics?.cpu.averageCpuPercent).toBeCloseTo(66.7, 1)
-        expect(events[events.length - 1]?.stage).toBe('done')
-        done()
-      })
-    }))
+  it('静态入榜 → JFR 归因合并，进度事件完整', async () => {
+    if (!existsSync(javac)) return
+    const events: PipelineEvent[] = []
+    const r = await runFullAuto(
+      repo,
+      {
+        jarPaths: [pathA],
+        loader: 'fabric',
+        mcVersion: '1.20.1',
+        collector: { kind: 'jfr', collect: async () => JFR_SAMPLE }
+      },
+      (e) => events.push(e)
+    )
+    expect(r.static.succeeded).toBe(1)
+    expect(r.dynamic.ok).toBe(true)
+    expect(r.dynamic.modIds).toContain('mod-a')
+    const profile = repo.getProfile(keyA())
+    expect(profile?.dynamicMetrics?.source).toBe('jfr')
+    expect(profile?.dynamicMetrics?.cpu.topMethods[0]?.className).toBe(
+      'com.examplea.foo.FooA'
+    )
+    expect(profile?.dynamicMetrics?.cpu.averageCpuPercent).toBeCloseTo(66.7, 1)
+    expect(events[events.length - 1]?.stage).toBe('done')
+  })
 
   it('动态采集失败不影响静态画像', async () => {
     if (!existsSync(javac)) return

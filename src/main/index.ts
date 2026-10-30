@@ -193,7 +193,7 @@ function createWindow(): void {
   }
 }
 
-app.whenReady().then(async () => {
+void app.whenReady().then(async () => {
   await initSettings()
   // 社区桥接分区 UA 须在首个 webview 创建前装好（UA 与 sec-ch-ua 同源，否则
   // Cloudflare 判定伪造浏览器，挑战页死循环渲染不出交互式人机验证）

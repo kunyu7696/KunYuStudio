@@ -60,6 +60,7 @@ export function handle(
   // fn 的剩余入参用 any[] 而非 unknown[]：业务 handler 声明具体类型
   // （path: string, content: string 等），是 any[] 的协变子类型，可直接传入；
   // 用 unknown[] 会因逆变量参数报「string 不可赋给 unknown」。
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- 见上方协变说明，不可改 unknown
   fn: (event: IpcMainInvokeEvent, ...args: any[]) => unknown | Promise<unknown>
 ): void {
   const validators: (ValidateFunction | null)[] = schemas

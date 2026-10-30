@@ -52,7 +52,7 @@ export function useThought() {
     return ''
   })
   watch(liveThoughtText, () => {
-    nextTick(() => {
+    void nextTick(() => {
       const el = document.querySelector('.ap-thought.is-live .ap-thought-body') as HTMLElement | null
       if (el) el.scrollTop = el.scrollHeight
     })
