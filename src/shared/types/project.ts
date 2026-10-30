@@ -9,6 +9,13 @@ export type ProjectType =
   | 'shaderpack'
   | 'modpack'
 
+/**
+ * 目标版本（edition）：Java 版 / 基岩版。
+ * 基岩版支持尚未开放——本类型仅为架构预留，避免类型层把 Java 写死、
+ * 垂直闭环后无法向基岩扩宽；当前所有项目均为 'java'（字段缺省即 java，不落库）。
+ */
+export type ProjectEdition = 'java' | 'bedrock'
+
 /** 模组加载器（M7+ 解锁 Fabric/Forge/NeoForge 三加载器） */
 export type ModLoader = 'fabric' | 'forge' | 'neoforge'
 
@@ -34,6 +41,8 @@ export interface Project {
   id: string
   name: string
   type: ProjectType
+  /** 目标版本：缺省/'java' 即现有行为；'bedrock' 为基岩版预留位（当前无 UI 写入） */
+  edition?: ProjectEdition
   /** 项目在磁盘上的绝对路径 */
   path: string
   /** 仅模组类型有值 */
@@ -55,6 +64,8 @@ export interface Project {
 export interface CreateProjectInput {
   name: string
   type: ProjectType
+  /** 目标版本预留位：当前创建链路不传入，一律按 Java 版处理 */
+  edition?: ProjectEdition
   path: string
   loader?: ModLoader
   mcVersion?: string
