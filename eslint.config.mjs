@@ -12,6 +12,10 @@
 import tsParser from '@typescript-eslint/parser'
 import tsPlugin from '@typescript-eslint/eslint-plugin'
 import vueParser from 'vue-eslint-parser'
+import noHardcodedZh from './eslint/rules/no-hardcoded-zh.mjs'
+import zhBaseline from './eslint/zh-baseline.mjs'
+
+const kunyuPlugin = { rules: { 'no-hardcoded-zh': noHardcodedZh } }
 
 const rules = {
   // recommended 规则集整体接入（error 级）
@@ -84,5 +88,16 @@ export default [
       '@typescript-eslint/no-use-before-define': 'off',
       '@typescript-eslint/no-explicit-any': 'off'
     }
+  },
+  {
+    // 阶段3：渲染层禁止新增硬编码中文（script 字面量/模板字符串 + .vue 模板文本/静态属性）
+    files: ['src/renderer/src/**/*.ts', 'src/renderer/src/**/*.vue'],
+    plugins: { kunyu: kunyuPlugin },
+    rules: { 'kunyu/no-hardcoded-zh': 'error' }
+  },
+  {
+    // 豁免：存量基线（国际化后从中移除）+ i18n 翻译源 + 渲染层测试
+    files: [...zhBaseline, 'src/renderer/src/i18n/**/*', 'src/renderer/src/**/*.spec.ts'],
+    rules: { 'kunyu/no-hardcoded-zh': 'off' }
   }
 ]
