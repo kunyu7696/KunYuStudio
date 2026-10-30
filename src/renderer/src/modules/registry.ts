@@ -2,13 +2,6 @@ import type { Component } from 'vue'
 import type { ProjectType } from '../../../shared/types/project'
 
 /**
- * 活动栏分组标识：纯渲染层归属，不影响模块注册、路由与激活逻辑。
- * create 创作工坊 / content 内容库 / ai-debug AI 与调试 / release 发布交付 / ext 扩展与生态；
- * 缺省表示不分组（项目管理、设置等常驻项）。
- */
-export type ModuleGroupId = 'create' | 'content' | 'ai-debug' | 'release' | 'ext'
-
-/**
  * 活动栏模块统一接口（设计文档 9.2.3）
  * 新模块只需实现该接口并调用 moduleRegistry.register()，无需修改主框架代码。
  */
@@ -35,8 +28,6 @@ export interface KunYuModule {
   sidebarLoader?: () => Promise<{ default: Component }>
   /** 活动栏位置：常规模块在顶部，设置等固定在底部 */
   placement?: 'top' | 'bottom'
-  /** 活动栏分组：仅影响 ActivityBar 的折叠分组渲染，缺省为不分组常驻项 */
-  group?: ModuleGroupId
   /**
    * 仅在指定项目类型下可见（如三个包编辑器）。
    * 缺省表示对所有项目类型可见。

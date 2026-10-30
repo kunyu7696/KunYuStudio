@@ -65,24 +65,11 @@ const enUS: Messages = {
   },
   activity: {
     label: 'Activity bar',
-    ai: 'AI assistant',
-    collapse: 'Collapse activity bar',
-    expand: 'Expand activity bar',
-    search: 'Search modules (Ctrl+K)',
-    hideModule: 'Hide "{name}"',
-    groups: {
-      create: 'Create',
-      content: 'Content',
-      aiDebug: 'AI & Debug',
-      release: 'Release',
-      ext: 'Extensions'
-    }
+    ai: 'AI assistant'
   },
   sidebar: {
     backToProjects: 'Back to project list',
     title: 'Sidebar',
-    collapse: 'Collapse sidebar',
-    expand: 'Expand sidebar',
     refreshTree: 'Refresh file tree',
     createProject: 'Create project',
     importProject: 'Import project',
@@ -154,10 +141,6 @@ const enUS: Messages = {
   settings: {
     generalTitle: 'General',
     generalDesc: 'Basic interface and workflow preferences. Changes apply immediately.',
-    activityModules: 'Activity bar modules',
-    activityModulesDesc: 'Right-click a module in the activity bar to hide it; hidden modules remain reachable via the Ctrl+K command palette.',
-    restoreAllModules: 'Restore all',
-    noHiddenModules: 'No hidden modules',
     appearance: 'Appearance',
     themeMode: 'Theme',
     themeModeDesc: 'Dark, classic light, or follow the operating system light/dark setting.',

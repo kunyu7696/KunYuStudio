@@ -40,18 +40,7 @@
     </div>
     <div class="app-body">
       <ActivityBar />
-      <SideBar v-if="showSideBar && !ui.sidebarCollapsed" />
-      <!-- 侧边栏收起态：细竖条常驻原位置，点击展开（折叠按钮在侧边栏左缘） -->
-      <button
-        v-else-if="showSideBar"
-        type="button"
-        class="sidebar-reopen"
-        :title="t('sidebar.expand')"
-        :aria-label="t('sidebar.expand')"
-        @click="ui.toggleSidebarCollapsed()"
-      >
-        <span class="sidebar-reopen-arrow">›</span>
-      </button>
+      <SideBar v-if="showSideBar" />
       <!-- 中间编辑列：底部终端只占编辑区宽度（不横贯到 AI 助手），可折叠 -->
       <div class="app-main">
         <!-- 编辑区：标签页、内容、终端 -->
@@ -72,7 +61,7 @@
         <span class="modlib-reopen-text">{{ t('app.modlibTitle') }}</span>
       </button>
       <AiAssistantPanel v-show="ui.aiPanelVisible" />
-      <!-- AI 助手收起态：右缘细竖条，点击展开（活动栏底部不再放 AI 入口） -->
+      <!-- AI 助手收起态：右缘细竖条，点击展开（活动栏底部 AI 入口之外的常驻恢复出口） -->
       <button
         v-if="!ui.aiPanelVisible"
         type="button"
@@ -170,12 +159,8 @@ const cryptoPlaintext = ref(false)
 /** 项目管理与统一编辑器固定显示文件树；注册了 sidebarLoader 的模块显示侧边栏 */
 const showSideBar = computed(() => {
   if (ui.activeModuleId === 'settings') return false
-  // 项目管理无打开项目时：项目列表在活动栏，侧边栏让位给内容区
-  if (ui.activeModuleId === 'project-manager') return Boolean(projectStore.currentProject)
-  if (ui.activeModuleId === 'unified') return true
-  if (moduleRegistry.get(ui.activeModuleId)?.sidebarLoader) return true
-  // 其余模块（整合包组装、建模器等）：打开项目时侧栏回落为项目文件树，避免切模块就丢树
-  return Boolean(projectStore.currentProject)
+  if (ui.activeModuleId === 'project-manager' || ui.activeModuleId === 'unified') return true
+  return Boolean(moduleRegistry.get(ui.activeModuleId)?.sidebarLoader)
 })
 
 /** Mod 库面板：仅当前项目为整合包且面板开关开启时显示 */
@@ -426,27 +411,6 @@ function onGlobalKeyDown(e: KeyboardEvent): void {
 .app-main-content {
   flex: 1;
   min-height: 0;
-}
-
-/* 侧边栏收起态把手：细竖条常驻原位置，点击展开 */
-.sidebar-reopen {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 14px;
-  flex-shrink: 0;
-  padding: 0;
-  border: none;
-  border-right: 1px solid var(--ky-border);
-  background: var(--ky-bg-sidebar);
-  color: var(--ky-text-dim);
-  cursor: pointer;
-  font-size: 13px;
-}
-
-.sidebar-reopen:hover {
-  background: var(--ky-bg-hover);
-  color: var(--ky-accent);
 }
 
 /* Mod 库收起态把手：细竖条常驻右栏位置，点击展开 */

@@ -96,31 +96,6 @@
       </SettingsRow>
     </SettingsSection>
 
-    <SettingsSection :title="t('settings.activityModules')">
-      <SettingsRow
-        :label="t('settings.activityModules')"
-        :desc="t('settings.activityModulesDesc')"
-        data-setting-id="general-activity-modules"
-      >
-        <div class="hidden-mods">
-          <template v-if="hiddenMods.length > 0">
-            <el-tag
-              v-for="m in hiddenMods"
-              :key="m.id"
-              closable
-              size="small"
-              @close="ui.restoreModule(m.id)"
-              >{{ moduleName(m) }}</el-tag
-            >
-            <el-button size="small" @click="ui.restoreHiddenModules()">{{
-              t('settings.restoreAllModules')
-            }}</el-button>
-          </template>
-          <span v-else class="set-unit dim">{{ t('settings.noHiddenModules') }}</span>
-        </div>
-      </SettingsRow>
-    </SettingsSection>
-
     <SettingsSection :title="t('settings.update')">
       <SettingsRow
         :label="t('settings.currentVersion')"
@@ -309,12 +284,9 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, computed, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useSettingsStore } from '../../stores/settings'
-import { useUiStore } from '../../stores/ui'
-import { moduleRegistry, type KunYuModule } from '../../modules'
-import { t, moduleName } from '../../i18n'
 import {
   DEFAULT_SETTINGS,
   type GeneralSettings,
@@ -322,18 +294,11 @@ import {
   type ThemeMode
 } from '../../../../shared/types/settings'
 import { UPDATE_RELEASE_PAGE, type UpdateState } from '../../../../shared/types/update'
+import { t } from '../../i18n'
 import SettingsSection from './SettingsSection.vue'
 import SettingsRow from './SettingsRow.vue'
 
 const settings = useSettingsStore()
-const ui = useUiStore()
-
-/** 已隐藏的活动栏模块（隐藏动作在活动栏右键菜单，恢复在这里） */
-const hiddenMods = computed<KunYuModule[]>(() =>
-  ui.hiddenModules
-    .map((id) => moduleRegistry.get(id))
-    .filter((m): m is KunYuModule => Boolean(m))
-)
 
 const appVersion = ref('')
 /** 更新状态机快照：主进程推送 + 进入面板时主动拉一次 */
@@ -476,14 +441,6 @@ async function reset(): Promise<void> {
 }
 .set-unit.dim {
   opacity: 0.5;
-}
-.hidden-mods {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  max-width: 320px;
-  justify-content: flex-end;
 }
 .pane-foot {
   margin-top: 4px;

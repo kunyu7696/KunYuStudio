@@ -7,11 +7,11 @@
       </section>
     </div>
 
-    <!-- 未打开项目：欢迎页（项目列表在左侧活动栏分组） -->
+    <!-- 未打开项目：欢迎页（项目列表在左侧侧边栏） -->
     <template v-else>
       <header class="pm-header">
         <h1>项目管理</h1>
-        <p class="pm-subtitle">项目列表在左侧活动栏「项目管理」分组里，展开即可创建、导入或打开</p>
+        <p class="pm-subtitle">从左侧选择项目打开，或点 ＋ 创建、⊥ 导入</p>
       </header>
 
       <div v-if="projectStore.loading" class="pm-loading">
@@ -24,9 +24,9 @@
           <el-icon :size="56" class="pm-hint-icon"><FolderOpened /></el-icon>
           <h2>{{ projectStore.projects.length > 0 ? '请选择一个项目' : '还没有项目' }}</h2>
           <p v-if="projectStore.projects.length > 0">
-            左侧活动栏「项目管理」里已有 {{ projectStore.projects.length }} 个项目，点一下打开
+            左侧项目列表已有 {{ projectStore.projects.length }} 个项目，点一下打开
           </p>
-          <p v-else>在左侧活动栏「项目管理」里点「创建项目」新建，或「导入项目」打开已有文件夹</p>
+          <p v-else>点击左侧 ＋ 创建第一个项目，或 ⊥ 导入已有项目文件夹</p>
         </div>
       </template>
     </template>

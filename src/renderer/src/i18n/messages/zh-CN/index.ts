@@ -60,24 +60,11 @@ const zhCN = {
   },
   activity: {
     label: '活动栏',
-    ai: 'AI 助手',
-    collapse: '收起活动栏',
-    expand: '展开活动栏',
-    search: '搜索模块（Ctrl+K）',
-    hideModule: '隐藏「{name}」',
-    groups: {
-      create: '创作工坊',
-      content: '内容库',
-      aiDebug: 'AI 与调试',
-      release: '发布交付',
-      ext: '扩展与生态'
-    }
+    ai: 'AI 助手'
   },
   sidebar: {
     backToProjects: '返回项目列表',
     title: '侧边栏',
-    collapse: '收起侧边栏',
-    expand: '展开侧边栏',
     refreshTree: '刷新文件树',
     createProject: '创建项目',
     importProject: '导入项目',
@@ -149,10 +136,6 @@ const zhCN = {
   settings: {
     generalTitle: '通用',
     generalDesc: '界面与工作习惯相关的基础设置，修改即时生效。',
-    activityModules: '活动栏模块',
-    activityModulesDesc: '在活动栏模块上右键可隐藏；隐藏的模块仍可通过 Ctrl+K 命令面板打开。',
-    restoreAllModules: '全部恢复',
-    noHiddenModules: '没有隐藏的模块',
     appearance: '外观',
     themeMode: '主题模式',
     themeModeDesc: '深色、经典浅白，或跟随操作系统亮暗切换。',

@@ -105,19 +105,6 @@ describe('面板开关与宽度', () => {
     )
   })
 
-  it('文件树侧边栏折叠态默认展开，切换后持久化并可恢复', () => {
-    const ui = useUiStore()
-    expect(ui.sidebarCollapsed).toBe(false)
-    ui.toggleSidebarCollapsed()
-    expect(ui.sidebarCollapsed).toBe(true)
-    expect(localStorage.getItem('kunyu:sidebar-collapsed')).toBe('1')
-    // 重新建 store 时从持久化恢复折叠态
-    setActivePinia(createPinia())
-    expect(useUiStore().sidebarCollapsed).toBe(true)
-    useUiStore().toggleSidebarCollapsed()
-    expect(localStorage.getItem('kunyu:sidebar-collapsed')).toBe('0')
-  })
-
   it('持久化了越界 AI 面板宽度时回落默认 400', () => {
     localStorage.setItem('kunyu:ai-panel-width', '100')
     expect(useUiStore().aiPanelWidth).toBe(400)
