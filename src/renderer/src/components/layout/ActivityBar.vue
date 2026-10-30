@@ -19,18 +19,6 @@
 
     <div class="ab-group ab-bottom">
       <button
-        type="button"
-        class="ab-item"
-        :class="{ active: ui.aiPanelVisible }"
-        :title="t('activity.ai')"
-        :aria-label="t('activity.ai')"
-        :aria-current="ui.aiPanelVisible"
-        @click="ui.toggleAiPanel()"
-      >
-        <el-icon :size="19"><ChatLineRound /></el-icon>
-        <span class="ab-label">{{ t('activity.ai') }}</span>
-      </button>
-      <button
         v-for="mod in bottomModules"
         :key="mod.id"
         type="button"
@@ -49,7 +37,6 @@
 
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import { ChatLineRound } from '@element-plus/icons-vue'
 import { moduleRegistry, type KunYuModule } from '../../modules'
 import { t, moduleName } from '../../i18n'
 import { useUiStore } from '../../stores/ui'

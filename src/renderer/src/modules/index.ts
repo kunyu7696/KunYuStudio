@@ -111,12 +111,13 @@ export function registerBuiltinModules(): void {
 
   // 资产库（原项目画廊）：AI 产出的贴图候选全部存档，零额度复用（不必重跑 AI 烧额度）；
   // 同时接替原「KunYu 社区」的跨项目聚合与 .kyshare.json 分享包导入/导出
-  // 不绑定单个项目：无项目时进入「跨项目汇总」模式，把全部项目的画作与模型汇成素材库
+  // 无项目时进入「跨项目汇总」模式；mod 项目内隐藏（主页已有入口，避免重复）
   moduleRegistry.register({
     id: 'gallery',
     name: '资产库',
     icon: Picture,
     description: 'AI 贴图候选、项目像素资产与 3D 模型的统一资产库：跨项目汇总、写回 / 二次编辑、分享包导入导出',
+    projectTypes: ['resourcepack', 'datapack', 'shaderpack', 'modpack'],
     loader: () => import('./gallery/GalleryView.vue')
   })
 
@@ -149,12 +150,14 @@ export function registerBuiltinModules(): void {
     loader: () => import('./views/MarketView.vue')
   })
 
-  // 资源库：全局库，不绑定项目——市场下载与本地导入的 jar/zip/mrpack 统一存放，未打开项目也能查看整理
+  // 资源库：市场下载与本地导入的 jar/zip/mrpack 统一存放，未打开项目也能查看整理；
+  // mod 项目内隐藏（主页已有入口，避免重复），整合包项目内可按类型一键加入对应目录
   moduleRegistry.register({
     id: 'modlib',
     name: '资源库',
     icon: FolderOpened,
     description: '全局资源库：市场下载与本地导入的模组/资源包/数据包/光影统一存放，打开整合包项目可按类型一键加入对应目录',
+    projectTypes: ['resourcepack', 'datapack', 'shaderpack', 'modpack'],
     loader: () => import('./modlib/ModLibraryView.vue')
   })
 
@@ -184,7 +187,7 @@ export function registerBuiltinModules(): void {
     name: 'FTB 任务书',
     icon: Tickets,
     description: '编辑 FTB Quests 章节：任务提交物品、奖励与前置依赖，落盘 SNBT 游戏内 /reload 生效',
-    projectTypes: ['mod', 'modpack'],
+    projectTypes: ['modpack'],
     requireProject: true,
     loader: () => import('./ftbquest/FtbQuestView.vue')
   })
@@ -195,7 +198,7 @@ export function registerBuiltinModules(): void {
     name: '指南书',
     icon: Reading,
     description: '编辑 Patchouli 手册：类目与条目页面（文本/配方/图片/聚焦），落盘 config/<命名空间>/patchouli_books/',
-    projectTypes: ['mod', 'modpack'],
+    projectTypes: ['modpack'],
     requireProject: true,
     loader: () => import('./patchouli/PatchouliView.vue')
   })

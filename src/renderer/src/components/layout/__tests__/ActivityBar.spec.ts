@@ -9,8 +9,8 @@ import type { Project, ProjectType } from '../../../../../shared/types/project'
 
 /**
  * 活动栏模块可见性契约（requireProject / homeOnly / projectTypes 组合）：
- * - 未打开项目：只显示不要求项目的模块 —— 资产库、Mod 库、模组与市场、全流程 AI 制作、版本与产物等
- * - 打开 mod 项目：模组与市场、全流程 AI 制作都不出现；资产库出现；光影包编辑器不出现
+ * - 未打开项目：只显示不要求项目的模块 —— 资产库、资源库、模组与市场、全流程 AI 制作、版本与产物等
+ * - 打开 mod 项目：模组与市场、全流程 AI 制作、资产库、资源库都不出现（主页已有入口）；光影包编辑器不出现
  * - 打开 modpack 项目：模组与市场出现
  * - 打开 shaderpack 项目：光影包编辑器出现
  */
@@ -59,18 +59,31 @@ describe('ActivityBar · 模块可见性', () => {
     expect(labels).not.toContain('整合包组装')
   })
 
-  it('资源库在任意场景都可见（全局库，不绑定项目）', () => {
+  it('资源库：主页与整合包等项目可见，mod 项目隐藏（主页已有入口）', () => {
     expect(visibleLabels(null)).toContain('资源库')
-    for (const type of ['mod', 'modpack', 'datapack', 'resourcepack', 'shaderpack'] as ProjectType[]) {
+    expect(visibleLabels('mod')).not.toContain('资源库')
+    for (const type of ['modpack', 'datapack', 'resourcepack', 'shaderpack'] as ProjectType[]) {
       expect(visibleLabels(type)).toContain('资源库')
     }
   })
 
-  it('普通 mod 项目：模组与市场不出现，资产库出现', () => {
+  it('普通 mod 项目：模组与市场、资产库、资源库都不出现', () => {
     const labels = visibleLabels('mod')
     expect(labels).not.toContain('模组与市场')
-    expect(labels).toContain('资产库')
+    expect(labels).not.toContain('资产库')
+    expect(labels).not.toContain('资源库')
     expect(labels).toContain('数据包编辑器')
+  })
+
+  it('FTB 任务书与指南书仅整合包项目可见', () => {
+    expect(visibleLabels('modpack')).toContain('FTB 任务书')
+    expect(visibleLabels('modpack')).toContain('指南书')
+    for (const type of ['mod', 'datapack', 'resourcepack', 'shaderpack'] as ProjectType[]) {
+      expect(visibleLabels(type)).not.toContain('FTB 任务书')
+      expect(visibleLabels(type)).not.toContain('指南书')
+    }
+    expect(visibleLabels(null)).not.toContain('FTB 任务书')
+    expect(visibleLabels(null)).not.toContain('指南书')
   })
 
   it('打开项目后「全流程 AI 制作」从项目页移除（仅主页保留）', () => {
