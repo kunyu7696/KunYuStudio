@@ -137,6 +137,9 @@
       </div>
     </section>
 
+    <!-- 依赖关系图（P3-2 只读：jar 内嵌元数据解析，随预览刷新） -->
+    <DepGraphCard v-if="depGraph" :graph="depGraph" />
+
     <!-- 内容包模块 -->
     <section class="mp-card">
       <div class="mp-card-title">
@@ -405,6 +408,7 @@ import { useModpackStore } from '../../stores/modpack'
 import { useProjectStore } from '../../stores/project'
 import { useLauncherStore } from '../../stores/launcher'
 import PublishDialog from './PublishDialog.vue'
+import DepGraphCard from './DepGraphCard.vue'
 import { addLibraryModToProject as addLibraryMod } from './addLibraryMod'
 import { t } from '../../i18n'
 import { MODLIB_MIME, type ModlibDragPayload } from '../../../../shared/modlibDnd'
@@ -427,6 +431,8 @@ const launcherStore = useLauncherStore()
 
 const projectName = computed(() => projectStore.currentProject?.name ?? '—')
 const mcVersion = computed(() => projectStore.currentProject?.mcVersion ?? '')
+/** 依赖关系图（随组装计划预览产出，无计划时不显示） */
+const depGraph = computed(() => store.plan?.depGraph ?? null)
 
 const LOADER_TEXT: Record<string, string> = {
   fabric: 'Fabric',

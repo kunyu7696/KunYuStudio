@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { zipEntries } from '../../ai/zipUtil'
-import { auditDependencies, extractJarDeps, normalizeModId } from '../dependencyAudit'
+import { auditDependencies, buildDependencyGraph, extractJarDeps, normalizeModId } from '../dependencyAudit'
 
 function tmpDir(): string {
   return mkdtempSync(join(tmpdir(), 'kunyu-depaudit-'))
@@ -173,5 +173,99 @@ describe('zip 夹具自检', () => {
     expect(bytes[1]).toBe(0x4b)
     expect(bytes[2]).toBe(0x03)
     expect(bytes[3]).toBe(0x04)
+  })
+})
+
+describe('buildDependencyGraph（P3-2 只读关系图）', () => {
+  it('在场 required→satisfied 边；缺席 required/optional→missing 边 + 虚影节点', () => {
+    const dir = tmpDir()
+    fabricJar(dir, 'main.jar', {
+      id: 'mainmod',
+      depends: { libmod: '*', 'missing-lib': '*' },
+      suggests: { 'missing-addon': '*' }
+    })
+    fabricJar(dir, 'lib.jar', { id: 'libmod' })
+    const decls = ['main.jar', 'lib.jar'].map((n) => extractJarDeps(join(dir, n), n))
+    const g = buildDependencyGraph(decls, new Map())
+
+    // 节点：2 个在场 jar + 2 个虚影
+    expect(g.nodes.map((n) => n.id).sort()).toEqual([
+      'jar:lib.jar',
+      'jar:main.jar',
+      'mod:missing-addon',
+      'mod:missing-lib'
+    ])
+    const ghost = g.nodes.find((n) => n.id === 'mod:missing-lib')
+    expect(ghost?.ghost).toBe(true)
+    expect(ghost?.platform).toBeNull()
+
+    expect(g.edges).toContainEqual({
+      from: 'jar:main.jar',
+      to: 'jar:lib.jar',
+      kind: 'required',
+      state: 'satisfied'
+    })
+    expect(g.edges).toContainEqual({
+      from: 'jar:main.jar',
+      to: 'mod:missing-lib',
+      kind: 'required',
+      state: 'missing'
+    })
+    expect(g.edges).toContainEqual({
+      from: 'jar:main.jar',
+      to: 'mod:missing-addon',
+      kind: 'optional',
+      state: 'missing'
+    })
+    expect(g.edges).toHaveLength(3)
+  })
+
+  it('incompatible 在场→conflict 边；缺席→不成边', () => {
+    const decls = [
+      { fileName: 'a.jar', modId: 'amod', deps: [
+        { target: 'evilmod', kind: 'incompatible' as const },
+        { target: 'not-here', kind: 'incompatible' as const }
+      ] },
+      { fileName: 'b.jar', modId: 'evilmod', deps: [] }
+    ]
+    const g = buildDependencyGraph(decls, new Map())
+    expect(g.edges).toEqual([
+      { from: 'jar:a.jar', to: 'jar:b.jar', kind: 'incompatible', state: 'conflict' }
+    ])
+    expect(g.nodes.some((n) => n.id === 'mod:not-here')).toBe(false)
+  })
+
+  it('元数据缺失的 jar 是孤立节点（无边）；自我依赖跳过', () => {
+    const decls = [
+      { fileName: 'solo.jar', modId: null, deps: [] },
+      { fileName: 'self.jar', modId: 'selfmod', deps: [{ target: 'selfmod', kind: 'required' as const }] }
+    ]
+    const g = buildDependencyGraph(decls, new Map())
+    expect(g.nodes).toHaveLength(2)
+    expect(g.edges).toEqual([])
+    expect(g.nodes.find((n) => n.fileName === 'solo.jar')?.modId).toBeNull()
+  })
+
+  it('展示名与平台取自来源记录，无记录回退 fileName + local', () => {
+    const decls = [{ fileName: 'sodium.jar', modId: 'sodium', deps: [] }]
+    const src = {
+      fileName: 'sodium.jar',
+      platform: 'modrinth' as const,
+      modId: 'AANobbMI',
+      versionId: 'v1',
+      slug: 'sodium',
+      name: 'Sodium',
+      versionNumber: '0.5.0',
+      downloadUrl: 'https://example.com/x.jar',
+      size: 1,
+      installedAt: '2026-01-01T00:00:00Z'
+    }
+    const g = buildDependencyGraph(decls, new Map([[src.fileName, src]]))
+    expect(g.nodes[0]?.name).toBe('Sodium')
+    expect(g.nodes[0]?.platform).toBe('modrinth')
+
+    const g2 = buildDependencyGraph(decls, new Map())
+    expect(g2.nodes[0]?.name).toBe('sodium.jar')
+    expect(g2.nodes[0]?.platform).toBe('local')
   })
 })

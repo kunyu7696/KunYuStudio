@@ -14,7 +14,7 @@ import type {
   ModrinthFileEntry
 } from '../../../shared/types/modpack'
 import { classifyJars, type JarCandidate } from './classify'
-import { auditDependencies, extractJarDeps } from './dependencyAudit'
+import { auditDependencies, buildDependencyGraph, extractJarDeps } from './dependencyAudit'
 import type { FileHashes } from './hashUtil'
 
 /** 包内条目来源：generated 由组装器现场生成，file 直接从项目内取 */
@@ -83,9 +83,9 @@ export function planModpack(input: PlannerInput): PlannerResult {
 
   // P3-1b：依赖缺席审计——缺必需前置/可选联动/冲突共存前置到打包阶段提示，
   // 不再等游戏启动崩溃才发现（单个 jar 元数据损坏跳过，不拖垮审计）。
-  const audit = auditDependencies(
-    input.candidates.filter((c) => c.validZip).map((c) => extractJarDeps(c.absPath, c.fileName))
-  )
+  // decls 同时喂 P3-2 依赖关系图（depGraph），jar 元数据只解析一次。
+  const decls = input.candidates.filter((c) => c.validZip).map((c) => extractJarDeps(c.absPath, c.fileName))
+  const audit = auditDependencies(decls)
   if (audit.missingRequired.length > 0 || audit.conflicts.length > 0) {
     warnings.push(
       `依赖审计发现 ${audit.missingRequired.length} 个缺必需前置、${audit.conflicts.length} 组冲突共存（详见下）：`
@@ -239,6 +239,7 @@ export function planModpack(input: PlannerInput): PlannerResult {
     jars,
     exclusions,
     packs: packSummaries,
+    depGraph: buildDependencyGraph(decls, input.sources),
     warnings
   }
 

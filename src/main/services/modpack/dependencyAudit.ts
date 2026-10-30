@@ -17,6 +17,12 @@
  * 只报缺席不校验版本号是否满足（版本满足性属于加载器运行时职责）。
  */
 import { openZip } from '../performance/jarReader'
+import type {
+  DependencyGraph,
+  DepGraphEdge,
+  DepGraphNode,
+  ModSourceEntry
+} from '../../../shared/types/modpack'
 
 /** 单个模组的依赖声明（从 jar 元数据解析出的归一化形态） */
 export interface ModDependencyDecl {
@@ -207,4 +213,66 @@ export function auditDependencies(decls: ModJarDecl[]): DependencyAuditResult {
     missingOptional,
     conflicts
   }
+}
+
+/**
+ * 由 jar 依赖声明构建只读关系图（P3-2，纯函数）。
+ * 节点=在场 jar（含解析失败的孤立点）+ 缺席依赖目标的虚影节点；边=依赖声明。
+ * 判定与审计一致：required/optional 目标缺席 → missing 边到虚影；
+ * incompatible 目标在场 → conflict 边；目标不在场的 incompatible 声明不成边
+ * （未安装即无冲突，画出来是纯噪音）。自我依赖声明跳过（单 jar 多模组元数据的常态）。
+ */
+export function buildDependencyGraph(
+  decls: ModJarDecl[],
+  sources: ReadonlyMap<string, ModSourceEntry>
+): DependencyGraph {
+  const byModId = new Map<string, string>()
+  for (const d of decls) {
+    if (d.modId && !byModId.has(d.modId)) byModId.set(d.modId, d.fileName)
+  }
+
+  const jarNodes: DepGraphNode[] = decls.map((d) => {
+    const src = sources.get(d.fileName)
+    return {
+      id: `jar:${d.fileName}`,
+      fileName: d.fileName,
+      modId: d.modId,
+      name: src?.name || d.fileName,
+      platform: src?.platform ?? 'local',
+      ghost: false
+    }
+  })
+
+  const ghosts = new Map<string, DepGraphNode>()
+  const edges: DepGraphEdge[] = []
+  for (const d of decls) {
+    if (!d.modId) continue
+    for (const dep of d.deps) {
+      if (dep.target === d.modId) continue
+      const targetFile = byModId.get(dep.target)
+      if (targetFile) {
+        edges.push({
+          from: `jar:${d.fileName}`,
+          to: `jar:${targetFile}`,
+          kind: dep.kind,
+          state: dep.kind === 'incompatible' ? 'conflict' : 'satisfied'
+        })
+      } else if (dep.kind !== 'incompatible') {
+        let ghost = ghosts.get(dep.target)
+        if (!ghost) {
+          ghost = {
+            id: `mod:${dep.target}`,
+            fileName: null,
+            modId: dep.target,
+            name: dep.target,
+            platform: null,
+            ghost: true
+          }
+          ghosts.set(dep.target, ghost)
+        }
+        edges.push({ from: `jar:${d.fileName}`, to: ghost.id, kind: dep.kind, state: 'missing' })
+      }
+    }
+  }
+  return { nodes: [...jarNodes, ...ghosts.values()], edges }
 }

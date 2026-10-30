@@ -98,6 +98,37 @@ export interface ModrinthFileEntry {
   env: JarEnv
 }
 
+/** 依赖关系图节点（P3-2 只读图：jar 维度；ghost=被依赖但未安装的虚影节点） */
+export interface DepGraphNode {
+  /** 唯一键：在场 jar 为 `jar:<fileName>`；缺席目标为 `mod:<modId>` */
+  id: string
+  /** 在场 jar 的文件名；ghost 为 null */
+  fileName: string | null
+  /** 归一化 modId；元数据缺失的在场 jar 为 null */
+  modId: string | null
+  /** 展示名：来源记录 name 优先，其次 fileName / modId */
+  name: string
+  /** 来源平台；ghost（未安装）为 null */
+  platform: ModSourcePlatform | null
+  /** true=被依赖但未安装的虚影节点 */
+  ghost: boolean
+}
+
+/** 依赖关系图边（from/to 为节点 id） */
+export interface DepGraphEdge {
+  from: string
+  to: string
+  kind: 'required' | 'optional' | 'incompatible'
+  /** satisfied=目标在场（含可选已装）；missing=目标缺席；conflict=声明冲突却共存 */
+  state: 'satisfied' | 'missing' | 'conflict'
+}
+
+/** jar 内嵌元数据（fabric.mod.json / mods.toml）解析出的模组间依赖关系图 */
+export interface DependencyGraph {
+  nodes: DepGraphNode[]
+  edges: DepGraphEdge[]
+}
+
 /** 组装计划（干跑 `modpack:preview` 与实跑共用同一结构） */
 export interface ModpackPlan {
   name: string
@@ -112,6 +143,8 @@ export interface ModpackPlan {
   exclusions: ModpackExclusion[]
   /** 内容包概要（禁用包也列出，enabled:false 供 UI 展示） */
   packs: ContentPackSummary[]
+  /** 模组间依赖关系图（P3-2：由 jar 内嵌元数据解析，组装页只读展示） */
+  depGraph: DependencyGraph
   /** 非阻断告警（降级、许可提示等） */
   warnings: string[]
 }
