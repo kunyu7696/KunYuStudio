@@ -305,6 +305,8 @@ const api: IpcApi = {
     assemble: (projectPath) => ipcRenderer.invoke(IpcChannels.MODPACK_ASSEMBLE, projectPath),
     listSources: (projectPath) =>
       ipcRenderer.invoke(IpcChannels.MODPACK_LIST_SOURCES, projectPath),
+    crossLink: (projectPath) =>
+      ipcRenderer.invoke(IpcChannels.MODPACK_CROSS_LINK, projectPath),
     launchTest: (input) => ipcRenderer.invoke(IpcChannels.MODPACK_LAUNCH_TEST, input),
     listPacks: (projectPath) => ipcRenderer.invoke(IpcChannels.MODPACK_LIST_PACKS, projectPath),
     setPackEnabled: (projectPath, packId, enabled) =>

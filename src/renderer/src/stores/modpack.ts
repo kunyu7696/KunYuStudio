@@ -4,6 +4,7 @@
  */
 import { defineStore } from 'pinia'
 import type {
+  CrossLinkReport,
   LaunchTestInput,
   LaunchTestResult,
   ModJarPlan,
@@ -31,6 +32,9 @@ export interface ModpackState {
   /** 启动测试：进行中与最近一次回执 */
   testing: boolean
   launchResult: LaunchTestResult | null
+  /** 跨平台联动报告（P3-3；手动触发，逐模组联网，不随预览自动刷新） */
+  crossLink: CrossLinkReport | null
+  crossLinkLoading: boolean
 }
 
 export const useModpackStore = defineStore('modpack', {
@@ -45,7 +49,9 @@ export const useModpackStore = defineStore('modpack', {
     lastCfZipPath: null,
     lastEntryCount: null,
     testing: false,
-    launchResult: null
+    launchResult: null,
+    crossLink: null,
+    crossLinkLoading: false
   }),
 
   getters: {
@@ -77,9 +83,10 @@ export const useModpackStore = defineStore('modpack', {
   },
 
   actions: {
-    /** 重新扫描并干跑预览（不落盘） */
+    /** 重新扫描并干跑预览（不落盘）；跨平台报告按项目维度作废弃置，需手动重新比对 */
     async refresh(projectPath: string): Promise<void> {
       this.loading = true
+      this.crossLink = null
       try {
         const [preview, sources, packs] = await Promise.all([
           window.api.modpack.preview(projectPath),
@@ -129,6 +136,29 @@ export const useModpackStore = defineStore('modpack', {
       this.lastCfZipPath = null
       this.lastEntryCount = null
       this.launchResult = null
+      this.crossLink = null
+    },
+
+    /** P3-3 跨平台联动：手动触发（逐模组联网，模组多时需要数十秒） */
+    async refreshCrossLink(projectPath: string): Promise<void> {
+      this.crossLinkLoading = true
+      try {
+        this.crossLink = await window.api.modpack.crossLink(projectPath)
+      } catch (err) {
+        this.crossLink = {
+          ok: false,
+          error: err instanceof Error ? err.message : String(err),
+          generatedAt: '',
+          items: [],
+          duplicates: [],
+          missingDeps: [],
+          matchedCount: 0,
+          updateCount: 0,
+          cfUnavailable: false
+        }
+      } finally {
+        this.crossLinkLoading = false
+      }
     },
 
     /** 切换内容包启用状态（主进程改写 pack.json），成功后刷新概要 */

@@ -384,6 +384,8 @@ export const IpcChannels = {
   MODPACK_PREVIEW: 'modpack:preview',
   MODPACK_ASSEMBLE: 'modpack:assemble',
   MODPACK_LIST_SOURCES: 'modpack:list-sources',
+  // P3-3 跨平台联动（CF↔MR 同模组映射 + 版本滞后/重复/缺失预警，手动触发）
+  MODPACK_CROSS_LINK: 'modpack:cross-link',
   MODPACK_LAUNCH_TEST: 'modpack:launch-test',
   MODPACK_LIST_PACKS: 'modpack:list-packs',
   MODPACK_SET_PACK_ENABLED: 'modpack:set-pack-enabled',
@@ -1746,6 +1748,8 @@ export interface IpcApi {
     assemble(projectPath: string): Promise<import('./modpack').ModpackAssembleResult>
     /** 读取项目内安装来源记录 `.kunyu/modpack.json`（缺失返回空数组） */
     listSources(projectPath: string): Promise<import('./modpack').ModSourceEntry[]>
+    /** P3-3 跨平台联动：CF↔MR 同模组映射缓存 + 版本滞后/重复/缺失预警（手动触发，逐模组联网） */
+    crossLink(projectPath: string): Promise<import('./modpack').CrossLinkReport>
     /** 启动测试：批量导入实例 → 目录断言 → 启动 → 日志增量判定 */
     launchTest(
       input: import('./modpack').LaunchTestInput

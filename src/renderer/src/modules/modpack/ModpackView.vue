@@ -140,6 +140,9 @@
     <!-- 依赖关系图（P3-2 只读：jar 内嵌元数据解析，随预览刷新） -->
     <DepGraphCard v-if="depGraph" :graph="depGraph" />
 
+    <!-- 跨平台联动（P3-3：CF↔MR 映射 + 版本滞后/重复/缺失预警，手动触发） -->
+    <CrossLinkCard />
+
     <!-- 内容包模块 -->
     <section class="mp-card">
       <div class="mp-card-title">
@@ -409,6 +412,7 @@ import { useProjectStore } from '../../stores/project'
 import { useLauncherStore } from '../../stores/launcher'
 import PublishDialog from './PublishDialog.vue'
 import DepGraphCard from './DepGraphCard.vue'
+import CrossLinkCard from './CrossLinkCard.vue'
 import { addLibraryModToProject as addLibraryMod } from './addLibraryMod'
 import { t } from '../../i18n'
 import { MODLIB_MIME, type ModlibDragPayload } from '../../../../shared/modlibDnd'

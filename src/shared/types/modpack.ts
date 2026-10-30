@@ -4,6 +4,7 @@
  */
 import type { ModLoader } from './project'
 import type { ContentPackSummary } from './contentPack'
+import type { ModPlatform } from './market'
 
 /** 模组来源平台：两个平台可反查下载坐标，local 表示手工拖入（只能走 overrides） */
 export type ModSourcePlatform = 'curseforge' | 'modrinth' | 'local'
@@ -291,4 +292,74 @@ export interface PublishPreflightResult {
    * unverifiedCount > 0 时发布对话框应禁用「确认发布」（验证三态显式化 #1）。
    */
   contractGate?: { overall: string; unverifiedCount: number; total: number } | null
+}
+
+/* ================================================================== */
+/* P3-3：跨平台联动（CurseForge ↔ Modrinth 同模组映射与版本比对）        */
+/* ================================================================== */
+
+/** 跨平台映射命中方式：slug 精确 / 名称归一化精确（宁漏勿错，不做模糊打分） */
+export type CrossLinkMatchedBy = 'slug' | 'name'
+
+/** 已装模组在对侧平台的映射结果 */
+export interface CrossLinkCounterpart {
+  platform: ModPlatform
+  id: string
+  slug: string
+  name: string
+  matchedBy: CrossLinkMatchedBy
+  /** 对侧项目最近更新 ISO（「对侧更新超前」提示用，免逐版本比对） */
+  updatedAt: string
+}
+
+/** 单个已装模组的跨平台联动条目 */
+export interface CrossLinkItem {
+  fileName: string
+  name: string
+  /** 安装来源平台（local 不参与比对，不会出现在报告中） */
+  platform: ModPlatform
+  modId: string
+  /** 已装版本坐标 */
+  versionId: string
+  versionNumber: string
+  /** 对侧映射（未匹配 / 对侧不可达为 null） */
+  counterpart: CrossLinkCounterpart | null
+  /** 本侧最新兼容版本（按项目 mcVersion+loader 过滤；无适配为 null，不回退全局最新） */
+  latest: { versionId: string; versionNumber: string; releasedAt: string } | null
+  /** 本侧有更新：最新兼容版本坐标 ≠ 已装版本坐标 */
+  updateAvailable: boolean
+  /** 对侧项目更新晚于本侧最新兼容版本发布时间（跨平台超前信号） */
+  counterpartAhead: boolean
+}
+
+/** 同一逻辑模组在两个平台各装一份（重复安装预警） */
+export interface CrossLinkDuplicate {
+  name: string
+  cfFileName: string
+  mrFileName: string
+}
+
+/** 已装版本声明的 required 依赖缺席（同平台未装且无跨平台等价安装） */
+export interface CrossLinkMissingDep {
+  /** 声明该依赖的已装模组 */
+  fileName: string
+  name: string
+  depPlatform: ModPlatform
+  depModId: string
+}
+
+/** 跨平台联动报告（`modpack:cross-link`，手动触发：逐模组联网查询） */
+export interface CrossLinkReport {
+  ok: boolean
+  error?: string
+  generatedAt: string
+  items: CrossLinkItem[]
+  duplicates: CrossLinkDuplicate[]
+  missingDeps: CrossLinkMissingDep[]
+  /** 成功映射到对侧的模组数 */
+  matchedCount: number
+  /** 本侧有更新的模组数 */
+  updateCount: number
+  /** CF 无 Key 且镜像未启用：CF 侧查询整体降级跳过 */
+  cfUnavailable: boolean
 }

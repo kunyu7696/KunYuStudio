@@ -10,6 +10,7 @@ import {
 } from '../../services/modpack/modpackAssembler'
 import { createContentPack, scanContentPacks, setPackEnabled } from '../../services/modpack/contentPackIo'
 import { readSources } from '../../services/modpack/provenance'
+import { buildCrossLinkReport, emptyCrossLinkReport } from '../../services/crossPlatformLink'
 import { createSystemLaunchTestDeps, persistLaunchTestResult, runLaunchTest } from '../../services/modpack/launchTest'
 import { getAllProjects } from '../../services/projectService'
 import { getSection } from '../../services/settingsService'
@@ -111,6 +112,20 @@ export function registerModpackHandlers(ctx: IpcContext): void {
     const target = resolveModpackTarget(projectPath)
     if (!target.ok) return []
     return [...readSources(target.root).values()]
+  })
+  // P3-3 跨平台联动：手动触发，逐模组联网比对（映射缓存 .kunyu/crossmap.json）
+  ipcMain.handle(IpcChannels.MODPACK_CROSS_LINK, async (_event, projectPath: string) => {
+    const target = resolveModpackTarget(projectPath)
+    if (!target.ok) return emptyCrossLinkReport(target.error)
+    try {
+      return await buildCrossLinkReport(
+        target.root,
+        target.meta,
+        getSection('marketplace').curseforgeApiKey
+      )
+    } catch (err) {
+      return emptyCrossLinkReport(err instanceof Error ? err.message : String(err))
+    }
   })
   // 内容包模块化：列表 / 启用开关 / 新建（入参只收标量与 plain 对象，防结构化克隆失败）
   ipcMain.handle(IpcChannels.MODPACK_LIST_PACKS, (_event, projectPath: string) => {

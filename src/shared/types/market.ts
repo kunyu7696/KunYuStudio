@@ -118,6 +118,15 @@ export interface MarketModDetail extends MarketModSummary {
   license?: { id: string; name: string } | null
 }
 
+/** 跨平台联动的轻量项目候选（P3-3：slug/名称匹配与「对侧更新超前」提示用） */
+export interface CrossPlatformCandidate {
+  id: string
+  slug: string
+  name: string
+  /** 项目最近更新 ISO */
+  updatedAt: string
+}
+
 /** 搜索查询 */
 export interface MarketSearchQuery {
   platform: ModPlatform

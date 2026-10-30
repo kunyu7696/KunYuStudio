@@ -11,12 +11,13 @@
 import { existsSync, mkdirSync, readdirSync, statSync, unlinkSync } from 'node:fs'
 import { readFile, rename } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
-import { httpDownload, httpGetJson, type DownloadExpected } from './httpUtil'
+import { httpDownload, httpGetJson, HttpUtilError, type DownloadExpected } from './httpUtil'
 import { getSection } from './settingsService'
 import { translateZhQuery } from './marketQueryZh'
 import type { ProvenanceRecorder } from './modpack/provenance'
 import {
   PROJECT_TYPE_META,
+  type CrossPlatformCandidate,
   type MarketDependency,
   type MarketInstallInput,
   type MarketInstallResult,
@@ -439,6 +440,125 @@ export async function getModVersions(
 ): Promise<MarketModFile[]> {
   const detail = await getModDetail(platform, modId, curseforgeApiKey, projectType)
   return detail.files
+}
+
+// ---------------------------------------------------------------------------
+// P3-3 跨平台联动：轻量查询（单次 HTTP，供逐模组批量比对复用）
+// ---------------------------------------------------------------------------
+
+/** CF 可用性预检：有 Key 或显式允许镜像时可用（不触网，仅配置判定） */
+export function isCurseforgeAvailable(apiKey: string): boolean {
+  try {
+    cfEndpoint(apiKey)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/** 轻量版本列表：仅一次 HTTP 请求（不取项目信息），跨平台联动批量比对用 */
+export async function listModFiles(
+  platform: ModPlatform,
+  modId: string,
+  curseforgeApiKey: string
+): Promise<MarketModFile[]> {
+  if (platform === 'curseforge') {
+    const ep = cfEndpoint(curseforgeApiKey)
+    await rateLimit('curseforge')
+    const { data } = await httpGetJson<{ data: CfFile[] }>(`${ep.base}/mods/${modId}/files`, {
+      headers: ep.headers
+    })
+    return (data.data ?? []).map((f) => adaptCfFile(modId, f, ep.mirrored))
+  }
+  await rateLimit('modrinth')
+  const { data } = await httpGetJson<MrVersion[]>(`${MR_BASE}/project/${modId}/version`, {
+    headers: { 'User-Agent': USER_AGENT }
+  })
+  return (data ?? []).map(adaptMrVersion)
+}
+
+/** 按 slug 精确查项目（MR /project/{slug}；CF search?slug=），未找到返回 null */
+export async function findProjectBySlug(
+  platform: ModPlatform,
+  slug: string,
+  curseforgeApiKey: string
+): Promise<CrossPlatformCandidate | null> {
+  if (!slug) return null
+  if (platform === 'curseforge') {
+    const ep = cfEndpoint(curseforgeApiKey)
+    const params = new URLSearchParams({
+      gameId: '432',
+      classId: String(PROJECT_TYPE_META.mod.cfClassId),
+      slug
+    })
+    await rateLimit('curseforge')
+    const { data } = await httpGetJson<{ data: CfMod[] }>(`${ep.base}/mods/search?${params.toString()}`, {
+      headers: ep.headers
+    })
+    const hit = (data.data ?? []).find((m) => m.slug?.toLowerCase() === slug.toLowerCase())
+    return hit
+      ? { id: String(hit.id), slug: hit.slug, name: hit.name, updatedAt: hit.dateModified }
+      : null
+  }
+  try {
+    await rateLimit('modrinth')
+    const { data } = await httpGetJson<MrProject>(`${MR_BASE}/project/${encodeURIComponent(slug)}`, {
+      headers: { 'User-Agent': USER_AGENT }
+    })
+    return {
+      id: data.id ?? data.project_id ?? '',
+      slug: data.slug,
+      name: data.title,
+      updatedAt: data.updated
+    }
+  } catch (err) {
+    if (err instanceof HttpUtilError && err.status === 404) return null
+    throw err
+  }
+}
+
+/** 按名称检索候选（只召回前 5 条；归一化精确匹配由调用方做，宁漏勿错） */
+export async function searchProjectCandidates(
+  platform: ModPlatform,
+  name: string,
+  curseforgeApiKey: string
+): Promise<CrossPlatformCandidate[]> {
+  const query = name.trim()
+  if (!query) return []
+  if (platform === 'curseforge') {
+    const ep = cfEndpoint(curseforgeApiKey)
+    const params = new URLSearchParams({
+      gameId: '432',
+      classId: String(PROJECT_TYPE_META.mod.cfClassId),
+      searchFilter: query,
+      pageSize: '5'
+    })
+    await rateLimit('curseforge')
+    const { data } = await httpGetJson<{ data: CfMod[] }>(`${ep.base}/mods/search?${params.toString()}`, {
+      headers: ep.headers
+    })
+    return (data.data ?? []).map((m) => ({
+      id: String(m.id),
+      slug: m.slug,
+      name: m.name,
+      updatedAt: m.dateModified
+    }))
+  }
+  const params = new URLSearchParams({
+    query,
+    limit: '5',
+    facets: `[["project_type:${PROJECT_TYPE_META.mod.mrProjectType}"]]`
+  })
+  await rateLimit('modrinth')
+  const { data } = await httpGetJson<{ hits: MrProject[] }>(`${MR_BASE}/search?${params.toString()}`, {
+    headers: { 'User-Agent': USER_AGENT }
+  })
+  return (data.hits ?? []).map((p) => ({
+    id: p.project_id ?? p.id ?? '',
+    slug: p.slug,
+    name: p.title,
+    updatedAt: p.updated
+  }))
 }
 
 // ---------------------------------------------------------------------------

@@ -4,10 +4,19 @@ import { mkdtemp, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-// mock httpUtil：所有 HTTP 调用拦截
+// mock httpUtil：所有 HTTP 调用拦截（HttpUtilError 保留真实构造签名供 404 判定）
 vi.mock('../httpUtil', () => ({
   httpGetJson: vi.fn(),
-  httpDownload: vi.fn()
+  httpDownload: vi.fn(),
+  HttpUtilError: class HttpUtilError extends Error {
+    readonly code: string
+    readonly status?: number
+    constructor(code: string, message: string, status?: number) {
+      super(message)
+      this.code = code
+      this.status = status
+    }
+  }
 }))
 
 // mock settingsService：镜像开关可控（P1-10 默认关闭，镜像用例显式开启）
@@ -20,14 +29,101 @@ vi.mock('../settingsService', () => ({
   )
 }))
 
-import { httpDownload, httpGetJson } from '../httpUtil'
-import { getModDetail, installMod, searchMods } from '../marketService'
+import { httpDownload, httpGetJson, HttpUtilError } from '../httpUtil'
+import {
+  findProjectBySlug,
+  getModDetail,
+  installMod,
+  listModFiles,
+  searchMods
+} from '../marketService'
 import { createProvenanceRecorder, writeSources } from '../modpack/provenance'
 
 function zipBuffer(): Buffer {
   // 最小 ZIP/JAR 头：PK\x03\x04 + 若干字节
   return Buffer.concat([Buffer.from([0x50, 0x4b, 0x03, 0x04]), Buffer.alloc(32, 0)])
 }
+
+describe('marketService — P3-3 轻量查询（跨平台联动复用）', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockAllowCfMirror.value = true
+  })
+
+  it('listModFiles（Modrinth）：单次请求拉取版本列表并适配为 MarketModFile', async () => {
+    vi.mocked(httpGetJson).mockResolvedValueOnce({
+      status: 200,
+      data: [
+        {
+          id: 'v2',
+          name: 'Sodium 0.6',
+          version_number: '0.6.0',
+          date_published: '2024-06-01T00:00:00Z',
+          loaders: ['fabric'],
+          game_versions: ['1.20.1'],
+          dependencies: [],
+          files: [
+            {
+              url: 'https://cdn.example/sodium.jar',
+              filename: 'sodium.jar',
+              size: 10,
+              primary: true,
+              hashes: { sha1: 'a', sha512: 'b' }
+            }
+          ]
+        }
+      ]
+    })
+    const files = await listModFiles('modrinth', 'mr1', '')
+    expect(files).toHaveLength(1)
+    expect(files[0]).toMatchObject({
+      id: 'v2',
+      versionNumber: '0.6.0',
+      hashes: { sha1: 'a', sha512: 'b' }
+    })
+    expect(vi.mocked(httpGetJson)).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(httpGetJson).mock.calls[0]![0]).toContain('/project/mr1/version')
+  })
+
+  it('findProjectBySlug（Modrinth）：404 返回 null；命中返回候选', async () => {
+    vi.mocked(httpGetJson).mockRejectedValueOnce(new HttpUtilError('http', 'HTTP 404', 404))
+    await expect(findProjectBySlug('modrinth', 'nope', '')).resolves.toBeNull()
+
+    vi.mocked(httpGetJson).mockResolvedValueOnce({
+      status: 200,
+      data: { id: 'mr9', slug: 'sodium', title: 'Sodium', updated: '2024-06-01T00:00:00Z' }
+    })
+    await expect(findProjectBySlug('modrinth', 'sodium', '')).resolves.toMatchObject({
+      id: 'mr9',
+      slug: 'sodium',
+      name: 'Sodium',
+      updatedAt: '2024-06-01T00:00:00Z'
+    })
+  })
+
+  it('findProjectBySlug（CurseForge）：slug 精确命中返回候选，未命中返回 null', async () => {
+    const mod = {
+      id: 238222,
+      slug: 'jei',
+      name: 'JEI',
+      summary: '',
+      downloadCount: 1,
+      dateModified: '2024-01-01T00:00:00Z',
+      authors: [],
+      categories: [],
+      latestFiles: []
+    }
+    vi.mocked(httpGetJson).mockResolvedValueOnce({ status: 200, data: { data: [mod] } })
+    await expect(findProjectBySlug('curseforge', 'jei', '')).resolves.toMatchObject({
+      id: '238222',
+      slug: 'jei'
+    })
+    expect(vi.mocked(httpGetJson).mock.calls[0]![0]).toContain('slug=jei')
+
+    vi.mocked(httpGetJson).mockResolvedValueOnce({ status: 200, data: { data: [mod] } })
+    await expect(findProjectBySlug('curseforge', 'other', '')).resolves.toBeNull()
+  })
+})
 
 describe('marketService — CurseForge', () => {
   beforeEach(() => {
