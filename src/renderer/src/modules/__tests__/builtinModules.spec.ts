@@ -8,9 +8,9 @@ import { moduleRegistry, registerBuiltinModules } from '../index'
  * - projectTypes：已打开项目时限定项目类型（未打开项目不受其影响）
  * - 模组与市场：不要求项目（主页可先逛市场），已打开项目时只保留在整合包项目里
  * - 全流程 AI 制作：只在主页活动栏，项目页里移除
- * - 资产库（原画廊）：不要求项目——未打开项目时进入跨项目汇总模式；mod 项目内隐藏
- * - 资源库：主页可整理，mod 项目内隐藏（主页已有入口）
- * - FTB 任务书 / 指南书：整合包项目专用
+ * - 资产库（原画廊）：主页活动栏专用（打开项目后隐藏）
+ * - 资源库：主页活动栏专用（打开项目后隐藏）
+ * - FTB 任务书 / 指南书 / KubeJS 脚本：整合包项目专用
  * - 整合包组装：仍要求项目且仅整合包类型可见（本次不动）
  */
 registerBuiltinModules()
@@ -30,24 +30,24 @@ describe('内置模块注册表 · 主页活动栏可见性', () => {
     expect(ai?.projectTypes).toBeUndefined()
   })
 
-  it('资产库（原画廊改名）不要求先打开项目；mod 项目内隐藏（主页已有入口）', () => {
+  it('资产库（原画廊改名）为主页活动栏专用入口（打开项目后隐藏）', () => {
     const gallery = moduleRegistry.get('gallery')
     expect(gallery?.requireProject).toBeFalsy()
-    expect(gallery?.homeOnly).toBeFalsy()
+    expect(gallery?.homeOnly).toBe(true)
     expect(gallery?.name).toBe('资产库')
-    expect(gallery?.projectTypes).toEqual(['resourcepack', 'datapack', 'shaderpack', 'modpack'])
+    expect(gallery?.projectTypes).toBeUndefined()
   })
 
-  it('资源库：不要求项目、不限主页；mod 项目内隐藏（主页已有入口）', () => {
+  it('资源库为主页活动栏专用入口（打开项目后隐藏）', () => {
     const modlib = moduleRegistry.get('modlib')
     expect(modlib?.name).toBe('资源库')
     expect(modlib?.requireProject).toBeFalsy()
-    expect(modlib?.homeOnly).toBeFalsy()
-    expect(modlib?.projectTypes).toEqual(['resourcepack', 'datapack', 'shaderpack', 'modpack'])
+    expect(modlib?.homeOnly).toBe(true)
+    expect(modlib?.projectTypes).toBeUndefined()
   })
 
-  it('FTB 任务书与指南书为整合包项目专用', () => {
-    for (const id of ['ftbquest', 'patchouli'] as const) {
+  it('FTB 任务书、指南书与 KubeJS 脚本为整合包项目专用', () => {
+    for (const id of ['ftbquest', 'patchouli', 'kubejs'] as const) {
       const mod = moduleRegistry.get(id)
       expect(mod?.requireProject).toBe(true)
       expect(mod?.projectTypes).toEqual(['modpack'])

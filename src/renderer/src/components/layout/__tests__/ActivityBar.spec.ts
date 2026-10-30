@@ -59,11 +59,12 @@ describe('ActivityBar · 模块可见性', () => {
     expect(labels).not.toContain('整合包组装')
   })
 
-  it('资源库：主页与整合包等项目可见，mod 项目隐藏（主页已有入口）', () => {
+  it('资产库与资源库为主页活动栏专用（打开任何项目后隐藏）', () => {
+    expect(visibleLabels(null)).toContain('资产库')
     expect(visibleLabels(null)).toContain('资源库')
-    expect(visibleLabels('mod')).not.toContain('资源库')
-    for (const type of ['modpack', 'datapack', 'resourcepack', 'shaderpack'] as ProjectType[]) {
-      expect(visibleLabels(type)).toContain('资源库')
+    for (const type of ['mod', 'modpack', 'datapack', 'resourcepack', 'shaderpack'] as ProjectType[]) {
+      expect(visibleLabels(type)).not.toContain('资产库')
+      expect(visibleLabels(type)).not.toContain('资源库')
     }
   })
 
@@ -75,15 +76,14 @@ describe('ActivityBar · 模块可见性', () => {
     expect(labels).toContain('数据包编辑器')
   })
 
-  it('FTB 任务书与指南书仅整合包项目可见', () => {
-    expect(visibleLabels('modpack')).toContain('FTB 任务书')
-    expect(visibleLabels('modpack')).toContain('指南书')
-    for (const type of ['mod', 'datapack', 'resourcepack', 'shaderpack'] as ProjectType[]) {
-      expect(visibleLabels(type)).not.toContain('FTB 任务书')
-      expect(visibleLabels(type)).not.toContain('指南书')
+  it('FTB 任务书、指南书与 KubeJS 脚本仅整合包项目可见', () => {
+    for (const name of ['FTB 任务书', '指南书', 'KubeJS 脚本']) {
+      expect(visibleLabels('modpack')).toContain(name)
+      expect(visibleLabels(null)).not.toContain(name)
+      for (const type of ['mod', 'datapack', 'resourcepack', 'shaderpack'] as ProjectType[]) {
+        expect(visibleLabels(type)).not.toContain(name)
+      }
     }
-    expect(visibleLabels(null)).not.toContain('FTB 任务书')
-    expect(visibleLabels(null)).not.toContain('指南书')
   })
 
   it('打开项目后「全流程 AI 制作」从项目页移除（仅主页保留）', () => {

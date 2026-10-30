@@ -111,13 +111,13 @@ export function registerBuiltinModules(): void {
 
   // 资产库（原项目画廊）：AI 产出的贴图候选全部存档，零额度复用（不必重跑 AI 烧额度）；
   // 同时接替原「KunYu 社区」的跨项目聚合与 .kyshare.json 分享包导入/导出
-  // 无项目时进入「跨项目汇总」模式；mod 项目内隐藏（主页已有入口，避免重复）
+  // 主页活动栏专用：打开任何项目后隐藏（项目内不再重复提供入口）
   moduleRegistry.register({
     id: 'gallery',
     name: '资产库',
     icon: Picture,
     description: 'AI 贴图候选、项目像素资产与 3D 模型的统一资产库：跨项目汇总、写回 / 二次编辑、分享包导入导出',
-    projectTypes: ['resourcepack', 'datapack', 'shaderpack', 'modpack'],
+    homeOnly: true,
     loader: () => import('./gallery/GalleryView.vue')
   })
 
@@ -150,14 +150,14 @@ export function registerBuiltinModules(): void {
     loader: () => import('./views/MarketView.vue')
   })
 
-  // 资源库：市场下载与本地导入的 jar/zip/mrpack 统一存放，未打开项目也能查看整理；
-  // mod 项目内隐藏（主页已有入口，避免重复），整合包项目内可按类型一键加入对应目录
+  // 资源库：市场下载与本地导入的 jar/zip/mrpack 统一存放，主页活动栏专用——
+  // 打开任何项目后隐藏（项目内不再重复提供入口）
   moduleRegistry.register({
     id: 'modlib',
     name: '资源库',
     icon: FolderOpened,
     description: '全局资源库：市场下载与本地导入的模组/资源包/数据包/光影统一存放，打开整合包项目可按类型一键加入对应目录',
-    projectTypes: ['resourcepack', 'datapack', 'shaderpack', 'modpack'],
+    homeOnly: true,
     loader: () => import('./modlib/ModLibraryView.vue')
   })
 
@@ -209,7 +209,7 @@ export function registerBuiltinModules(): void {
     name: 'KubeJS 脚本',
     icon: Document,
     description: '编辑 KubeJS 三目录脚本：启动期注册、服务端与客户端事件，模板库一键生成骨架',
-    projectTypes: ['mod', 'modpack'],
+    projectTypes: ['modpack'],
     requireProject: true,
     loader: () => import('./kubejs/KubejsView.vue')
   })
