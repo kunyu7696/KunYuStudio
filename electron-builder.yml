@@ -138,7 +138,9 @@ nsis:
   allowElevation: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  artifactName: ${productName}-${version}-setup.${ext}
+  # ⚠ 不要用 ${productName}：含空格时 yml 生成的是连字符名、GitHub 上传却把空格转成点，
+  # 导致 latest.yml 指向的文件名与实际资产不一致（0.1.6 自动更新即因此 404/校验失败）
+  artifactName: KunYu-Studio-${version}-setup.${ext}
   installerLanguages:
     - zh_CN
     - en_US
@@ -150,7 +152,7 @@ mac:
   icon: resources/build/icon-mac.png
   category: public.app-category.developer-tools
   identity: null
-  artifactName: ${productName}-${version}-mac-${arch}.${ext}
+  artifactName: KunYu-Studio-${version}-mac-${arch}.${ext}
   target:
     - target: dmg
       arch:
@@ -161,7 +163,7 @@ mac:
 linux:
   icon: resources/build/icon.png
   category: Development
-  artifactName: ${productName}-${version}-linux-${arch}.${ext}
+  artifactName: KunYu-Studio-${version}-linux-${arch}.${ext}
   target:
     - target: AppImage
       arch:
