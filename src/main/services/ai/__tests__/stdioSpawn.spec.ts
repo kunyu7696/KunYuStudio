@@ -6,14 +6,30 @@
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { spawnSync } from 'node:child_process'
+import { execFile } from 'node:child_process'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ensureNoPopNodeLaunch, resolveNpxEntryRewrite, resolvePreemptiveNodeLaunch, resolveStdioSpawn, win32NpxHijackHint } from '../mcpClient'
 
 vi.mock('node:child_process', async (importOriginal) => {
   const orig = await importOriginal<typeof import('node:child_process')>()
-  return { ...orig, spawnSync: vi.fn(orig.spawnSync) }
+  return { ...orig, execFile: vi.fn(orig.execFile) }
 })
+
+/** execCollect 的预取调用形态：execFile(cmd, args, opts, callback)，回调必须异步（模拟真实语义） */
+type ExecFileCallback = (error: Error | null, stdout: string, stderr: string) => void
+
+function mockPrefetchOnce(seedDuringRun: () => void): void {
+  vi.mocked(execFile).mockImplementationOnce(((
+    _cmd: string,
+    _args: string[],
+    _opts: unknown,
+    cb: ExecFileCallback
+  ) => {
+    seedDuringRun() // 模拟 npm 下载落盘
+    queueMicrotask(() => cb(null, '', ''))
+    return { stdin: { end() {} }, exitCode: 0 }
+  }) as never)
+}
 
 const onWindows = process.platform === 'win32'
 
@@ -188,7 +204,7 @@ describe.runIf(onWindows)('ensureNoPopNodeLaunch (win32)', () => {
   let savedLocalAppData: string | undefined
 
   afterEach(() => {
-    vi.mocked(spawnSync).mockClear()
+    vi.mocked(execFile).mockClear()
     if (savedLocalAppData === undefined) delete process.env.LOCALAPPDATA
     else process.env.LOCALAPPDATA = savedLocalAppData
     if (fakeLocalAppData) rmSync(fakeLocalAppData, { recursive: true, force: true })
@@ -216,19 +232,16 @@ describe.runIf(onWindows)('ensureNoPopNodeLaunch (win32)', () => {
     const r = await ensureNoPopNodeLaunch('npx', ['-y', 'mojang-x@latest'])
     expect(r).not.toBeNull()
     expect(r!.args[0]).toBe(entry)
-    expect(vi.mocked(spawnSync)).not.toHaveBeenCalled()
+    expect(vi.mocked(execFile)).not.toHaveBeenCalled()
   })
 
   it('缓存未就绪：先静默预取再直启（首次连接也不弹窗）', async () => {
     useFakeCache()
-    vi.mocked(spawnSync).mockImplementationOnce((() => {
-      seed('newpkg', 'import x from "./server.js"') // 模拟 npm 下载落盘
-      return { status: 0, stdout: '', stderr: '', output: [], pid: 0, signal: null }
-    }) as never)
+    mockPrefetchOnce(() => seed('newpkg', 'import x from "./server.js"'))
     const r = await ensureNoPopNodeLaunch('npx', ['-y', 'newpkg@latest'])
-    expect(vi.mocked(spawnSync)).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(execFile)).toHaveBeenCalledTimes(1)
     // 预取命令必须是 noop（cmd /c exit 0），不得执行包 bin
-    const preflightArgs = vi.mocked(spawnSync).mock.calls[0][1] as string[]
+    const preflightArgs = vi.mocked(execFile).mock.calls[0][1] as string[]
     expect(preflightArgs.slice(-3)).toEqual(['/c', 'exit', '0'])
     expect(r).not.toBeNull()
     expect(r!.args[0]).toContain('newpkg')
@@ -236,15 +249,12 @@ describe.runIf(onWindows)('ensureNoPopNodeLaunch (win32)', () => {
 
   it('预取后包带 shebang：返回 null 保留 npx 原链路', async () => {
     useFakeCache()
-    vi.mocked(spawnSync).mockImplementationOnce((() => {
-      seed('healthy-x', '#!/usr/bin/env node\nconsole.log(1)')
-      return { status: 0, stdout: '', stderr: '', output: [], pid: 0, signal: null }
-    }) as never)
+    mockPrefetchOnce(() => seed('healthy-x', '#!/usr/bin/env node\nconsole.log(1)'))
     expect(await ensureNoPopNodeLaunch('npx', ['-y', 'healthy-x@latest'])).toBeNull()
   })
 
   it('非 npx 命令：不预取直接 null', async () => {
     expect(await ensureNoPopNodeLaunch('node', ['a.js'])).toBeNull()
-    expect(vi.mocked(spawnSync)).not.toHaveBeenCalled()
+    expect(vi.mocked(execFile)).not.toHaveBeenCalled()
   })
 })

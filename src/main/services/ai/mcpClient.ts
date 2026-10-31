@@ -1,4 +1,4 @@
-import { execFile, spawn, spawnSync, type ChildProcess } from 'node:child_process'
+import { execFile, spawn, type ChildProcess } from 'node:child_process'
 import { closeSync, existsSync, openSync, readdirSync, readFileSync, readSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { delimiter, join, sep } from 'node:path'
@@ -835,6 +835,42 @@ function parseNpxRawSpec(args: string[]): string | null {
 }
 
 /**
+ * spawnSync 的异步替身：同样的「跑完拿退出码与 stderr」语义，但不冻结主进程事件循环。
+ * Electron 主进程里任何 spawnSync 都会阻断全部 IPC（项目打开后紧随的 fs.readDir 等
+ * 会被卡到超时），因此 MCP 链路上的预取/诊断子进程一律走这里。
+ * stdin 立即 EOF（等价 spawnSync input:''），让读取 stdin 的服务自行退出；
+ * 永不 reject——启动失败/超时统一 resolve({ status: null, stderr })。
+ */
+function execCollect(
+  command: string,
+  args: string[],
+  opts: { env: Record<string, string>; cwd?: string; timeout: number }
+): Promise<{ status: number | null; stderr: string }> {
+  return new Promise((resolvePromise) => {
+    const child = execFile(
+      command,
+      args,
+      {
+        env: opts.env,
+        cwd: opts.cwd,
+        timeout: opts.timeout,
+        encoding: 'utf8',
+        windowsHide: true,
+        // npm 预取的下载进度输出可能超过 execFile 默认 1MB maxBuffer
+        maxBuffer: 8 * 1024 * 1024
+      },
+      (_error, _stdout, stderr) => {
+        resolvePromise({
+          status: typeof child.exitCode === 'number' ? child.exitCode : null,
+          stderr: String(stderr ?? '')
+        })
+      }
+    )
+    child.stdin?.end()
+  })
+}
+
+/**
  * win32 零弹窗直启（含预取）：resolvePreemptiveNodeLaunch 要求包已在 npx 缓存；
  * 新包首次连接时缓存未就绪，若直接走 npx 首发，缺 shebang 的包会被 .js 文件关联
  * 劫持弹一次编辑器。这里先用 `npm exec -- <noop>` 静默拉包（只下载、不执行 bin，
@@ -860,16 +896,10 @@ export async function ensureNoPopNodeLaunch(
   } catch {
     return null
   }
-  try {
-    spawnSync('cmd', ['/c', 'npm', 'exec', '--yes', `--package=${rawSpec}`, '--', 'cmd', '/c', 'exit', '0'], {
-      env: process.env as Record<string, string>,
-      stdio: 'ignore',
-      timeout: 90_000,
-      windowsHide: true
-    })
-  } catch {
-    /* 拉包失败：落到原链路 */
-  }
+  await execCollect('cmd', ['/c', 'npm', 'exec', '--yes', `--package=${rawSpec}`, '--', 'cmd', '/c', 'exit', '0'], {
+    env: process.env as Record<string, string>,
+    timeout: 90_000
+  })
   return resolvePreemptiveNodeLaunch(command, args)
 }
 
@@ -1008,11 +1038,13 @@ export class CustomMcpManager {
       } catch (err) {
         await tp.close().catch(() => {})
         const msg = (err as Error).message
-        // 优先用实时捕获的 stderr（真实崩溃原因）；为空再跑一次同步诊断（同样走 cmd /c 包装）
+        // 优先用实时捕获的 stderr（真实崩溃原因）；为空再跑一次带外诊断（同样走 cmd /c 包装）。
+        // 必须异步：此路径在打开项目后的 MCP 重连里，同步 spawnSync 会冻结主进程事件循环，
+        // 表现为「点项目卡一下才进入」（握手失败且服务签名随项目根变化时每次打开都命中）。
         let diag = stderrTail.trim() ? ` | stderr: ${stderrTail.trim().slice(-300)}` : ''
         if (!diag) {
           try {
-            const r = spawnSync(spawnCmd.command, spawnCmd.args, { env: spawnEnv, cwd, input: '', encoding: 'utf8', timeout: 25000 })
+            const r = await execCollect(spawnCmd.command, spawnCmd.args, { env: spawnEnv, cwd, timeout: 25000 })
             diag = ` | diag exit=${r.status} stderr=${(r.stderr || '').slice(0, 300)}`
           } catch (e) { diag = ` | diag fail: ${(e as Error).message}` }
         }
