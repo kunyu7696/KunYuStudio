@@ -5,7 +5,7 @@
  * 1. ensureVineflower：vineflower.jar 缺失时按网络镜像设置从 Maven Central / 阿里云镜像
  *    下载到 userData/tools/（运行时按需，不打进安装包；版本经 maven-metadata.xml 解析，
  *    失败回退固定版本），落盘后校验 ZIP 魔数（PK）。
- * 2. startDecompile：复用 jdkService.detectJdk 选 Java 11+ 运行时，spawn
+ * 2. startDecompile：复用 jdkService.detectJdk 选 Java 17+ 运行时，spawn
  *    `java -jar vineflower.jar <源jar> <输出目录>`，stdout/stderr 行经事件回调节流推送。
  * 3. 产物浏览：readDirIn / readFileIn / searchIn / deleteWorkspace 全部经
  *    assertWithinDecompileRoot 守卫（自管安全根，realpath 防 Junction 穿越）。
@@ -47,8 +47,8 @@ const MAVEN_CENTRAL = 'https://repo1.maven.org/maven2'
 const ALIYUN_PUBLIC = 'https://maven.aliyun.com/repository/public'
 /** maven-metadata 解析失败时的固定兜底版本 */
 export const VINEFLOWER_PINNED_VERSION = '1.11.1'
-/** Vineflower 运行时最低 Java 版本 */
-const MIN_JAVA_MAJOR = 11
+/** Vineflower 运行时最低 Java 版本（1.12.0 起 class 主版本 61，即 Java 17） */
+const MIN_JAVA_MAJOR = 17
 /** 单文件读取上限（2MB，超出截断） */
 export const DECOMPILE_READ_MAX_BYTES = 2 * 1024 * 1024
 /** 类搜索上限 */
@@ -73,7 +73,7 @@ export function vineflowerJarPath(version: string = VINEFLOWER_PINNED_VERSION): 
  * china → 阿里云镜像优先、Maven Central 兜底；official → 仅官方源在前（仍附镜像兜底）。
  */
 export function buildVineflowerUrls(version: string, mirror: 'china' | 'official'): string[] {
-  const path = `${VINEFLOWER_BASE}/vineflower-${version}.jar`
+  const path = `${VINEFLOWER_BASE}/${version}/vineflower-${version}.jar`
   const central = `${MAVEN_CENTRAL}/${path}`
   const aliyun = `${ALIYUN_PUBLIC}/${path}`
   return mirror === 'china' ? [aliyun, central] : [central, aliyun]
@@ -273,7 +273,7 @@ export async function ensureVineflower(
   throw new Error(`Vineflower 下载失败：${errors.join('；')}`)
 }
 
-/** 选 Java 11+ 运行时：优先 candidates 中最高主版本，兜底 detectJdk 选中项 */
+/** 选 Java 17+ 运行时：优先 candidates 中最高主版本，兜底 detectJdk 选中项 */
 async function pickJavaForVineflower(): Promise<string> {
   const result = await detectJdk()
   const eligible = result.candidates

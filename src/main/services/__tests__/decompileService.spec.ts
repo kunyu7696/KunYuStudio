@@ -53,7 +53,8 @@ describe('buildVineflowerUrls', () => {
     const official = buildVineflowerUrls('1.11.1', 'official')
     expect(official[0]).toContain('repo1.maven.org')
     for (const url of [...china, ...official]) {
-      expect(url).toContain('/org/vineflower/vineflower/vineflower-1.11.1.jar')
+      // Maven 仓库标准布局必须含版本目录段（此前缺这一段导致所有下载 404）
+      expect(url).toContain('/org/vineflower/vineflower/1.11.1/vineflower-1.11.1.jar')
     }
   })
 })

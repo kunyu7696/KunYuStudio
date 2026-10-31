@@ -5,7 +5,7 @@
  *   只读浏览 userData/decompiled 下的既有反编译产物（不依赖打开的项目）；
  *   路径越界由 decompileService 自管安全根拦截，工具侧捕获后一律软失败。
  * - decompile_start：对指定 jar 启动 Vineflower 反编译（工具缺失时按镜像设置下载，
- *   需 Java 11+），属外部副作用；产物落新工作区，随后用上面三个只读工具浏览。
+ *   需 Java 17+），属外部副作用；产物落新工作区，随后用上面三个只读工具浏览。
  */
 import type { RegisteredTool } from '../toolRegistry'
 import { listWorkspaces, readFileIn, searchIn, startDecompile } from '../../decompileService'
@@ -144,7 +144,7 @@ export function builtinDecompileTools(): RegisteredTool[] {
       function: {
         name: 'decompile_start',
         description:
-          '对指定 jar 启动 Vineflower 反编译：工具缺失时按网络镜像设置下载，需 Java 11+ 运行时。' +
+          '对指定 jar 启动 Vineflower 反编译：工具缺失时按网络镜像设置下载，需 Java 17+ 运行时。' +
           '产物落 userData/decompiled/<jar名>-<哈希>/ 新工作区，完成后用 decompile_search / decompile_read_file 浏览。',
         parameters: {
           type: 'object',
