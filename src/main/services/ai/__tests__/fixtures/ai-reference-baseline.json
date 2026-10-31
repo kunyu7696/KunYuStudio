@@ -1,7 +1,4 @@
 {
-  "note": "重构前 templates 树逐文件 sha1；用于证明 canonical+versions+variants 组合结果逐字节一致",
-  "referenceDir": "resources/ai-reference",
-  "templateCount": 1557,
   "files": {
     "templates/fabric/1.16.5/advancement/advancement.json": "56d3b0e95955202224ef87d8439d745c47c0915d",
     "templates/fabric/1.16.5/block/blockstate.json": "9b6bc09bdafeb09309941e034e28a7bf2b5c2468",
