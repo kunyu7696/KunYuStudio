@@ -22,10 +22,7 @@ const baseline = JSON.parse(
   )
 ) as { files: Record<string, string> }
 
-// 基线与比对都做 EOL 归一（CRLF→LF）：仓库未锁 ai-reference 的 eol，
-// 本地 autocrlf 检出为 CRLF、CI 检出为 LF，直接逐字节哈希会在 CI 全量误报
-const sha1 = (text: string): string =>
-  createHash('sha1').update(text.replace(/\r\n/g, '\n'), 'utf-8').digest('hex')
+const sha1 = (text: string): string => createHash('sha1').update(text, 'utf-8').digest('hex')
 /** 根级共享文档（不在 loader 组合目录下）仍需直读磁盘 */
 const isRootDoc = (rel: string): boolean => !/^templates\/(fabric|forge|neoforge)\//.test(rel)
 const store = createTemplateStore(dir)

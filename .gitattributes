@@ -8,6 +8,12 @@
 *.yaml text eol=lf
 *.sh text eol=lf
 *.gradle text eol=lf
+
+# AI 参考包：组合器 templateStore 对字节敏感（守卫按 sha1 逐字节比对），
+# Windows autocrlf 检出成 CRLF 会把组合输出撑出 \r\r\n / 与基线不符，
+# 任何平台检出都必须是 LF；variants 是整文件原字节，冻结不做任何转换
+resources/ai-reference/** text eol=lf
+resources/ai-reference/templates/variants/** -text
 *.properties text eol=lf
 
 # Windows 批处理：cmd.exe 要求 CRLF
