@@ -99,10 +99,10 @@ src/
    └─ utils/                  #   共享纯函数
 
 resources/
-├─ ai-reference/              # AI 参考包：1562 活跃模板 / 39 错误模式 / 78 API 索引
-│  ├─ templates/              #   按 fabric / forge / neoforge 分目录的模板工程
+├─ ai-reference/              # AI 参考包：1576 活跃模板 / 39 错误模式 / 78 API 索引
+│  ├─ templates/              #   压缩布局：canonical 正文 + versions 组合声明 + variants 真实差异
 │  ├─ community/              #   社区参考片段
-│  └─ manifest.json           #   清单（模板、指纹、来源统计）
+│  └─ manifest.json           #   清单（模板、指纹、来源统计；file 仍是 templates/<loader>/<mc>/<slot> 虚拟路径）
 ├─ knowledge/                 # 离线知识库（30 篇 Markdown，RAG 语料）
 ├─ mcdata/                    # minecraft-data 静态数据
 ├─ observer-mod/              # 游戏内观察 mod（Gradle 工程，随包分发 jar）
@@ -240,7 +240,9 @@ AI 参考包 manifest 登记 13 种内容类型。
 - **密钥**：API Key 仅存主进程并加密，不写入渲染层日志与前端状态快照；
 - **网络**：渲染层无直接出网能力；所有外部请求经主进程，统一治理超时、
   代理与退避；文件下载支持断点续传——瞬时中断按 Range 从已落盘字节继续，
-  半成品保留在目标旁的 `.part`，再次下载可接着传；
+  半成品保留在目标旁的 `.part`，再次下载可接着传；大文件（默认 ≥16MB 且
+  服务端支持 Range）自动切换多线程分段并行下载，段内独立重试与续传，
+  不支持 Range 时自动回退单流；
 - **NeoForge 构建**：NFRT 对不在 artifact manifest 里的工具（如 `binarypatcher`）
   硬编码从 `maven.neoforged.net` 下载，该域名在部分网络不可达，构建会卡在
   `:createMinecraftArtifacts`；用 `scripts/prefetch-nfrt-tools.ps1` 经 forgecdn

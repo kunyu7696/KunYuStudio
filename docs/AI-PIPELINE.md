@@ -113,9 +113,16 @@ AI 助手非常驻：打开项目时主动开启，避免不同项目任务混�
 
 ## 六、RAG 与参考资源
 
-- **AI 参考包**（`resources/ai-reference/`）：1562 个活跃模板（按
-  fabric/forge/neoforge 分目录的完整模板工程）、39 条错误模式、78 条 API
-  索引，覆盖 13 种内容类型；`manifest.json` 登记版本指纹与来源统计。
+- **AI 参考包**（`resources/ai-reference/`）：1576 个活跃模板（35 个
+  loader × MC 组合）、39 条错误模式、78 条 API 索引，覆盖 12 种内容类型；
+  `manifest.json` 登记版本指纹与来源统计。
+  模板目录为**压缩布局**：`templates/canonical/` 每 (loader, 槽位) 一份正文
+  （版本号等写成 `{{mcVersion}}` 占位符），`templates/vars/` 存占位符取值，
+  `templates/versions/<loader>/<mc>.json` 声明该组合由哪些槽位组成、
+  换行与迁移注释头，`templates/variants/` 只放装不进占位符的真实差异。
+  manifest 的 `file` 仍是旧虚拟路径 `templates/<loader>/<mc>/<slot>`，
+  运行时由 `templateStore` 组合还原（逐字节与压缩前一致，见
+  `__tests__/templateStore.spec.ts` 的 sha1 基线断言）。
   模板来源以社区公开成果为基础重写/适配，谨向 Fabric、Forge、NeoForge
   社区与 minecraft-data 等数据来源致谢。
 - **知识库**（`resources/knowledge/`）：30 篇离线 Markdown，公开教程的知识

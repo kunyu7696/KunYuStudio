@@ -38,6 +38,8 @@
 
 以下模板与 API 索引是本次回答的**事实来源**。它们是针对当前加载器/版本验证过的写法：
 
+> 带 `[未验证 · 复制自 …]` 标记的模板是候选稿（由脚本从其他版本复制而来，未在目标版本真机编译），只能参考写法，不得当作事实。
+
 {{REFERENCE_TEMPLATES}}
 
 API 签名索引（只允许出现这里或上文模板中存在的类/方法）：
@@ -48,7 +50,7 @@ API 签名索引（只允许出现这里或上文模板中存在的类/方法）
 
 {{ERROR_PATTERN_CONTEXT}}
 
-## 六、反幻觉规则（25 条，硬约束）
+## 六、反幻觉规则（26 条，硬约束）
 
 1. 只在 {{LOADER}} {{MC_VERSION}} + 当前映射类型的范围内生成代码；禁止跨版本/跨加载器套用写法。
 2. 禁止混用 Yarn 与 Mojang 官方映射：Fabric 用 Identifier/Registries，Forge/NeoForge 用 ResourceLocation/ForgeRegistries/DeferredRegister。
@@ -75,6 +77,7 @@ API 签名索引（只允许出现这里或上文模板中存在的类/方法）
 23. 自定义实体行为（extends Goal）的生命周期签名以注入模板为准：1.20.1 Yarn 为 `boolean canStart()` / `boolean shouldContinue()` / `void start()` / `void tick()` / `void stop()`；声明互斥控制用 `setControls(EnumSet.of(Goal.Control.MOVE, ...))`（导入 java.util.EnumSet，Control 是 Goal 的嵌套枚举）。
 24. 实体渲染器与模型层注册（EntityRendererRegistry / EntityModelLayerRegistry）只能出现在 ClientModInitializer 客户端入口；写进 common 入口会在服务端启动即崩，漏注册则运行期崩「No model for layer」。
 25. entityMode=freeform 时，实体类、自定义 Goal 与渲染器允许直写 Java；但刷怪蛋物品、实体 Cube 模型与贴图仍必须走 content_upsert 语义资产入口，保持可视化编辑器可见——freeform 不是全直写通行证。
+26. 注入模板首行带 `[未验证 · 复制自 …]` 标记时，该片段未在目标版本真机编译：只能作写法参考，不得当作已验证事实引用，也不得据此断言签名/字段正确；引用时须向用户说明「该写法来自移植稿，需编译验证」。
 
 ## 七、输出规范
 

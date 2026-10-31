@@ -6,6 +6,7 @@
  * probeService）。依赖以 ReferenceService 接口注入，便于无 Electron 验证。
  */
 import type { ReferenceService } from './referencePackageService'
+import { isFactStatus } from './referencePackageService'
 import type {
   ApiIndexEntry,
   ContentType,
@@ -79,6 +80,8 @@ export interface TemplateContent {
   provenance: TemplateProvenance
   build: 'pending' | 'pass' | 'fail'
   content: string
+  /** 未通过编译回测且未签字的候选稿：content 带 [未验证] 前缀，不得当事实引用 */
+  candidate?: boolean
 }
 
 /** 用户文本 -> 内容类型（多类型按首次命中顺序去重；空命中默认 block，PDF p433） */
@@ -105,7 +108,8 @@ export interface ContextBuilder {
     loader: LoaderId,
     version: string,
     types: readonly ContentType[],
-    query?: string
+    query?: string,
+    opts?: { includeCandidates?: boolean }
   ): TemplateContent[]
   matchErrorPatterns(loader: LoaderId, version: string, logText: string): MatchedErrorPattern[]
   getErrorFixContext(
@@ -122,6 +126,12 @@ export interface ContextBuilder {
 
 function comboId(loader: LoaderId, version: string): string {
   return `${loader}-${version}`
+}
+
+/** 候选稿标注：翻译稿写明种子组合，其余写来源；放在内容首行，模型可见 */
+function candidateBadge(provenance: TemplateProvenance): string {
+  const m = /^translated-from-([a-z]+)-(\d+(?:\.\d+)*)$/.exec(provenance)
+  return m ? `[未验证 · 复制自 ${m[1]} ${m[2]}]` : `[未验证 · 来源 ${provenance}]`
 }
 
 export function createContextBuilder(service: ReferenceService): ContextBuilder {
@@ -182,8 +192,8 @@ export function createContextBuilder(service: ReferenceService): ContextBuilder 
   return {
     detectContentTypes,
 
-    getTemplateContents(loader, version, types, query) {
-      const all = service.listTemplates(loader, version) // inactive 组合天然返回 []
+    getTemplateContents(loader, version, types, query, opts) {
+      const all = service.listTemplates(loader, version, undefined, opts) // inactive 组合天然返回 []
       if (all.length === 0) return []
       const tokens = tokenize(query)
       const rawLower = (query ?? '').toLowerCase()
@@ -191,12 +201,15 @@ export function createContextBuilder(service: ReferenceService): ContextBuilder 
         const view = service.readTemplate(t.id)
         return {
           t,
+          view,
           content: view?.content ?? '',
+          // 有效状态以 readTemplate 合并 overlay 后的视图为准
+          fact: isFactStatus(view ? view.build : t.build, view ? view.verified : t.verified),
           score: scoreTemplate(t.keywords, t.filename, t.type, types, tokens, rawLower)
         }
       })
       const typeOrder = new Map(types.map((ty, i) => [ty, i]))
-      return scored
+      const ranked = scored
         .filter((s) => s.score > 0)
         .sort((a, b) => {
           if (b.score !== a.score) return b.score - a.score
@@ -209,15 +222,20 @@ export function createContextBuilder(service: ReferenceService): ContextBuilder 
           if (sa !== sb) return sa - sb
           return a.t.file.localeCompare(b.t.file)
         })
-        .slice(0, MAX_INJECTION_TEMPLATES)
-        .map((s) => ({
-          id: s.t.id,
-          type: s.t.type,
-          file: s.t.file,
-          provenance: s.t.provenance,
-          build: s.t.build,
-          content: s.content
-        }))
+      // 事实模板永远排在候选稿之前，候选稿只填充剩余名额
+      const ordered = [
+        ...ranked.filter((s) => s.fact),
+        ...ranked.filter((s) => !s.fact)
+      ].slice(0, MAX_INJECTION_TEMPLATES)
+      return ordered.map((s) => ({
+        id: s.t.id,
+        type: s.t.type,
+        file: s.t.file,
+        provenance: s.t.provenance,
+        build: (s.view?.build ?? s.t.build) as TemplateContent['build'],
+        content: s.fact ? s.content : `${candidateBadge(s.t.provenance)}\n\n${s.content}`,
+        candidate: !s.fact
+      }))
     },
 
     matchErrorPatterns(loader, version, logText) {

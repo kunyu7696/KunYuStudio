@@ -12,7 +12,7 @@
  */
 import { app } from 'electron'
 import { existsSync, readFileSync } from 'node:fs'
-import { isAbsolute, join, normalize, relative, resolve } from 'node:path'
+import { isAbsolute, join, relative, resolve } from 'node:path'
 import type {
   ContentType,
   ErrorPattern,
@@ -33,6 +33,7 @@ import {
   type ProbeRecordInput,
   type UpstreamRecordInput
 } from './matrixHealthStore'
+import { contentStamp, createTemplateStore, type CorpusTemplateFile, type TemplateStore } from './templateStore'
 
 const MANIFEST_FILE = 'manifest.json'
 const PROMPT_FILE = 'system_prompt_base.md'
@@ -76,7 +77,10 @@ function asArray(v: unknown, label: string): unknown[] {
  * 加载并结构校验 manifest；同时交叉校验 stats 与磁盘实物。
  * 损坏/被篡改时直接抛错（调用方软降级，绝不带病工作）。
  */
-export function loadManifestFromDir(referenceDir: string): ReferenceManifest {
+export function loadManifestFromDir(
+  referenceDir: string,
+  templates: TemplateStore = createTemplateStore(referenceDir)
+): ReferenceManifest {
   const manifestPath = join(referenceDir, MANIFEST_FILE)
   if (!existsSync(manifestPath)) throw new Error(`参考包不存在：${manifestPath}`)
 
@@ -110,7 +114,8 @@ export function loadManifestFromDir(referenceDir: string): ReferenceManifest {
     throw new Error('stats.apiIndexCount 与实际 API 索引数不一致')
   }
 
-  // 每个 active 模板的 file 必须真实存在，且不得逃逸参考包根
+  // 每个 active 模板的 file 必须可组合（旧布局直读磁盘，压缩布局查 canonical/variants），
+  // 且不得逃逸参考包根
   const root = resolve(referenceDir)
   for (const t of m.templates) {
     if (typeof t.file !== 'string' || !t.file) throw new Error('模板缺少 file 字段')
@@ -119,7 +124,7 @@ export function loadManifestFromDir(referenceDir: string): ReferenceManifest {
     if (relPath.startsWith('..') || isAbsolute(relPath)) {
       throw new Error(`模板路径越界：${t.file}`)
     }
-    if (!existsSync(abs)) throw new Error(`模板文件缺失：${t.file}`)
+    if (!templates.exists(t.file)) throw new Error(`模板文件缺失：${t.file}`)
     if (t.active !== true) throw new Error(`仅允许 active 模板入库：${t.id}`)
   }
 
@@ -134,6 +139,24 @@ export function loadManifestFromDir(referenceDir: string): ReferenceManifest {
 }
 
 /* ------------------------------------------------------------------ */
+/* 状态判定                                                            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * 模板「事实」口径：build=pass，或 verified 为 true / 非空版本串。
+ *
+ * 参数取 unknown：manifest 历史数据存在脏值（build="verified"/"unverified"、
+ * verified=false 布尔），类型层虽然声明为 string|null，运行时仍可能收到布尔，
+ * 这里做一次收敛，避免把 verified=false 误判为已签字。
+ */
+export function isFactStatus(build: unknown, verified: unknown): boolean {
+  if (build === 'pass') return true
+  if (verified === true) return true
+  if (typeof verified === 'string' && verified.trim().length > 0) return true
+  return false
+}
+
+/* ------------------------------------------------------------------ */
 /* 服务实例（纯依赖注入，便于无 Electron 环境验证）                      */
 /* ------------------------------------------------------------------ */
 
@@ -142,9 +165,20 @@ export interface ReferenceService {
   isLoaded(): boolean
   loadError(): string | null
   getManifest(): ReferenceManifest | null
-  /** 列出激活组合的模板（inactive 组合永远返回空） */
-  listTemplates(loader: LoaderId, version: string, types?: readonly ContentType[]): ReferenceManifest['templates']
+  /**
+   * 列出激活组合的模板（inactive 组合永远返回空）。
+   * 默认只返回「事实」模板（build=pass 或已签字）；build=pending 的迁移稿
+   * 仅在 includeCandidates=true 时返回，调用方必须作为候选标注，不得当事实注入。
+   */
+  listTemplates(
+    loader: LoaderId,
+    version: string,
+    types?: readonly ContentType[],
+    opts?: { includeCandidates?: boolean }
+  ): ReferenceManifest['templates']
   readTemplate(id: string): TemplateView | null
+  /** 参考包全部模板的「已组合正文」清单（RAG 语料；路径仍是 manifest 虚拟路径） */
+  listTemplateCorpus(): CorpusTemplateFile[]
   getSystemPromptBase(): string | null
   /** KunYuStudio 应用自身能力清单（聊天意图注入，AI 自我认知语料） */
   getKunyuCapabilities(): string | null
@@ -175,8 +209,10 @@ export function createReferenceService(deps: {
   let error: string | null = null
   // 矩阵健康统一存储：唯一真源（探针/监测/门禁同写一份，磁盘即真源）
   const store: MatrixHealthStore = createMatrixHealthStore({ path: deps.overlayPath })
+  // 模板组合器：磁盘上是 canonical+占位符+variants，运行时还原为原字节
+  const templates = createTemplateStore(deps.referenceDir)
   try {
-    manifest = loadManifestFromDir(deps.referenceDir)
+    manifest = loadManifestFromDir(deps.referenceDir, templates)
     // 一次性种子迁移：overlay 无记录的组合从 manifest 基线灌入（幂等，
     // 已有运行时记录绝不覆盖）——保证既有绿灯成果与 prod 升级后基线不丢失
     store.seedFromBaseline(manifest)
@@ -200,27 +236,26 @@ export function createReferenceService(deps: {
 
     getManifest: () => manifest,
 
-    listTemplates(loader, version, types) {
+    listTemplates(loader, version, types, opts) {
       if (!manifest) return []
       if (!activeCombos().has(`${loader}/${version}`)) return []
-      return manifest.templates.filter(
-        (t) =>
-          t.loader === loader &&
-          t.version === version &&
-          (!types || types.length === 0 || types.some((ty) => t.contentTypes.includes(ty)))
-      )
+      const includeCandidates = opts?.includeCandidates === true
+      return manifest.templates.filter((t) => {
+        if (t.loader !== loader || t.version !== version) return false
+        if (types && types.length > 0 && !types.some((ty) => t.contentTypes.includes(ty))) return false
+        if (includeCandidates) return true
+        // 有效状态：overlay 优先，无记录回退 manifest 基线（与 readTemplate 同源）
+        const ov = store.getTemplate(t.id)
+        return isFactStatus(ov ? ov.build : t.build, ov ? ov.verified : t.verified)
+      })
     },
 
     readTemplate(id) {
       if (!manifest) return null
       const t = manifest.templates.find((x) => x.id === id)
       if (!t) return null
-      const abs = resolve(deps.referenceDir, normalize(t.file))
-      const root = resolve(deps.referenceDir)
-      const relPath = relative(root, abs)
-      if (relPath.startsWith('..') || isAbsolute(relPath)) return null
-      if (!existsSync(abs)) return null
-      const content = readFileSync(abs, 'utf-8')
+      const content = templates.read(t.file)
+      if (content === null) return null
       // 模板运行时状态：overlay 优先，无记录回退 manifest 基线（模板写方仅探针，无分裂面）
       const ov = store.getTemplate(t.id)
       const view: TemplateView = {
@@ -231,6 +266,17 @@ export function createReferenceService(deps: {
         content
       }
       return view
+    },
+
+    listTemplateCorpus() {
+      if (!manifest) return []
+      const out: CorpusTemplateFile[] = []
+      for (const t of manifest.templates) {
+        const content = templates.read(t.file)
+        if (content === null) continue
+        out.push({ rel: t.file, content, mtimeMs: contentStamp(content) })
+      }
+      return out
     },
 
     getSystemPromptBase() {

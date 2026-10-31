@@ -1057,53 +1057,6 @@
   ],
   "templates": [
     {
-      "id": "any-any-weapon-3d-recipes.md",
-      "loader": "any",
-      "version": "any",
-      "type": "model",
-      "file": "templates/weapon-3d-recipes.md",
-      "filename": "weapon-3d-recipes.md",
-      "contentTypes": [
-        "item",
-        "model"
-      ],
-      "keywords": [
-        "武器",
-        "3d",
-        "cube",
-        "weapon",
-        "katana",
-        "greatsword",
-        "spear",
-        "staff",
-        "axe",
-        "dagger",
-        "剑",
-        "刀",
-        "武士刀",
-        "大剑",
-        "长枪",
-        "法杖",
-        "战斧",
-        "匕首"
-      ],
-      "appliesTo": {
-        "loaders": [
-          "fabric",
-          "forge",
-          "neoforge"
-        ],
-        "mcVersions": [
-          "1.20.1"
-        ]
-      },
-      "verified": true,
-      "verifiedAt": "2026-09-26",
-      "build": "verified",
-      "active": true,
-      "provenance": "handwritten"
-    },
-    {
       "id": "fabric-1.20.1-geckolib-animations.md",
       "loader": "fabric",
       "version": "1.20.1",
@@ -1135,7 +1088,7 @@
           "1.20.1"
         ]
       },
-      "verified": true,
+      "verified": "1.20.1",
       "verifiedAt": "2026-09-27T19:03:02.714Z",
       "build": "pass",
       "active": true,
@@ -1391,7 +1344,7 @@
           "1.20.1"
         ]
       },
-      "verified": true,
+      "verified": "1.20.1",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -1425,7 +1378,7 @@
           "1.20.1"
         ]
       },
-      "verified": true,
+      "verified": "1.20.1",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -1460,7 +1413,7 @@
           "1.20.1"
         ]
       },
-      "verified": true,
+      "verified": "1.20.1",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -26085,9 +26038,9 @@
           "1.16.5"
         ]
       },
-      "verified": false,
+      "verified": null,
       "verifiedAt": null,
-      "build": "unverified",
+      "build": "pending",
       "active": true,
       "provenance": "rewritten-for-1.16.5-mojmap-unverified-build",
       "verificationNote": "2026-10-03 已按真实 1.16.5 Mojmap 平铺包（net.minecraft.item/block/entity，无 net.minecraft.world 前缀）重写并经 yarn 平铺包结构交叉核对；ForgeGradle3 构建链断裂（artifactural:1.0.+ 已从 Maven 移除、mcp_config 无 obf_to_srg），当前环境无法真机编译。Agent 使用时作为参考样例，编译错误走错误模式库兜底。"
@@ -26237,9 +26190,9 @@
           "1.16.5"
         ]
       },
-      "verified": false,
+      "verified": null,
       "verifiedAt": null,
-      "build": "unverified",
+      "build": "pending",
       "active": true,
       "provenance": "rewritten-for-1.16.5-mojmap-unverified-build",
       "verificationNote": "2026-10-03 已按真实 1.16.5 Mojmap 平铺包（net.minecraft.item/block/entity，无 net.minecraft.world 前缀）重写并经 yarn 平铺包结构交叉核对；ForgeGradle3 构建链断裂（artifactural:1.0.+ 已从 Maven 移除、mcp_config 无 obf_to_srg），当前环境无法真机编译。Agent 使用时作为参考样例，编译错误走错误模式库兜底。"
@@ -26273,9 +26226,9 @@
           "1.16.5"
         ]
       },
-      "verified": false,
+      "verified": null,
       "verifiedAt": null,
-      "build": "unverified",
+      "build": "pending",
       "active": true,
       "provenance": "rewritten-for-1.16.5-mojmap-unverified-build",
       "verificationNote": "2026-10-03 已按真实 1.16.5 Mojmap 平铺包（net.minecraft.item/block/entity，无 net.minecraft.world 前缀）重写并经 yarn 平铺包结构交叉核对；ForgeGradle3 构建链断裂（artifactural:1.0.+ 已从 Maven 移除、mcp_config 无 obf_to_srg），当前环境无法真机编译。Agent 使用时作为参考样例，编译错误走错误模式库兜底。"
@@ -26308,9 +26261,9 @@
           "1.16.5"
         ]
       },
-      "verified": false,
+      "verified": null,
       "verifiedAt": null,
-      "build": "unverified",
+      "build": "pending",
       "active": true,
       "provenance": "rewritten-for-1.16.5-mojmap-unverified-build",
       "verificationNote": "2026-10-03 已按真实 1.16.5 Mojmap 平铺包（net.minecraft.item/block/entity，无 net.minecraft.world 前缀）重写并经 yarn 平铺包结构交叉核对；ForgeGradle3 构建链断裂（artifactural:1.0.+ 已从 Maven 移除、mcp_config 无 obf_to_srg），当前环境无法真机编译。Agent 使用时作为参考样例，编译错误走错误模式库兜底。"
@@ -26349,9 +26302,9 @@
           "1.16.5"
         ]
       },
-      "verified": false,
+      "verified": null,
       "verifiedAt": null,
-      "build": "unverified",
+      "build": "pending",
       "active": true,
       "provenance": "rewritten-for-1.16.5-mojmap-unverified-build",
       "verificationNote": "2026-10-03 已按真实 1.16.5 Mojmap 平铺包（net.minecraft.item/block/entity，无 net.minecraft.world 前缀）重写并经 yarn 平铺包结构交叉核对；ForgeGradle3 构建链断裂（artifactural:1.0.+ 已从 Maven 移除、mcp_config 无 obf_to_srg），当前环境无法真机编译。Agent 使用时作为参考样例，编译错误走错误模式库兜底。"
@@ -26390,9 +26343,9 @@
           "1.16.5"
         ]
       },
-      "verified": false,
+      "verified": null,
       "verifiedAt": null,
-      "build": "unverified",
+      "build": "pending",
       "active": true,
       "provenance": "rewritten-for-1.16.5-mojmap-unverified-build",
       "verificationNote": "2026-10-03 已按真实 1.16.5 Mojmap 平铺包（net.minecraft.item/block/entity，无 net.minecraft.world 前缀）重写并经 yarn 平铺包结构交叉核对；ForgeGradle3 构建链断裂（artifactural:1.0.+ 已从 Maven 移除、mcp_config 无 obf_to_srg），当前环境无法真机编译。Agent 使用时作为参考样例，编译错误走错误模式库兜底。"
@@ -26432,9 +26385,9 @@
           "1.16.5"
         ]
       },
-      "verified": false,
+      "verified": null,
       "verifiedAt": null,
-      "build": "unverified",
+      "build": "pending",
       "active": true,
       "provenance": "rewritten-for-1.16.5-mojmap-unverified-build",
       "verificationNote": "2026-10-03 已按真实 1.16.5 Mojmap 平铺包（net.minecraft.item/block/entity，无 net.minecraft.world 前缀）重写并经 yarn 平铺包结构交叉核对；ForgeGradle3 构建链断裂（artifactural:1.0.+ 已从 Maven 移除、mcp_config 无 obf_to_srg），当前环境无法真机编译。Agent 使用时作为参考样例，编译错误走错误模式库兜底。"
@@ -26476,9 +26429,9 @@
           "1.16.5"
         ]
       },
-      "verified": false,
+      "verified": null,
       "verifiedAt": null,
-      "build": "unverified",
+      "build": "pending",
       "active": true,
       "provenance": "rewritten-for-1.16.5-mojmap-unverified-build",
       "verificationNote": "2026-10-03 已按真实 1.16.5 Mojmap 平铺包（net.minecraft.item/block/entity，无 net.minecraft.world 前缀）重写并经 yarn 平铺包结构交叉核对；ForgeGradle3 构建链断裂（artifactural:1.0.+ 已从 Maven 移除、mcp_config 无 obf_to_srg），当前环境无法真机编译。Agent 使用时作为参考样例，编译错误走错误模式库兜底。"
@@ -26515,9 +26468,9 @@
           "1.16.5"
         ]
       },
-      "verified": false,
+      "verified": null,
       "verifiedAt": null,
-      "build": "unverified",
+      "build": "pending",
       "active": true,
       "provenance": "rewritten-for-1.16.5-mojmap-unverified-build",
       "verificationNote": "2026-10-03 已按真实 1.16.5 Mojmap 平铺包（net.minecraft.item/block/entity，无 net.minecraft.world 前缀）重写并经 yarn 平铺包结构交叉核对；ForgeGradle3 构建链断裂（artifactural:1.0.+ 已从 Maven 移除、mcp_config 无 obf_to_srg），当前环境无法真机编译。Agent 使用时作为参考样例，编译错误走错误模式库兜底。"
@@ -26554,9 +26507,9 @@
           "1.16.5"
         ]
       },
-      "verified": false,
+      "verified": null,
       "verifiedAt": null,
-      "build": "unverified",
+      "build": "pending",
       "active": true,
       "provenance": "rewritten-for-1.16.5-mojmap-unverified-build",
       "verificationNote": "2026-10-03 已按真实 1.16.5 Mojmap 平铺包（net.minecraft.item/block/entity，无 net.minecraft.world 前缀）重写并经 yarn 平铺包结构交叉核对；ForgeGradle3 构建链断裂（artifactural:1.0.+ 已从 Maven 移除、mcp_config 无 obf_to_srg），当前环境无法真机编译。Agent 使用时作为参考样例，编译错误走错误模式库兜底。"
@@ -26593,9 +26546,9 @@
           "1.16.5"
         ]
       },
-      "verified": false,
+      "verified": null,
       "verifiedAt": null,
-      "build": "unverified",
+      "build": "pending",
       "active": true,
       "provenance": "rewritten-for-1.16.5-mojmap-unverified-build",
       "verificationNote": "2026-10-03 已按真实 1.16.5 Mojmap 平铺包（net.minecraft.item/block/entity，无 net.minecraft.world 前缀）重写并经 yarn 平铺包结构交叉核对；ForgeGradle3 构建链断裂（artifactural:1.0.+ 已从 Maven 移除、mcp_config 无 obf_to_srg），当前环境无法真机编译。Agent 使用时作为参考样例，编译错误走错误模式库兜底。"
@@ -26632,9 +26585,9 @@
           "1.16.5"
         ]
       },
-      "verified": false,
+      "verified": null,
       "verifiedAt": null,
-      "build": "unverified",
+      "build": "pending",
       "active": true,
       "provenance": "rewritten-for-1.16.5-mojmap-unverified-build",
       "verificationNote": "2026-10-03 已按真实 1.16.5 Mojmap 平铺包（net.minecraft.item/block/entity，无 net.minecraft.world 前缀）重写并经 yarn 平铺包结构交叉核对；ForgeGradle3 构建链断裂（artifactural:1.0.+ 已从 Maven 移除、mcp_config 无 obf_to_srg），当前环境无法真机编译。Agent 使用时作为参考样例，编译错误走错误模式库兜底。"
@@ -26708,9 +26661,9 @@
           "1.16.5"
         ]
       },
-      "verified": false,
+      "verified": null,
       "verifiedAt": null,
-      "build": "unverified",
+      "build": "pending",
       "active": true,
       "provenance": "rewritten-for-1.16.5-mojmap-unverified-build",
       "verificationNote": "2026-10-03 已按真实 1.16.5 Mojmap 平铺包（net.minecraft.item/block/entity，无 net.minecraft.world 前缀）重写并经 yarn 平铺包结构交叉核对；ForgeGradle3 构建链断裂（artifactural:1.0.+ 已从 Maven 移除、mcp_config 无 obf_to_srg），当前环境无法真机编译。Agent 使用时作为参考样例，编译错误走错误模式库兜底。"
@@ -26747,9 +26700,9 @@
           "1.16.5"
         ]
       },
-      "verified": false,
+      "verified": null,
       "verifiedAt": null,
-      "build": "unverified",
+      "build": "pending",
       "active": true,
       "provenance": "rewritten-for-1.16.5-mojmap-unverified-build",
       "verificationNote": "2026-10-03 已按真实 1.16.5 Mojmap 平铺包（net.minecraft.item/block/entity，无 net.minecraft.world 前缀）重写并经 yarn 平铺包结构交叉核对；ForgeGradle3 构建链断裂（artifactural:1.0.+ 已从 Maven 移除、mcp_config 无 obf_to_srg），当前环境无法真机编译。Agent 使用时作为参考样例，编译错误走错误模式库兜底。"
@@ -26785,9 +26738,9 @@
           "1.16.5"
         ]
       },
-      "verified": false,
+      "verified": null,
       "verifiedAt": null,
-      "build": "unverified",
+      "build": "pending",
       "active": true,
       "provenance": "rewritten-for-1.16.5-mojmap-unverified-build",
       "verificationNote": "2026-10-03 已按真实 1.16.5 Mojmap 平铺包（net.minecraft.item/block/entity，无 net.minecraft.world 前缀）重写并经 yarn 平铺包结构交叉核对；ForgeGradle3 构建链断裂（artifactural:1.0.+ 已从 Maven 移除、mcp_config 无 obf_to_srg），当前环境无法真机编译。Agent 使用时作为参考样例，编译错误走错误模式库兜底。"
@@ -26860,9 +26813,9 @@
           "1.16.5"
         ]
       },
-      "verified": false,
+      "verified": null,
       "verifiedAt": null,
-      "build": "unverified",
+      "build": "pending",
       "active": true,
       "provenance": "rewritten-for-1.16.5-mojmap-unverified-build",
       "verificationNote": "2026-10-03 已按真实 1.16.5 Mojmap 平铺包（net.minecraft.item/block/entity，无 net.minecraft.world 前缀）重写并经 yarn 平铺包结构交叉核对；ForgeGradle3 构建链断裂（artifactural:1.0.+ 已从 Maven 移除、mcp_config 无 obf_to_srg），当前环境无法真机编译。Agent 使用时作为参考样例，编译错误走错误模式库兜底。"
@@ -27346,9 +27299,9 @@
           "1.16.5"
         ]
       },
-      "verified": false,
+      "verified": null,
       "verifiedAt": null,
-      "build": "unverified",
+      "build": "pending",
       "active": true,
       "provenance": "rewritten-for-1.16.5-mojmap-unverified-build",
       "verificationNote": "2026-10-03 已按真实 1.16.5 Mojmap 平铺包（net.minecraft.item/block/entity，无 net.minecraft.world 前缀）重写并经 yarn 平铺包结构交叉核对；ForgeGradle3 构建链断裂（artifactural:1.0.+ 已从 Maven 移除、mcp_config 无 obf_to_srg），当前环境无法真机编译。Agent 使用时作为参考样例，编译错误走错误模式库兜底。"
@@ -27507,9 +27460,9 @@
           "1.16.5"
         ]
       },
-      "verified": false,
+      "verified": null,
       "verifiedAt": null,
-      "build": "unverified",
+      "build": "pending",
       "active": true,
       "provenance": "rewritten-for-1.16.5-mojmap-unverified-build",
       "verificationNote": "2026-10-03 已按真实 1.16.5 Mojmap 平铺包（net.minecraft.item/block/entity，无 net.minecraft.world 前缀）重写并经 yarn 平铺包结构交叉核对；ForgeGradle3 构建链断裂（artifactural:1.0.+ 已从 Maven 移除、mcp_config 无 obf_to_srg），当前环境无法真机编译。Agent 使用时作为参考样例，编译错误走错误模式库兜底。"
@@ -27550,9 +27503,9 @@
           "1.16.5"
         ]
       },
-      "verified": false,
+      "verified": null,
       "verifiedAt": null,
-      "build": "unverified",
+      "build": "pending",
       "active": true,
       "provenance": "rewritten-for-1.16.5-mojmap-unverified-build",
       "verificationNote": "2026-10-03 已按真实 1.16.5 Mojmap 平铺包（net.minecraft.item/block/entity，无 net.minecraft.world 前缀）重写并经 yarn 平铺包结构交叉核对；ForgeGradle3 构建链断裂（artifactural:1.0.+ 已从 Maven 移除、mcp_config 无 obf_to_srg），当前环境无法真机编译。Agent 使用时作为参考样例，编译错误走错误模式库兜底。"
@@ -27593,9 +27546,9 @@
           "1.16.5"
         ]
       },
-      "verified": false,
+      "verified": null,
       "verifiedAt": null,
-      "build": "unverified",
+      "build": "pending",
       "active": true,
       "provenance": "rewritten-for-1.16.5-mojmap-unverified-build",
       "verificationNote": "2026-10-03 已按真实 1.16.5 Mojmap 平铺包（net.minecraft.item/block/entity，无 net.minecraft.world 前缀）重写并经 yarn 平铺包结构交叉核对；ForgeGradle3 构建链断裂（artifactural:1.0.+ 已从 Maven 移除、mcp_config 无 obf_to_srg），当前环境无法真机编译。Agent 使用时作为参考样例，编译错误走错误模式库兜底。"
@@ -27634,7 +27587,7 @@
           "1.16.5"
         ]
       },
-      "verified": true,
+      "verified": "1.16.5",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -27668,7 +27621,7 @@
           "1.16.5"
         ]
       },
-      "verified": true,
+      "verified": "1.16.5",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -27703,7 +27656,7 @@
           "1.16.5"
         ]
       },
-      "verified": true,
+      "verified": "1.16.5",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -27743,7 +27696,7 @@
           "1.18.2"
         ]
       },
-      "verified": true,
+      "verified": "1.18.2",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -27777,7 +27730,7 @@
           "1.18.2"
         ]
       },
-      "verified": true,
+      "verified": "1.18.2",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -27812,7 +27765,7 @@
           "1.18.2"
         ]
       },
-      "verified": true,
+      "verified": "1.18.2",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -27852,7 +27805,7 @@
           "1.19.2"
         ]
       },
-      "verified": true,
+      "verified": "1.19.2",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -27886,7 +27839,7 @@
           "1.19.2"
         ]
       },
-      "verified": true,
+      "verified": "1.19.2",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -27921,7 +27874,7 @@
           "1.19.2"
         ]
       },
-      "verified": true,
+      "verified": "1.19.2",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -27961,7 +27914,7 @@
           "1.20.4"
         ]
       },
-      "verified": true,
+      "verified": "1.20.4",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -27995,7 +27948,7 @@
           "1.20.4"
         ]
       },
-      "verified": true,
+      "verified": "1.20.4",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -28030,7 +27983,7 @@
           "1.20.4"
         ]
       },
-      "verified": true,
+      "verified": "1.20.4",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -28070,7 +28023,7 @@
           "1.20.6"
         ]
       },
-      "verified": true,
+      "verified": "1.20.6",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -28104,7 +28057,7 @@
           "1.20.6"
         ]
       },
-      "verified": true,
+      "verified": "1.20.6",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -28139,7 +28092,7 @@
           "1.20.6"
         ]
       },
-      "verified": true,
+      "verified": "1.20.6",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -28179,7 +28132,7 @@
           "1.21.1"
         ]
       },
-      "verified": true,
+      "verified": "1.21.1",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -28213,7 +28166,7 @@
           "1.21.1"
         ]
       },
-      "verified": true,
+      "verified": "1.21.1",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -28248,7 +28201,7 @@
           "1.21.1"
         ]
       },
-      "verified": true,
+      "verified": "1.21.1",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -28288,9 +28241,9 @@
           "1.16.5"
         ]
       },
-      "verified": false,
+      "verified": null,
       "verifiedAt": null,
-      "build": "unverified",
+      "build": "pending",
       "active": true,
       "provenance": "rewritten-for-1.16.5-mojmap-unverified-build",
       "verificationNote": "2026-10-03 已按真实 1.16.5 Mojmap 平铺包（net.minecraft.item/block/entity，无 net.minecraft.world 前缀）重写并经 yarn 平铺包结构交叉核对；ForgeGradle3 构建链断裂（artifactural:1.0.+ 已从 Maven 移除、mcp_config 无 obf_to_srg），当前环境无法真机编译。Agent 使用时作为参考样例，编译错误走错误模式库兜底。"
@@ -28323,7 +28276,7 @@
           "1.16.5"
         ]
       },
-      "verified": true,
+      "verified": "1.16.5",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -28358,7 +28311,7 @@
           "1.16.5"
         ]
       },
-      "verified": true,
+      "verified": "1.16.5",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -28398,7 +28351,7 @@
           "1.18.2"
         ]
       },
-      "verified": true,
+      "verified": "1.18.2",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -28432,7 +28385,7 @@
           "1.18.2"
         ]
       },
-      "verified": true,
+      "verified": "1.18.2",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -28467,7 +28420,7 @@
           "1.18.2"
         ]
       },
-      "verified": true,
+      "verified": "1.18.2",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -28507,7 +28460,7 @@
           "1.19.2"
         ]
       },
-      "verified": true,
+      "verified": "1.19.2",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -28541,7 +28494,7 @@
           "1.19.2"
         ]
       },
-      "verified": true,
+      "verified": "1.19.2",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -28576,7 +28529,7 @@
           "1.19.2"
         ]
       },
-      "verified": true,
+      "verified": "1.19.2",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -28616,7 +28569,7 @@
         ]
       },
       "provenance": "manual-verified",
-      "verified": true,
+      "verified": "1.20.1",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true
@@ -28650,7 +28603,7 @@
         ]
       },
       "provenance": "manual-verified",
-      "verified": true,
+      "verified": "1.20.1",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true
@@ -28685,7 +28638,7 @@
         ]
       },
       "provenance": "manual-verified",
-      "verified": true,
+      "verified": "1.20.1",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true
@@ -28724,7 +28677,7 @@
           "1.20.4"
         ]
       },
-      "verified": true,
+      "verified": "1.20.4",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -28758,7 +28711,7 @@
           "1.20.4"
         ]
       },
-      "verified": true,
+      "verified": "1.20.4",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -28793,7 +28746,7 @@
           "1.20.4"
         ]
       },
-      "verified": true,
+      "verified": "1.20.4",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -28833,7 +28786,7 @@
           "1.21.1"
         ]
       },
-      "verified": true,
+      "verified": "1.21.1",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -28867,7 +28820,7 @@
           "1.21.1"
         ]
       },
-      "verified": true,
+      "verified": "1.21.1",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -28902,7 +28855,7 @@
           "1.21.1"
         ]
       },
-      "verified": true,
+      "verified": "1.21.1",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -28942,7 +28895,7 @@
           "1.20.4"
         ]
       },
-      "verified": true,
+      "verified": "1.20.4",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -28976,7 +28929,7 @@
           "1.20.4"
         ]
       },
-      "verified": true,
+      "verified": "1.20.4",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -29011,7 +28964,7 @@
           "1.20.4"
         ]
       },
-      "verified": true,
+      "verified": "1.20.4",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -29051,7 +29004,7 @@
           "1.20.6"
         ]
       },
-      "verified": true,
+      "verified": "1.20.6",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -29085,7 +29038,7 @@
           "1.20.6"
         ]
       },
-      "verified": true,
+      "verified": "1.20.6",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -29120,7 +29073,7 @@
           "1.20.6"
         ]
       },
-      "verified": true,
+      "verified": "1.20.6",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -29160,7 +29113,7 @@
         ]
       },
       "provenance": "manual-verified",
-      "verified": true,
+      "verified": "1.21.1",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true
@@ -29194,7 +29147,7 @@
         ]
       },
       "provenance": "manual-verified",
-      "verified": true,
+      "verified": "1.21.1",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true
@@ -29229,7 +29182,7 @@
         ]
       },
       "provenance": "manual-verified",
-      "verified": true,
+      "verified": "1.21.1",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true
@@ -29268,7 +29221,7 @@
           "1.21.3"
         ]
       },
-      "verified": true,
+      "verified": "1.21.3",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -29302,7 +29255,7 @@
           "1.21.3"
         ]
       },
-      "verified": true,
+      "verified": "1.21.3",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -29337,7 +29290,7 @@
           "1.21.3"
         ]
       },
-      "verified": true,
+      "verified": "1.21.3",
       "verifiedAt": "2026-10-02T00:00:00.000Z",
       "build": "pass",
       "active": true,
@@ -59989,6 +59942,138 @@
       "verifiedAt": null,
       "build": "pending",
       "active": true
+    },
+    {
+      "id": "fabric-1.20.1-weapon_3d_recipes.md",
+      "loader": "fabric",
+      "version": "1.20.1",
+      "type": "item",
+      "file": "templates/weapon-3d-recipes.md",
+      "filename": "weapon-3d-recipes.md",
+      "contentTypes": [
+        "item"
+      ],
+      "keywords": [
+        "武器",
+        "3d",
+        "cube",
+        "weapon",
+        "katana",
+        "greatsword",
+        "spear",
+        "staff",
+        "axe",
+        "dagger",
+        "剑",
+        "刀",
+        "武士刀",
+        "大剑",
+        "长枪",
+        "法杖",
+        "战斧",
+        "匕首"
+      ],
+      "appliesTo": {
+        "loaders": [
+          "fabric"
+        ],
+        "mcVersions": [
+          "1.20.1"
+        ]
+      },
+      "verified": "any",
+      "verifiedAt": "2026-09-26",
+      "build": "pass",
+      "active": true,
+      "provenance": "handwritten"
+    },
+    {
+      "id": "forge-1.20.1-weapon_3d_recipes.md",
+      "loader": "forge",
+      "version": "1.20.1",
+      "type": "item",
+      "file": "templates/weapon-3d-recipes.md",
+      "filename": "weapon-3d-recipes.md",
+      "contentTypes": [
+        "item"
+      ],
+      "keywords": [
+        "武器",
+        "3d",
+        "cube",
+        "weapon",
+        "katana",
+        "greatsword",
+        "spear",
+        "staff",
+        "axe",
+        "dagger",
+        "剑",
+        "刀",
+        "武士刀",
+        "大剑",
+        "长枪",
+        "法杖",
+        "战斧",
+        "匕首"
+      ],
+      "appliesTo": {
+        "loaders": [
+          "forge"
+        ],
+        "mcVersions": [
+          "1.20.1"
+        ]
+      },
+      "verified": "any",
+      "verifiedAt": "2026-09-26",
+      "build": "pass",
+      "active": true,
+      "provenance": "handwritten"
+    },
+    {
+      "id": "neoforge-1.20.1-weapon_3d_recipes.md",
+      "loader": "neoforge",
+      "version": "1.20.1",
+      "type": "item",
+      "file": "templates/weapon-3d-recipes.md",
+      "filename": "weapon-3d-recipes.md",
+      "contentTypes": [
+        "item"
+      ],
+      "keywords": [
+        "武器",
+        "3d",
+        "cube",
+        "weapon",
+        "katana",
+        "greatsword",
+        "spear",
+        "staff",
+        "axe",
+        "dagger",
+        "剑",
+        "刀",
+        "武士刀",
+        "大剑",
+        "长枪",
+        "法杖",
+        "战斧",
+        "匕首"
+      ],
+      "appliesTo": {
+        "loaders": [
+          "neoforge"
+        ],
+        "mcVersions": [
+          "1.20.1"
+        ]
+      },
+      "verified": "any",
+      "verifiedAt": "2026-09-26",
+      "build": "pass",
+      "active": true,
+      "provenance": "handwritten"
     }
   ],
   "errorPatterns": [
@@ -61954,24 +62039,24 @@
     }
   ],
   "stats": {
-    "templateCount": 1574,
-    "activeTemplateCount": 1574,
+    "templateCount": 1576,
+    "activeTemplateCount": 1576,
     "inactiveComboCount": 0,
     "inactiveRegisteredTemplateCount": 0,
     "errorPatternCount": 39,
     "apiIndexCount": 78,
-    "contentTypes": 13,
+    "contentTypes": 12,
     "provenance": {
-      "pdf": 35,
-      "scaffold": 6,
-      "mdk-adapted": 92,
-      "handwritten": 2,
-      "manual-verified": 50,
       "translated-from-fabric-1.20.1": 657,
       "translated-from-neoforge-1.21.1": 475,
       "translated-from-forge-1.20.1": 229,
+      "mdk-adapted": 92,
+      "manual-verified": 50,
+      "pdf": 35,
       "rewritten-for-1.16.5-mojmap-unverified-build": 21,
-      "hand-curated": 7
+      "hand-curated": 7,
+      "scaffold": 6,
+      "handwritten": 4
     },
     "vendorClaims": {
       "document": "KunYuEcosystem AI Reference v3.0 (2026-09)",

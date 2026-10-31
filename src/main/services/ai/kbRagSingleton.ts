@@ -12,7 +12,7 @@ import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import type { EmbedBackend } from '../../../shared/types/models'
 import { defaultKnowledgeRoot } from '../knowledgeSearch'
-import { collectCorpusFiles, createKbRag } from './kbRagService'
+import { collectCorpusFiles, createKbRag, type CorpusFile } from './kbRagService'
 import { getReferenceService, resolveReferenceDir } from './referencePackageService'
 
 export type KbRagInstance = ReturnType<typeof createKbRag>
@@ -31,14 +31,18 @@ export function kbModelsDir(): string {
  * 按 manifest 活跃组合精确挑语料；失败返回 null（服务内部回退 roots 目录遍历）。
  * knowledge 语料目录小且平铺，直接遍历拼入同一清单。
  */
-function listManifestFiles(): Array<{ alias: string; file: string }> | null {
+function listManifestFiles(): CorpusFile[] | null {
   try {
-    const manifest = getReferenceService().getManifest()
-    if (!manifest) return null
+    const svc = getReferenceService()
+    if (!svc.getManifest()) return null
     const dir = resolveReferenceDir()
-    const out: Array<{ alias: string; file: string }> = manifest.templates.map((t) => ({
+    // 模板已压缩为 canonical+variants，正文由组合器给出；file 仍用虚拟路径，
+    // 保证 relPath 与向量缓存键和重构前一致（mtime 换成内容指纹）
+    const out: CorpusFile[] = svc.listTemplateCorpus().map((f) => ({
       alias: REFERENCE_ALIAS,
-      file: join(dir, t.file)
+      file: join(dir, f.rel),
+      content: f.content,
+      mtimeMs: f.mtimeMs
     }))
     for (const doc of REFERENCE_TOP_DOCS) {
       const abs = join(dir, doc)

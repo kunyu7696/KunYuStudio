@@ -1,0 +1,3126 @@
+{
+  "generatedAt": "2026-10-31T21:03:16.737Z",
+  "referenceDir": "D:\\KunYuEcosystem\\resources\\ai-reference",
+  "manifestVersion": "3.3.0",
+  "generatedAtManifest": "2026-10-23T13:24:09.365Z",
+  "layout": {
+    "templateVirtualFiles": 1557,
+    "comboVirtualFiles": 1555,
+    "rootSharedDocs": 2,
+    "canonicalSlots": 1391,
+    "canonicalFiles": 147,
+    "variantSlots": 164,
+    "versionsFiles": 35,
+    "varsFiles": 3,
+    "reuseRate": "89.5%",
+    "unresolved": []
+  },
+  "files": {
+    "templatesTreeFiles": 351,
+    "byLoader": {
+      "fabric": 709,
+      "forge": 313,
+      "neoforge": 533
+    },
+    "combosInTree": 35,
+    "activeCombos": 34
+  },
+  "javaDedup": {
+    "total": 738,
+    "distinctTexts": 155,
+    "duplicateGroups": 94,
+    "maxCopies": 18,
+    "distinctLoaderSlots": 77,
+    "topGroups": [
+      {
+        "slot": "forge/mixin/inject_mixin.java",
+        "copies": 18,
+        "distinctCombos": 18
+      },
+      {
+        "slot": "forge/mixin/modify_arg_mixin.java",
+        "copies": 18,
+        "distinctCombos": 18
+      },
+      {
+        "slot": "fabric/entity/entity_attribute.java",
+        "copies": 16,
+        "distinctCombos": 16
+      },
+      {
+        "slot": "fabric/mixin/inject_mixin.java",
+        "copies": 16,
+        "distinctCombos": 16
+      },
+      {
+        "slot": "fabric/project/ModMain.java",
+        "copies": 16,
+        "distinctCombos": 16
+      },
+      {
+        "slot": "fabric/project/ModClient.java",
+        "copies": 16,
+        "distinctCombos": 16
+      },
+      {
+        "slot": "fabric/project/ModServer.java",
+        "copies": 16,
+        "distinctCombos": 16
+      },
+      {
+        "slot": "forge/gui/simple_screen.java",
+        "copies": 15,
+        "distinctCombos": 15
+      },
+      {
+        "slot": "fabric/mixin/modify_arg_mixin.java",
+        "copies": 14,
+        "distinctCombos": 14
+      },
+      {
+        "slot": "fabric/command/simple_command.java",
+        "copies": 13,
+        "distinctCombos": 13
+      }
+    ]
+  },
+  "duplicateGroups": [
+    {
+      "hash": "cb334b63b71d",
+      "copies": 18,
+      "distinctCombos": 18,
+      "slot": "forge/mixin/inject_mixin.java",
+      "members": [
+        "templates/forge/1.20.1/mixin/inject_mixin.java",
+        "templates/neoforge/1.21.1/mixin/inject_mixin.java",
+        "templates/neoforge/1.21.3/mixin/inject_mixin.java",
+        "templates/neoforge/1.20.6/mixin/inject_mixin.java",
+        "templates/neoforge/1.20.4/mixin/inject_mixin.java",
+        "templates/forge/1.21.1/mixin/inject_mixin.java",
+        "templates/forge/1.20.4/mixin/inject_mixin.java",
+        "templates/forge/1.19.2/mixin/inject_mixin.java",
+        "templates/forge/1.18.2/mixin/inject_mixin.java",
+        "templates/neoforge/1.21.4/mixin/inject_mixin.java",
+        "templates/neoforge/1.21.5/mixin/inject_mixin.java",
+        "templates/neoforge/1.21.6/mixin/inject_mixin.java",
+        "templates/neoforge/1.21.7/mixin/inject_mixin.java",
+        "templates/neoforge/1.21.8/mixin/inject_mixin.java",
+        "templates/neoforge/1.21.9/mixin/inject_mixin.java",
+        "templates/neoforge/1.21.10/mixin/inject_mixin.java",
+        "templates/neoforge/1.21.11/mixin/inject_mixin.java",
+        "templates/forge/26.3/mixin/inject_mixin.java"
+      ]
+    },
+    {
+      "hash": "64d53692baaf",
+      "copies": 18,
+      "distinctCombos": 18,
+      "slot": "forge/mixin/modify_arg_mixin.java",
+      "members": [
+        "templates/forge/1.20.1/mixin/modify_arg_mixin.java",
+        "templates/neoforge/1.21.1/mixin/modify_arg_mixin.java",
+        "templates/neoforge/1.21.3/mixin/modify_arg_mixin.java",
+        "templates/neoforge/1.20.6/mixin/modify_arg_mixin.java",
+        "templates/neoforge/1.20.4/mixin/modify_arg_mixin.java",
+        "templates/forge/1.21.1/mixin/modify_arg_mixin.java",
+        "templates/forge/1.20.4/mixin/modify_arg_mixin.java",
+        "templates/forge/1.19.2/mixin/modify_arg_mixin.java",
+        "templates/forge/1.18.2/mixin/modify_arg_mixin.java",
+        "templates/neoforge/1.21.4/mixin/modify_arg_mixin.java",
+        "templates/neoforge/1.21.5/mixin/modify_arg_mixin.java",
+        "templates/neoforge/1.21.6/mixin/modify_arg_mixin.java",
+        "templates/neoforge/1.21.7/mixin/modify_arg_mixin.java",
+        "templates/neoforge/1.21.8/mixin/modify_arg_mixin.java",
+        "templates/neoforge/1.21.9/mixin/modify_arg_mixin.java",
+        "templates/neoforge/1.21.10/mixin/modify_arg_mixin.java",
+        "templates/neoforge/1.21.11/mixin/modify_arg_mixin.java",
+        "templates/forge/26.3/mixin/modify_arg_mixin.java"
+      ]
+    },
+    {
+      "hash": "75d9145c0150",
+      "copies": 16,
+      "distinctCombos": 16,
+      "slot": "fabric/entity/entity_attribute.java",
+      "members": [
+        "templates/fabric/1.20.1/entity/entity_attribute.java",
+        "templates/fabric/1.21.1/entity/entity_attribute.java",
+        "templates/fabric/1.20.4/entity/entity_attribute.java",
+        "templates/fabric/1.20.6/entity/entity_attribute.java",
+        "templates/fabric/1.19.2/entity/entity_attribute.java",
+        "templates/fabric/1.18.2/entity/entity_attribute.java",
+        "templates/fabric/1.16.5/entity/entity_attribute.java",
+        "templates/fabric/1.21.4/entity/entity_attribute.java",
+        "templates/fabric/1.21.5/entity/entity_attribute.java",
+        "templates/fabric/1.21.6/entity/entity_attribute.java",
+        "templates/fabric/1.21.7/entity/entity_attribute.java",
+        "templates/fabric/1.21.8/entity/entity_attribute.java",
+        "templates/fabric/1.21.9/entity/entity_attribute.java",
+        "templates/fabric/1.21.10/entity/entity_attribute.java",
+        "templates/fabric/1.21.11/entity/entity_attribute.java",
+        "templates/fabric/26.3/entity/entity_attribute.java"
+      ]
+    },
+    {
+      "hash": "1ac040c9e30d",
+      "copies": 16,
+      "distinctCombos": 16,
+      "slot": "fabric/mixin/inject_mixin.java",
+      "members": [
+        "templates/fabric/1.20.1/mixin/inject_mixin.java",
+        "templates/fabric/1.21.1/mixin/inject_mixin.java",
+        "templates/fabric/1.20.4/mixin/inject_mixin.java",
+        "templates/fabric/1.20.6/mixin/inject_mixin.java",
+        "templates/fabric/1.19.2/mixin/inject_mixin.java",
+        "templates/fabric/1.18.2/mixin/inject_mixin.java",
+        "templates/fabric/1.16.5/mixin/inject_mixin.java",
+        "templates/fabric/1.21.4/mixin/inject_mixin.java",
+        "templates/fabric/1.21.5/mixin/inject_mixin.java",
+        "templates/fabric/1.21.6/mixin/inject_mixin.java",
+        "templates/fabric/1.21.7/mixin/inject_mixin.java",
+        "templates/fabric/1.21.8/mixin/inject_mixin.java",
+        "templates/fabric/1.21.9/mixin/inject_mixin.java",
+        "templates/fabric/1.21.10/mixin/inject_mixin.java",
+        "templates/fabric/1.21.11/mixin/inject_mixin.java",
+        "templates/fabric/26.3/mixin/inject_mixin.java"
+      ]
+    },
+    {
+      "hash": "fbed57e61317",
+      "copies": 16,
+      "distinctCombos": 16,
+      "slot": "fabric/project/ModMain.java",
+      "members": [
+        "templates/fabric/1.20.1/project/ModMain.java",
+        "templates/fabric/1.21.1/project/ModMain.java",
+        "templates/fabric/1.20.4/project/ModMain.java",
+        "templates/fabric/1.20.6/project/ModMain.java",
+        "templates/fabric/1.19.2/project/ModMain.java",
+        "templates/fabric/1.18.2/project/ModMain.java",
+        "templates/fabric/1.16.5/project/ModMain.java",
+        "templates/fabric/1.21.4/project/ModMain.java",
+        "templates/fabric/1.21.5/project/ModMain.java",
+        "templates/fabric/1.21.6/project/ModMain.java",
+        "templates/fabric/1.21.7/project/ModMain.java",
+        "templates/fabric/1.21.8/project/ModMain.java",
+        "templates/fabric/1.21.9/project/ModMain.java",
+        "templates/fabric/1.21.10/project/ModMain.java",
+        "templates/fabric/1.21.11/project/ModMain.java",
+        "templates/fabric/26.3/project/ModMain.java"
+      ]
+    },
+    {
+      "hash": "8174d297d5a9",
+      "copies": 16,
+      "distinctCombos": 16,
+      "slot": "fabric/project/ModClient.java",
+      "members": [
+        "templates/fabric/1.20.1/project/ModClient.java",
+        "templates/fabric/1.21.1/project/ModClient.java",
+        "templates/fabric/1.20.4/project/ModClient.java",
+        "templates/fabric/1.20.6/project/ModClient.java",
+        "templates/fabric/1.19.2/project/ModClient.java",
+        "templates/fabric/1.18.2/project/ModClient.java",
+        "templates/fabric/1.16.5/project/ModClient.java",
+        "templates/fabric/1.21.4/project/ModClient.java",
+        "templates/fabric/1.21.5/project/ModClient.java",
+        "templates/fabric/1.21.6/project/ModClient.java",
+        "templates/fabric/1.21.7/project/ModClient.java",
+        "templates/fabric/1.21.8/project/ModClient.java",
+        "templates/fabric/1.21.9/project/ModClient.java",
+        "templates/fabric/1.21.10/project/ModClient.java",
+        "templates/fabric/1.21.11/project/ModClient.java",
+        "templates/fabric/26.3/project/ModClient.java"
+      ]
+    },
+    {
+      "hash": "26331cb4c5fa",
+      "copies": 16,
+      "distinctCombos": 16,
+      "slot": "fabric/project/ModServer.java",
+      "members": [
+        "templates/fabric/1.20.1/project/ModServer.java",
+        "templates/fabric/1.21.1/project/ModServer.java",
+        "templates/fabric/1.20.4/project/ModServer.java",
+        "templates/fabric/1.20.6/project/ModServer.java",
+        "templates/fabric/1.19.2/project/ModServer.java",
+        "templates/fabric/1.18.2/project/ModServer.java",
+        "templates/fabric/1.16.5/project/ModServer.java",
+        "templates/fabric/1.21.4/project/ModServer.java",
+        "templates/fabric/1.21.5/project/ModServer.java",
+        "templates/fabric/1.21.6/project/ModServer.java",
+        "templates/fabric/1.21.7/project/ModServer.java",
+        "templates/fabric/1.21.8/project/ModServer.java",
+        "templates/fabric/1.21.9/project/ModServer.java",
+        "templates/fabric/1.21.10/project/ModServer.java",
+        "templates/fabric/1.21.11/project/ModServer.java",
+        "templates/fabric/26.3/project/ModServer.java"
+      ]
+    },
+    {
+      "hash": "7a8dee177f32",
+      "copies": 15,
+      "distinctCombos": 15,
+      "slot": "forge/gui/simple_screen.java",
+      "members": [
+        "templates/forge/1.20.1/gui/simple_screen.java",
+        "templates/neoforge/1.21.1/gui/simple_screen.java",
+        "templates/neoforge/1.20.6/gui/simple_screen.java",
+        "templates/neoforge/1.20.4/gui/simple_screen.java",
+        "templates/forge/1.21.1/gui/simple_screen.java",
+        "templates/forge/1.20.4/gui/simple_screen.java",
+        "templates/neoforge/1.21.4/gui/simple_screen.java",
+        "templates/neoforge/1.21.5/gui/simple_screen.java",
+        "templates/neoforge/1.21.6/gui/simple_screen.java",
+        "templates/neoforge/1.21.7/gui/simple_screen.java",
+        "templates/neoforge/1.21.8/gui/simple_screen.java",
+        "templates/neoforge/1.21.9/gui/simple_screen.java",
+        "templates/neoforge/1.21.10/gui/simple_screen.java",
+        "templates/neoforge/1.21.11/gui/simple_screen.java",
+        "templates/forge/26.3/gui/simple_screen.java"
+      ]
+    },
+    {
+      "hash": "982ae66a54f1",
+      "copies": 14,
+      "distinctCombos": 14,
+      "slot": "fabric/mixin/modify_arg_mixin.java",
+      "members": [
+        "templates/fabric/1.20.1/mixin/modify_arg_mixin.java",
+        "templates/fabric/1.21.1/mixin/modify_arg_mixin.java",
+        "templates/fabric/1.20.4/mixin/modify_arg_mixin.java",
+        "templates/fabric/1.20.6/mixin/modify_arg_mixin.java",
+        "templates/fabric/1.19.2/mixin/modify_arg_mixin.java",
+        "templates/fabric/1.21.4/mixin/modify_arg_mixin.java",
+        "templates/fabric/1.21.5/mixin/modify_arg_mixin.java",
+        "templates/fabric/1.21.6/mixin/modify_arg_mixin.java",
+        "templates/fabric/1.21.7/mixin/modify_arg_mixin.java",
+        "templates/fabric/1.21.8/mixin/modify_arg_mixin.java",
+        "templates/fabric/1.21.9/mixin/modify_arg_mixin.java",
+        "templates/fabric/1.21.10/mixin/modify_arg_mixin.java",
+        "templates/fabric/1.21.11/mixin/modify_arg_mixin.java",
+        "templates/fabric/26.3/mixin/modify_arg_mixin.java"
+      ]
+    },
+    {
+      "hash": "a2b10977df93",
+      "copies": 13,
+      "distinctCombos": 13,
+      "slot": "fabric/command/simple_command.java",
+      "members": [
+        "templates/fabric/1.20.1/command/simple_command.java",
+        "templates/fabric/1.21.1/command/simple_command.java",
+        "templates/fabric/1.20.4/command/simple_command.java",
+        "templates/fabric/1.20.6/command/simple_command.java",
+        "templates/fabric/1.21.4/command/simple_command.java",
+        "templates/fabric/1.21.5/command/simple_command.java",
+        "templates/fabric/1.21.6/command/simple_command.java",
+        "templates/fabric/1.21.7/command/simple_command.java",
+        "templates/fabric/1.21.8/command/simple_command.java",
+        "templates/fabric/1.21.9/command/simple_command.java",
+        "templates/fabric/1.21.10/command/simple_command.java",
+        "templates/fabric/1.21.11/command/simple_command.java",
+        "templates/fabric/26.3/command/simple_command.java"
+      ]
+    },
+    {
+      "hash": "4b97d738da81",
+      "copies": 13,
+      "distinctCombos": 13,
+      "slot": "fabric/entity/entity_renderer.java",
+      "members": [
+        "templates/fabric/1.20.1/entity/entity_renderer.java",
+        "templates/fabric/1.20.4/entity/entity_renderer.java",
+        "templates/fabric/1.19.2/entity/entity_renderer.java",
+        "templates/fabric/1.18.2/entity/entity_renderer.java",
+        "templates/fabric/1.21.4/entity/entity_renderer.java",
+        "templates/fabric/1.21.5/entity/entity_renderer.java",
+        "templates/fabric/1.21.6/entity/entity_renderer.java",
+        "templates/fabric/1.21.7/entity/entity_renderer.java",
+        "templates/fabric/1.21.8/entity/entity_renderer.java",
+        "templates/fabric/1.21.9/entity/entity_renderer.java",
+        "templates/fabric/1.21.10/entity/entity_renderer.java",
+        "templates/fabric/1.21.11/entity/entity_renderer.java",
+        "templates/fabric/26.3/entity/entity_renderer.java"
+      ]
+    },
+    {
+      "hash": "e467872df051",
+      "copies": 12,
+      "distinctCombos": 12,
+      "slot": "neoforge/command/simple_command.java",
+      "members": [
+        "templates/neoforge/1.21.1/command/simple_command.java",
+        "templates/neoforge/1.21.3/command/simple_command.java",
+        "templates/neoforge/1.20.6/command/simple_command.java",
+        "templates/neoforge/1.20.4/command/simple_command.java",
+        "templates/neoforge/1.21.4/command/simple_command.java",
+        "templates/neoforge/1.21.5/command/simple_command.java",
+        "templates/neoforge/1.21.6/command/simple_command.java",
+        "templates/neoforge/1.21.7/command/simple_command.java",
+        "templates/neoforge/1.21.8/command/simple_command.java",
+        "templates/neoforge/1.21.9/command/simple_command.java",
+        "templates/neoforge/1.21.10/command/simple_command.java",
+        "templates/neoforge/1.21.11/command/simple_command.java"
+      ]
+    },
+    {
+      "hash": "9edeb993deb3",
+      "copies": 12,
+      "distinctCombos": 12,
+      "slot": "neoforge/entity/entity_attribute.java",
+      "members": [
+        "templates/neoforge/1.21.1/entity/entity_attribute.java",
+        "templates/neoforge/1.21.3/entity/entity_attribute.java",
+        "templates/neoforge/1.20.6/entity/entity_attribute.java",
+        "templates/neoforge/1.20.4/entity/entity_attribute.java",
+        "templates/neoforge/1.21.4/entity/entity_attribute.java",
+        "templates/neoforge/1.21.5/entity/entity_attribute.java",
+        "templates/neoforge/1.21.6/entity/entity_attribute.java",
+        "templates/neoforge/1.21.7/entity/entity_attribute.java",
+        "templates/neoforge/1.21.8/entity/entity_attribute.java",
+        "templates/neoforge/1.21.9/entity/entity_attribute.java",
+        "templates/neoforge/1.21.10/entity/entity_attribute.java",
+        "templates/neoforge/1.21.11/entity/entity_attribute.java"
+      ]
+    },
+    {
+      "hash": "a8508ca2afac",
+      "copies": 12,
+      "distinctCombos": 12,
+      "slot": "neoforge/worldgen/ore_feature.java",
+      "members": [
+        "templates/neoforge/1.21.1/worldgen/ore_feature.java",
+        "templates/neoforge/1.21.3/worldgen/ore_feature.java",
+        "templates/neoforge/1.20.6/worldgen/ore_feature.java",
+        "templates/neoforge/1.20.4/worldgen/ore_feature.java",
+        "templates/neoforge/1.21.4/worldgen/ore_feature.java",
+        "templates/neoforge/1.21.5/worldgen/ore_feature.java",
+        "templates/neoforge/1.21.6/worldgen/ore_feature.java",
+        "templates/neoforge/1.21.7/worldgen/ore_feature.java",
+        "templates/neoforge/1.21.8/worldgen/ore_feature.java",
+        "templates/neoforge/1.21.9/worldgen/ore_feature.java",
+        "templates/neoforge/1.21.10/worldgen/ore_feature.java",
+        "templates/neoforge/1.21.11/worldgen/ore_feature.java"
+      ]
+    },
+    {
+      "hash": "f0823ef94ff3",
+      "copies": 12,
+      "distinctCombos": 12,
+      "slot": "neoforge/project/ModMain.java",
+      "members": [
+        "templates/neoforge/1.21.1/project/ModMain.java",
+        "templates/neoforge/1.21.3/project/ModMain.java",
+        "templates/neoforge/1.20.6/project/ModMain.java",
+        "templates/neoforge/1.20.4/project/ModMain.java",
+        "templates/neoforge/1.21.4/project/ModMain.java",
+        "templates/neoforge/1.21.5/project/ModMain.java",
+        "templates/neoforge/1.21.6/project/ModMain.java",
+        "templates/neoforge/1.21.7/project/ModMain.java",
+        "templates/neoforge/1.21.8/project/ModMain.java",
+        "templates/neoforge/1.21.9/project/ModMain.java",
+        "templates/neoforge/1.21.10/project/ModMain.java",
+        "templates/neoforge/1.21.11/project/ModMain.java"
+      ]
+    },
+    {
+      "hash": "c82654e4cce7",
+      "copies": 12,
+      "distinctCombos": 12,
+      "slot": "neoforge/project/ModClient.java",
+      "members": [
+        "templates/neoforge/1.21.1/project/ModClient.java",
+        "templates/neoforge/1.21.3/project/ModClient.java",
+        "templates/neoforge/1.20.6/project/ModClient.java",
+        "templates/neoforge/1.20.4/project/ModClient.java",
+        "templates/neoforge/1.21.4/project/ModClient.java",
+        "templates/neoforge/1.21.5/project/ModClient.java",
+        "templates/neoforge/1.21.6/project/ModClient.java",
+        "templates/neoforge/1.21.7/project/ModClient.java",
+        "templates/neoforge/1.21.8/project/ModClient.java",
+        "templates/neoforge/1.21.9/project/ModClient.java",
+        "templates/neoforge/1.21.10/project/ModClient.java",
+        "templates/neoforge/1.21.11/project/ModClient.java"
+      ]
+    },
+    {
+      "hash": "76b954961565",
+      "copies": 12,
+      "distinctCombos": 12,
+      "slot": "neoforge/project/ModServer.java",
+      "members": [
+        "templates/neoforge/1.21.1/project/ModServer.java",
+        "templates/neoforge/1.21.3/project/ModServer.java",
+        "templates/neoforge/1.20.6/project/ModServer.java",
+        "templates/neoforge/1.20.4/project/ModServer.java",
+        "templates/neoforge/1.21.4/project/ModServer.java",
+        "templates/neoforge/1.21.5/project/ModServer.java",
+        "templates/neoforge/1.21.6/project/ModServer.java",
+        "templates/neoforge/1.21.7/project/ModServer.java",
+        "templates/neoforge/1.21.8/project/ModServer.java",
+        "templates/neoforge/1.21.9/project/ModServer.java",
+        "templates/neoforge/1.21.10/project/ModServer.java",
+        "templates/neoforge/1.21.11/project/ModServer.java"
+      ]
+    },
+    {
+      "hash": "66f37212c848",
+      "copies": 11,
+      "distinctCombos": 11,
+      "slot": "fabric/block/block_entity.java",
+      "members": [
+        "templates/fabric/1.20.1/block/block_entity.java",
+        "templates/fabric/1.20.4/block/block_entity.java",
+        "templates/fabric/1.21.4/block/block_entity.java",
+        "templates/fabric/1.21.5/block/block_entity.java",
+        "templates/fabric/1.21.6/block/block_entity.java",
+        "templates/fabric/1.21.7/block/block_entity.java",
+        "templates/fabric/1.21.8/block/block_entity.java",
+        "templates/fabric/1.21.9/block/block_entity.java",
+        "templates/fabric/1.21.10/block/block_entity.java",
+        "templates/fabric/1.21.11/block/block_entity.java",
+        "templates/fabric/26.3/block/block_entity.java"
+      ]
+    },
+    {
+      "hash": "6c5b4b7f3593",
+      "copies": 11,
+      "distinctCombos": 11,
+      "slot": "fabric/block/simple_block.java",
+      "members": [
+        "templates/fabric/1.20.1/block/simple_block.java",
+        "templates/fabric/1.20.4/block/simple_block.java",
+        "templates/fabric/1.21.4/block/simple_block.java",
+        "templates/fabric/1.21.5/block/simple_block.java",
+        "templates/fabric/1.21.6/block/simple_block.java",
+        "templates/fabric/1.21.7/block/simple_block.java",
+        "templates/fabric/1.21.8/block/simple_block.java",
+        "templates/fabric/1.21.9/block/simple_block.java",
+        "templates/fabric/1.21.10/block/simple_block.java",
+        "templates/fabric/1.21.11/block/simple_block.java",
+        "templates/fabric/26.3/block/simple_block.java"
+      ]
+    },
+    {
+      "hash": "2af9059bce3b",
+      "copies": 11,
+      "distinctCombos": 11,
+      "slot": "fabric/block/processing_block.java",
+      "members": [
+        "templates/fabric/1.20.1/block/processing_block.java",
+        "templates/fabric/1.20.4/block/processing_block.java",
+        "templates/fabric/1.21.4/block/processing_block.java",
+        "templates/fabric/1.21.5/block/processing_block.java",
+        "templates/fabric/1.21.6/block/processing_block.java",
+        "templates/fabric/1.21.7/block/processing_block.java",
+        "templates/fabric/1.21.8/block/processing_block.java",
+        "templates/fabric/1.21.9/block/processing_block.java",
+        "templates/fabric/1.21.10/block/processing_block.java",
+        "templates/fabric/1.21.11/block/processing_block.java",
+        "templates/fabric/26.3/block/processing_block.java"
+      ]
+    },
+    {
+      "hash": "2a3a3c0e2aad",
+      "copies": 11,
+      "distinctCombos": 11,
+      "slot": "fabric/enchantment/custom_enchantment.java",
+      "members": [
+        "templates/fabric/1.20.1/enchantment/custom_enchantment.java",
+        "templates/fabric/1.20.4/enchantment/custom_enchantment.java",
+        "templates/fabric/1.21.4/enchantment/custom_enchantment.java",
+        "templates/fabric/1.21.5/enchantment/custom_enchantment.java",
+        "templates/fabric/1.21.6/enchantment/custom_enchantment.java",
+        "templates/fabric/1.21.7/enchantment/custom_enchantment.java",
+        "templates/fabric/1.21.8/enchantment/custom_enchantment.java",
+        "templates/fabric/1.21.9/enchantment/custom_enchantment.java",
+        "templates/fabric/1.21.10/enchantment/custom_enchantment.java",
+        "templates/fabric/1.21.11/enchantment/custom_enchantment.java",
+        "templates/fabric/26.3/enchantment/custom_enchantment.java"
+      ]
+    },
+    {
+      "hash": "edc4b22736cb",
+      "copies": 11,
+      "distinctCombos": 11,
+      "slot": "fabric/entity/simple_entity.java",
+      "members": [
+        "templates/fabric/1.20.1/entity/simple_entity.java",
+        "templates/fabric/1.20.4/entity/simple_entity.java",
+        "templates/fabric/1.21.4/entity/simple_entity.java",
+        "templates/fabric/1.21.5/entity/simple_entity.java",
+        "templates/fabric/1.21.6/entity/simple_entity.java",
+        "templates/fabric/1.21.7/entity/simple_entity.java",
+        "templates/fabric/1.21.8/entity/simple_entity.java",
+        "templates/fabric/1.21.9/entity/simple_entity.java",
+        "templates/fabric/1.21.10/entity/simple_entity.java",
+        "templates/fabric/1.21.11/entity/simple_entity.java",
+        "templates/fabric/26.3/entity/simple_entity.java"
+      ]
+    },
+    {
+      "hash": "dc9d8ba06473",
+      "copies": 11,
+      "distinctCombos": 11,
+      "slot": "fabric/entity/spawn_egg_item.java",
+      "members": [
+        "templates/fabric/1.20.1/entity/spawn_egg_item.java",
+        "templates/fabric/1.20.4/entity/spawn_egg_item.java",
+        "templates/fabric/1.21.4/entity/spawn_egg_item.java",
+        "templates/fabric/1.21.5/entity/spawn_egg_item.java",
+        "templates/fabric/1.21.6/entity/spawn_egg_item.java",
+        "templates/fabric/1.21.7/entity/spawn_egg_item.java",
+        "templates/fabric/1.21.8/entity/spawn_egg_item.java",
+        "templates/fabric/1.21.9/entity/spawn_egg_item.java",
+        "templates/fabric/1.21.10/entity/spawn_egg_item.java",
+        "templates/fabric/1.21.11/entity/spawn_egg_item.java",
+        "templates/fabric/26.3/entity/spawn_egg_item.java"
+      ]
+    },
+    {
+      "hash": "febc32af3fe8",
+      "copies": 11,
+      "distinctCombos": 11,
+      "slot": "fabric/gui/screen_with_menu.java",
+      "members": [
+        "templates/fabric/1.20.1/gui/screen_with_menu.java",
+        "templates/fabric/1.20.4/gui/screen_with_menu.java",
+        "templates/fabric/1.21.4/gui/screen_with_menu.java",
+        "templates/fabric/1.21.5/gui/screen_with_menu.java",
+        "templates/fabric/1.21.6/gui/screen_with_menu.java",
+        "templates/fabric/1.21.7/gui/screen_with_menu.java",
+        "templates/fabric/1.21.8/gui/screen_with_menu.java",
+        "templates/fabric/1.21.9/gui/screen_with_menu.java",
+        "templates/fabric/1.21.10/gui/screen_with_menu.java",
+        "templates/fabric/1.21.11/gui/screen_with_menu.java",
+        "templates/fabric/26.3/gui/screen_with_menu.java"
+      ]
+    },
+    {
+      "hash": "f63feb9fdaad",
+      "copies": 11,
+      "distinctCombos": 11,
+      "slot": "fabric/item/armor_item.java",
+      "members": [
+        "templates/fabric/1.20.1/item/armor_item.java",
+        "templates/fabric/1.20.4/item/armor_item.java",
+        "templates/fabric/1.21.4/item/armor_item.java",
+        "templates/fabric/1.21.5/item/armor_item.java",
+        "templates/fabric/1.21.6/item/armor_item.java",
+        "templates/fabric/1.21.7/item/armor_item.java",
+        "templates/fabric/1.21.8/item/armor_item.java",
+        "templates/fabric/1.21.9/item/armor_item.java",
+        "templates/fabric/1.21.10/item/armor_item.java",
+        "templates/fabric/1.21.11/item/armor_item.java",
+        "templates/fabric/26.3/item/armor_item.java"
+      ]
+    },
+    {
+      "hash": "8293d6a54539",
+      "copies": 11,
+      "distinctCombos": 11,
+      "slot": "fabric/item/food_item.java",
+      "members": [
+        "templates/fabric/1.20.1/item/food_item.java",
+        "templates/fabric/1.20.4/item/food_item.java",
+        "templates/fabric/1.21.4/item/food_item.java",
+        "templates/fabric/1.21.5/item/food_item.java",
+        "templates/fabric/1.21.6/item/food_item.java",
+        "templates/fabric/1.21.7/item/food_item.java",
+        "templates/fabric/1.21.8/item/food_item.java",
+        "templates/fabric/1.21.9/item/food_item.java",
+        "templates/fabric/1.21.10/item/food_item.java",
+        "templates/fabric/1.21.11/item/food_item.java",
+        "templates/fabric/26.3/item/food_item.java"
+      ]
+    },
+    {
+      "hash": "41ad44d146c6",
+      "copies": 11,
+      "distinctCombos": 11,
+      "slot": "fabric/item/simple_item.java",
+      "members": [
+        "templates/fabric/1.20.1/item/simple_item.java",
+        "templates/fabric/1.20.4/item/simple_item.java",
+        "templates/fabric/1.21.4/item/simple_item.java",
+        "templates/fabric/1.21.5/item/simple_item.java",
+        "templates/fabric/1.21.6/item/simple_item.java",
+        "templates/fabric/1.21.7/item/simple_item.java",
+        "templates/fabric/1.21.8/item/simple_item.java",
+        "templates/fabric/1.21.9/item/simple_item.java",
+        "templates/fabric/1.21.10/item/simple_item.java",
+        "templates/fabric/1.21.11/item/simple_item.java",
+        "templates/fabric/26.3/item/simple_item.java"
+      ]
+    },
+    {
+      "hash": "7aebda9e7288",
+      "copies": 11,
+      "distinctCombos": 11,
+      "slot": "fabric/item/tool_item.java",
+      "members": [
+        "templates/fabric/1.20.1/item/tool_item.java",
+        "templates/fabric/1.20.4/item/tool_item.java",
+        "templates/fabric/1.21.4/item/tool_item.java",
+        "templates/fabric/1.21.5/item/tool_item.java",
+        "templates/fabric/1.21.6/item/tool_item.java",
+        "templates/fabric/1.21.7/item/tool_item.java",
+        "templates/fabric/1.21.8/item/tool_item.java",
+        "templates/fabric/1.21.9/item/tool_item.java",
+        "templates/fabric/1.21.10/item/tool_item.java",
+        "templates/fabric/1.21.11/item/tool_item.java",
+        "templates/fabric/26.3/item/tool_item.java"
+      ]
+    },
+    {
+      "hash": "a5c9b387a8f2",
+      "copies": 11,
+      "distinctCombos": 11,
+      "slot": "fabric/worldgen/ore_feature.java",
+      "members": [
+        "templates/fabric/1.20.1/worldgen/ore_feature.java",
+        "templates/fabric/1.20.4/worldgen/ore_feature.java",
+        "templates/fabric/1.21.4/worldgen/ore_feature.java",
+        "templates/fabric/1.21.5/worldgen/ore_feature.java",
+        "templates/fabric/1.21.6/worldgen/ore_feature.java",
+        "templates/fabric/1.21.7/worldgen/ore_feature.java",
+        "templates/fabric/1.21.8/worldgen/ore_feature.java",
+        "templates/fabric/1.21.9/worldgen/ore_feature.java",
+        "templates/fabric/1.21.10/worldgen/ore_feature.java",
+        "templates/fabric/1.21.11/worldgen/ore_feature.java",
+        "templates/fabric/26.3/worldgen/ore_feature.java"
+      ]
+    },
+    {
+      "hash": "453230541895",
+      "copies": 11,
+      "distinctCombos": 11,
+      "slot": "neoforge/block/block_entity.java",
+      "members": [
+        "templates/neoforge/1.21.1/block/block_entity.java",
+        "templates/neoforge/1.21.3/block/block_entity.java",
+        "templates/neoforge/1.20.6/block/block_entity.java",
+        "templates/neoforge/1.21.4/block/block_entity.java",
+        "templates/neoforge/1.21.5/block/block_entity.java",
+        "templates/neoforge/1.21.6/block/block_entity.java",
+        "templates/neoforge/1.21.7/block/block_entity.java",
+        "templates/neoforge/1.21.8/block/block_entity.java",
+        "templates/neoforge/1.21.9/block/block_entity.java",
+        "templates/neoforge/1.21.10/block/block_entity.java",
+        "templates/neoforge/1.21.11/block/block_entity.java"
+      ]
+    },
+    {
+      "hash": "aa37b87b77a4",
+      "copies": 11,
+      "distinctCombos": 11,
+      "slot": "neoforge/block/simple_block.java",
+      "members": [
+        "templates/neoforge/1.21.1/block/simple_block.java",
+        "templates/neoforge/1.20.6/block/simple_block.java",
+        "templates/neoforge/1.20.4/block/simple_block.java",
+        "templates/neoforge/1.21.4/block/simple_block.java",
+        "templates/neoforge/1.21.5/block/simple_block.java",
+        "templates/neoforge/1.21.6/block/simple_block.java",
+        "templates/neoforge/1.21.7/block/simple_block.java",
+        "templates/neoforge/1.21.8/block/simple_block.java",
+        "templates/neoforge/1.21.9/block/simple_block.java",
+        "templates/neoforge/1.21.10/block/simple_block.java",
+        "templates/neoforge/1.21.11/block/simple_block.java"
+      ]
+    },
+    {
+      "hash": "511d3b7c3042",
+      "copies": 11,
+      "distinctCombos": 11,
+      "slot": "neoforge/entity/simple_entity.java",
+      "members": [
+        "templates/neoforge/1.21.1/entity/simple_entity.java",
+        "templates/neoforge/1.20.6/entity/simple_entity.java",
+        "templates/neoforge/1.20.4/entity/simple_entity.java",
+        "templates/neoforge/1.21.4/entity/simple_entity.java",
+        "templates/neoforge/1.21.5/entity/simple_entity.java",
+        "templates/neoforge/1.21.6/entity/simple_entity.java",
+        "templates/neoforge/1.21.7/entity/simple_entity.java",
+        "templates/neoforge/1.21.8/entity/simple_entity.java",
+        "templates/neoforge/1.21.9/entity/simple_entity.java",
+        "templates/neoforge/1.21.10/entity/simple_entity.java",
+        "templates/neoforge/1.21.11/entity/simple_entity.java"
+      ]
+    },
+    {
+      "hash": "fc9d570c4daa",
+      "copies": 11,
+      "distinctCombos": 11,
+      "slot": "neoforge/entity/spawn_egg_item.java",
+      "members": [
+        "templates/neoforge/1.21.1/entity/spawn_egg_item.java",
+        "templates/neoforge/1.20.6/entity/spawn_egg_item.java",
+        "templates/neoforge/1.20.4/entity/spawn_egg_item.java",
+        "templates/neoforge/1.21.4/entity/spawn_egg_item.java",
+        "templates/neoforge/1.21.5/entity/spawn_egg_item.java",
+        "templates/neoforge/1.21.6/entity/spawn_egg_item.java",
+        "templates/neoforge/1.21.7/entity/spawn_egg_item.java",
+        "templates/neoforge/1.21.8/entity/spawn_egg_item.java",
+        "templates/neoforge/1.21.9/entity/spawn_egg_item.java",
+        "templates/neoforge/1.21.10/entity/spawn_egg_item.java",
+        "templates/neoforge/1.21.11/entity/spawn_egg_item.java"
+      ]
+    },
+    {
+      "hash": "331886c9ae42",
+      "copies": 11,
+      "distinctCombos": 11,
+      "slot": "neoforge/item/armor_item.java",
+      "members": [
+        "templates/neoforge/1.21.1/item/armor_item.java",
+        "templates/neoforge/1.20.6/item/armor_item.java",
+        "templates/neoforge/1.20.4/item/armor_item.java",
+        "templates/neoforge/1.21.4/item/armor_item.java",
+        "templates/neoforge/1.21.5/item/armor_item.java",
+        "templates/neoforge/1.21.6/item/armor_item.java",
+        "templates/neoforge/1.21.7/item/armor_item.java",
+        "templates/neoforge/1.21.8/item/armor_item.java",
+        "templates/neoforge/1.21.9/item/armor_item.java",
+        "templates/neoforge/1.21.10/item/armor_item.java",
+        "templates/neoforge/1.21.11/item/armor_item.java"
+      ]
+    },
+    {
+      "hash": "6972c26429ed",
+      "copies": 11,
+      "distinctCombos": 11,
+      "slot": "neoforge/item/simple_item.java",
+      "members": [
+        "templates/neoforge/1.21.1/item/simple_item.java",
+        "templates/neoforge/1.20.6/item/simple_item.java",
+        "templates/neoforge/1.20.4/item/simple_item.java",
+        "templates/neoforge/1.21.4/item/simple_item.java",
+        "templates/neoforge/1.21.5/item/simple_item.java",
+        "templates/neoforge/1.21.6/item/simple_item.java",
+        "templates/neoforge/1.21.7/item/simple_item.java",
+        "templates/neoforge/1.21.8/item/simple_item.java",
+        "templates/neoforge/1.21.9/item/simple_item.java",
+        "templates/neoforge/1.21.10/item/simple_item.java",
+        "templates/neoforge/1.21.11/item/simple_item.java"
+      ]
+    },
+    {
+      "hash": "5f6f7841badd",
+      "copies": 11,
+      "distinctCombos": 11,
+      "slot": "neoforge/item/tool_item.java",
+      "members": [
+        "templates/neoforge/1.21.1/item/tool_item.java",
+        "templates/neoforge/1.20.6/item/tool_item.java",
+        "templates/neoforge/1.20.4/item/tool_item.java",
+        "templates/neoforge/1.21.4/item/tool_item.java",
+        "templates/neoforge/1.21.5/item/tool_item.java",
+        "templates/neoforge/1.21.6/item/tool_item.java",
+        "templates/neoforge/1.21.7/item/tool_item.java",
+        "templates/neoforge/1.21.8/item/tool_item.java",
+        "templates/neoforge/1.21.9/item/tool_item.java",
+        "templates/neoforge/1.21.10/item/tool_item.java",
+        "templates/neoforge/1.21.11/item/tool_item.java"
+      ]
+    },
+    {
+      "hash": "3af8cba1cd3d",
+      "copies": 11,
+      "distinctCombos": 11,
+      "slot": "neoforge/block/processing_block.java",
+      "members": [
+        "templates/neoforge/1.20.4/block/processing_block.java",
+        "templates/neoforge/1.20.6/block/processing_block.java",
+        "templates/neoforge/1.21.1/block/processing_block.java",
+        "templates/neoforge/1.21.4/block/processing_block.java",
+        "templates/neoforge/1.21.5/block/processing_block.java",
+        "templates/neoforge/1.21.6/block/processing_block.java",
+        "templates/neoforge/1.21.7/block/processing_block.java",
+        "templates/neoforge/1.21.8/block/processing_block.java",
+        "templates/neoforge/1.21.9/block/processing_block.java",
+        "templates/neoforge/1.21.10/block/processing_block.java",
+        "templates/neoforge/1.21.11/block/processing_block.java"
+      ]
+    },
+    {
+      "hash": "c5305ad75fdc",
+      "copies": 10,
+      "distinctCombos": 10,
+      "slot": "fabric/gui/simple_screen.java",
+      "members": [
+        "templates/fabric/1.20.1/gui/simple_screen.java",
+        "templates/fabric/1.21.4/gui/simple_screen.java",
+        "templates/fabric/1.21.5/gui/simple_screen.java",
+        "templates/fabric/1.21.6/gui/simple_screen.java",
+        "templates/fabric/1.21.7/gui/simple_screen.java",
+        "templates/fabric/1.21.8/gui/simple_screen.java",
+        "templates/fabric/1.21.9/gui/simple_screen.java",
+        "templates/fabric/1.21.10/gui/simple_screen.java",
+        "templates/fabric/1.21.11/gui/simple_screen.java",
+        "templates/fabric/26.3/gui/simple_screen.java"
+      ]
+    },
+    {
+      "hash": "12d0e4571a1e",
+      "copies": 10,
+      "distinctCombos": 10,
+      "slot": "neoforge/item/food_item.java",
+      "members": [
+        "templates/neoforge/1.21.1/item/food_item.java",
+        "templates/neoforge/1.20.6/item/food_item.java",
+        "templates/neoforge/1.21.4/item/food_item.java",
+        "templates/neoforge/1.21.5/item/food_item.java",
+        "templates/neoforge/1.21.6/item/food_item.java",
+        "templates/neoforge/1.21.7/item/food_item.java",
+        "templates/neoforge/1.21.8/item/food_item.java",
+        "templates/neoforge/1.21.9/item/food_item.java",
+        "templates/neoforge/1.21.10/item/food_item.java",
+        "templates/neoforge/1.21.11/item/food_item.java"
+      ]
+    },
+    {
+      "hash": "05130ce0c67c",
+      "copies": 9,
+      "distinctCombos": 9,
+      "slot": "neoforge/entity/entity_renderer.java",
+      "members": [
+        "templates/neoforge/1.21.1/entity/entity_renderer.java",
+        "templates/neoforge/1.21.4/entity/entity_renderer.java",
+        "templates/neoforge/1.21.5/entity/entity_renderer.java",
+        "templates/neoforge/1.21.6/entity/entity_renderer.java",
+        "templates/neoforge/1.21.7/entity/entity_renderer.java",
+        "templates/neoforge/1.21.8/entity/entity_renderer.java",
+        "templates/neoforge/1.21.9/entity/entity_renderer.java",
+        "templates/neoforge/1.21.10/entity/entity_renderer.java",
+        "templates/neoforge/1.21.11/entity/entity_renderer.java"
+      ]
+    },
+    {
+      "hash": "1e5b5768897c",
+      "copies": 9,
+      "distinctCombos": 9,
+      "slot": "neoforge/gui/screen_with_menu.java",
+      "members": [
+        "templates/neoforge/1.21.1/gui/screen_with_menu.java",
+        "templates/neoforge/1.21.4/gui/screen_with_menu.java",
+        "templates/neoforge/1.21.5/gui/screen_with_menu.java",
+        "templates/neoforge/1.21.6/gui/screen_with_menu.java",
+        "templates/neoforge/1.21.7/gui/screen_with_menu.java",
+        "templates/neoforge/1.21.8/gui/screen_with_menu.java",
+        "templates/neoforge/1.21.9/gui/screen_with_menu.java",
+        "templates/neoforge/1.21.10/gui/screen_with_menu.java",
+        "templates/neoforge/1.21.11/gui/screen_with_menu.java"
+      ]
+    },
+    {
+      "hash": "45bb8708ae05",
+      "copies": 8,
+      "distinctCombos": 8,
+      "slot": "forge/entity/entity_renderer.java",
+      "members": [
+        "templates/forge/1.20.1/entity/entity_renderer.java",
+        "templates/neoforge/1.20.6/entity/entity_renderer.java",
+        "templates/neoforge/1.20.4/entity/entity_renderer.java",
+        "templates/forge/1.21.1/entity/entity_renderer.java",
+        "templates/forge/1.20.4/entity/entity_renderer.java",
+        "templates/forge/1.19.2/entity/entity_renderer.java",
+        "templates/forge/1.18.2/entity/entity_renderer.java",
+        "templates/forge/26.3/entity/entity_renderer.java"
+      ]
+    },
+    {
+      "hash": "4e798b44f23f",
+      "copies": 6,
+      "distinctCombos": 6,
+      "slot": "forge/command/simple_command.java",
+      "members": [
+        "templates/forge/1.20.1/command/simple_command.java",
+        "templates/forge/1.21.1/command/simple_command.java",
+        "templates/forge/1.20.4/command/simple_command.java",
+        "templates/forge/1.19.2/command/simple_command.java",
+        "templates/forge/1.18.2/command/simple_command.java",
+        "templates/forge/26.3/command/simple_command.java"
+      ]
+    },
+    {
+      "hash": "20bf5b523dee",
+      "copies": 6,
+      "distinctCombos": 6,
+      "slot": "forge/entity/entity_attribute.java",
+      "members": [
+        "templates/forge/1.20.1/entity/entity_attribute.java",
+        "templates/forge/1.21.1/entity/entity_attribute.java",
+        "templates/forge/1.20.4/entity/entity_attribute.java",
+        "templates/forge/1.19.2/entity/entity_attribute.java",
+        "templates/forge/1.18.2/entity/entity_attribute.java",
+        "templates/forge/26.3/entity/entity_attribute.java"
+      ]
+    },
+    {
+      "hash": "64d09487c0a5",
+      "copies": 6,
+      "distinctCombos": 6,
+      "slot": "forge/entity/spawn_egg_item.java",
+      "members": [
+        "templates/forge/1.20.1/entity/spawn_egg_item.java",
+        "templates/forge/1.21.1/entity/spawn_egg_item.java",
+        "templates/forge/1.20.4/entity/spawn_egg_item.java",
+        "templates/forge/1.19.2/entity/spawn_egg_item.java",
+        "templates/forge/1.18.2/entity/spawn_egg_item.java",
+        "templates/forge/26.3/entity/spawn_egg_item.java"
+      ]
+    },
+    {
+      "hash": "8ab513a5b266",
+      "copies": 6,
+      "distinctCombos": 6,
+      "slot": "forge/item/armor_item.java",
+      "members": [
+        "templates/forge/1.20.1/item/armor_item.java",
+        "templates/forge/1.21.1/item/armor_item.java",
+        "templates/forge/1.20.4/item/armor_item.java",
+        "templates/forge/1.19.2/item/armor_item.java",
+        "templates/forge/1.18.2/item/armor_item.java",
+        "templates/forge/26.3/item/armor_item.java"
+      ]
+    },
+    {
+      "hash": "0ff664758547",
+      "copies": 6,
+      "distinctCombos": 6,
+      "slot": "forge/project/ModMain.java",
+      "members": [
+        "templates/forge/1.20.1/project/ModMain.java",
+        "templates/forge/1.21.1/project/ModMain.java",
+        "templates/forge/1.20.4/project/ModMain.java",
+        "templates/forge/1.19.2/project/ModMain.java",
+        "templates/forge/1.18.2/project/ModMain.java",
+        "templates/forge/26.3/project/ModMain.java"
+      ]
+    },
+    {
+      "hash": "061cc56a7921",
+      "copies": 6,
+      "distinctCombos": 6,
+      "slot": "forge/project/ModServer.java",
+      "members": [
+        "templates/forge/1.20.1/project/ModServer.java",
+        "templates/forge/1.21.1/project/ModServer.java",
+        "templates/forge/1.20.4/project/ModServer.java",
+        "templates/forge/1.19.2/project/ModServer.java",
+        "templates/forge/1.18.2/project/ModServer.java",
+        "templates/forge/26.3/project/ModServer.java"
+      ]
+    },
+    {
+      "hash": "dd5007ec72e8",
+      "copies": 6,
+      "distinctCombos": 6,
+      "slot": "forge/block/processing_block.java",
+      "members": [
+        "templates/forge/1.18.2/block/processing_block.java",
+        "templates/forge/1.19.2/block/processing_block.java",
+        "templates/forge/1.20.1/block/processing_block.java",
+        "templates/forge/1.20.4/block/processing_block.java",
+        "templates/forge/1.21.1/block/processing_block.java",
+        "templates/forge/26.3/block/processing_block.java"
+      ]
+    },
+    {
+      "hash": "e94d41bb2010",
+      "copies": 5,
+      "distinctCombos": 5,
+      "slot": "forge/enchantment/custom_enchantment.java",
+      "members": [
+        "templates/forge/1.20.1/enchantment/custom_enchantment.java",
+        "templates/forge/1.20.4/enchantment/custom_enchantment.java",
+        "templates/forge/1.19.2/enchantment/custom_enchantment.java",
+        "templates/forge/1.18.2/enchantment/custom_enchantment.java",
+        "templates/forge/26.3/enchantment/custom_enchantment.java"
+      ]
+    },
+    {
+      "hash": "095245ff2fe6",
+      "copies": 5,
+      "distinctCombos": 5,
+      "slot": "forge/entity/simple_entity.java",
+      "members": [
+        "templates/forge/1.20.1/entity/simple_entity.java",
+        "templates/forge/1.21.1/entity/simple_entity.java",
+        "templates/forge/1.20.4/entity/simple_entity.java",
+        "templates/forge/1.19.2/entity/simple_entity.java",
+        "templates/forge/26.3/entity/simple_entity.java"
+      ]
+    },
+    {
+      "hash": "965e1c430aef",
+      "copies": 5,
+      "distinctCombos": 5,
+      "slot": "forge/item/food_item.java",
+      "members": [
+        "templates/forge/1.20.1/item/food_item.java",
+        "templates/forge/1.20.4/item/food_item.java",
+        "templates/forge/1.19.2/item/food_item.java",
+        "templates/forge/1.18.2/item/food_item.java",
+        "templates/forge/26.3/item/food_item.java"
+      ]
+    },
+    {
+      "hash": "605d5683bca0",
+      "copies": 5,
+      "distinctCombos": 5,
+      "slot": "forge/item/tool_item.java",
+      "members": [
+        "templates/forge/1.20.1/item/tool_item.java",
+        "templates/forge/1.20.4/item/tool_item.java",
+        "templates/forge/1.19.2/item/tool_item.java",
+        "templates/forge/1.18.2/item/tool_item.java",
+        "templates/forge/26.3/item/tool_item.java"
+      ]
+    },
+    {
+      "hash": "f8242dc45b2d",
+      "copies": 5,
+      "distinctCombos": 5,
+      "slot": "forge/worldgen/ore_feature.java",
+      "members": [
+        "templates/forge/1.20.1/worldgen/ore_feature.java",
+        "templates/forge/1.21.1/worldgen/ore_feature.java",
+        "templates/forge/1.20.4/worldgen/ore_feature.java",
+        "templates/forge/1.19.2/worldgen/ore_feature.java",
+        "templates/forge/26.3/worldgen/ore_feature.java"
+      ]
+    },
+    {
+      "hash": "cbbfca7bde61",
+      "copies": 5,
+      "distinctCombos": 5,
+      "slot": "forge/project/ModClient.java",
+      "members": [
+        "templates/forge/1.20.1/project/ModClient.java",
+        "templates/forge/1.21.1/project/ModClient.java",
+        "templates/forge/1.20.4/project/ModClient.java",
+        "templates/forge/1.19.2/project/ModClient.java",
+        "templates/forge/26.3/project/ModClient.java"
+      ]
+    },
+    {
+      "hash": "384f9f1bb67a",
+      "copies": 4,
+      "distinctCombos": 4,
+      "slot": "forge/block/simple_block.java",
+      "members": [
+        "templates/forge/1.20.1/block/simple_block.java",
+        "templates/forge/1.21.1/block/simple_block.java",
+        "templates/forge/1.20.4/block/simple_block.java",
+        "templates/forge/26.3/block/simple_block.java"
+      ]
+    },
+    {
+      "hash": "802f6695fc08",
+      "copies": 4,
+      "distinctCombos": 4,
+      "slot": "forge/gui/screen_with_menu.java",
+      "members": [
+        "templates/forge/1.20.1/gui/screen_with_menu.java",
+        "templates/forge/1.21.1/gui/screen_with_menu.java",
+        "templates/forge/1.20.4/gui/screen_with_menu.java",
+        "templates/forge/26.3/gui/screen_with_menu.java"
+      ]
+    },
+    {
+      "hash": "c8abbc609fec",
+      "copies": 4,
+      "distinctCombos": 4,
+      "slot": "forge/item/simple_item.java",
+      "members": [
+        "templates/forge/1.20.1/item/simple_item.java",
+        "templates/forge/1.21.1/item/simple_item.java",
+        "templates/forge/1.20.4/item/simple_item.java",
+        "templates/forge/26.3/item/simple_item.java"
+      ]
+    },
+    {
+      "hash": "057425ee47ec",
+      "copies": 3,
+      "distinctCombos": 3,
+      "slot": "forge/block/block_entity.java",
+      "members": [
+        "templates/forge/1.20.1/block/block_entity.java",
+        "templates/forge/1.20.4/block/block_entity.java",
+        "templates/forge/26.3/block/block_entity.java"
+      ]
+    },
+    {
+      "hash": "dbcdde19dc94",
+      "copies": 3,
+      "distinctCombos": 3,
+      "slot": "fabric/gui/simple_screen.java",
+      "members": [
+        "templates/fabric/1.21.1/gui/simple_screen.java",
+        "templates/fabric/1.20.4/gui/simple_screen.java",
+        "templates/fabric/1.20.6/gui/simple_screen.java"
+      ]
+    },
+    {
+      "hash": "5e370b332f3b",
+      "copies": 3,
+      "distinctCombos": 3,
+      "slot": "fabric/block/simple_block.java",
+      "members": [
+        "templates/fabric/1.19.2/block/simple_block.java",
+        "templates/fabric/1.18.2/block/simple_block.java",
+        "templates/fabric/1.16.5/block/simple_block.java"
+      ]
+    },
+    {
+      "hash": "9cee7abbd585",
+      "copies": 3,
+      "distinctCombos": 3,
+      "slot": "fabric/enchantment/custom_enchantment.java",
+      "members": [
+        "templates/fabric/1.19.2/enchantment/custom_enchantment.java",
+        "templates/fabric/1.18.2/enchantment/custom_enchantment.java",
+        "templates/fabric/1.16.5/enchantment/custom_enchantment.java"
+      ]
+    },
+    {
+      "hash": "d69cbd18a29d",
+      "copies": 3,
+      "distinctCombos": 3,
+      "slot": "fabric/entity/simple_entity.java",
+      "members": [
+        "templates/fabric/1.19.2/entity/simple_entity.java",
+        "templates/fabric/1.18.2/entity/simple_entity.java",
+        "templates/fabric/1.16.5/entity/simple_entity.java"
+      ]
+    },
+    {
+      "hash": "eccf9369c1ee",
+      "copies": 3,
+      "distinctCombos": 3,
+      "slot": "fabric/entity/spawn_egg_item.java",
+      "members": [
+        "templates/fabric/1.19.2/entity/spawn_egg_item.java",
+        "templates/fabric/1.18.2/entity/spawn_egg_item.java",
+        "templates/fabric/1.16.5/entity/spawn_egg_item.java"
+      ]
+    },
+    {
+      "hash": "eb9736ad081c",
+      "copies": 3,
+      "distinctCombos": 3,
+      "slot": "fabric/gui/screen_with_menu.java",
+      "members": [
+        "templates/fabric/1.19.2/gui/screen_with_menu.java",
+        "templates/fabric/1.18.2/gui/screen_with_menu.java",
+        "templates/fabric/1.16.5/gui/screen_with_menu.java"
+      ]
+    },
+    {
+      "hash": "52c70130c285",
+      "copies": 3,
+      "distinctCombos": 3,
+      "slot": "fabric/item/armor_item.java",
+      "members": [
+        "templates/fabric/1.19.2/item/armor_item.java",
+        "templates/fabric/1.18.2/item/armor_item.java",
+        "templates/fabric/1.16.5/item/armor_item.java"
+      ]
+    },
+    {
+      "hash": "e45378027d5f",
+      "copies": 3,
+      "distinctCombos": 3,
+      "slot": "fabric/item/food_item.java",
+      "members": [
+        "templates/fabric/1.19.2/item/food_item.java",
+        "templates/fabric/1.18.2/item/food_item.java",
+        "templates/fabric/1.16.5/item/food_item.java"
+      ]
+    },
+    {
+      "hash": "a621a570a8c0",
+      "copies": 3,
+      "distinctCombos": 3,
+      "slot": "fabric/item/simple_item.java",
+      "members": [
+        "templates/fabric/1.19.2/item/simple_item.java",
+        "templates/fabric/1.18.2/item/simple_item.java",
+        "templates/fabric/1.16.5/item/simple_item.java"
+      ]
+    },
+    {
+      "hash": "ec2978f11f89",
+      "copies": 3,
+      "distinctCombos": 3,
+      "slot": "fabric/item/tool_item.java",
+      "members": [
+        "templates/fabric/1.19.2/item/tool_item.java",
+        "templates/fabric/1.18.2/item/tool_item.java",
+        "templates/fabric/1.16.5/item/tool_item.java"
+      ]
+    },
+    {
+      "hash": "90d30196fa73",
+      "copies": 3,
+      "distinctCombos": 3,
+      "slot": "fabric/block/processing_block.java",
+      "members": [
+        "templates/fabric/1.16.5/block/processing_block.java",
+        "templates/fabric/1.18.2/block/processing_block.java",
+        "templates/fabric/1.19.2/block/processing_block.java"
+      ]
+    },
+    {
+      "hash": "8788e7463057",
+      "copies": 2,
+      "distinctCombos": 2,
+      "slot": "fabric/block/block_entity.java",
+      "members": [
+        "templates/fabric/1.21.1/block/block_entity.java",
+        "templates/fabric/1.20.6/block/block_entity.java"
+      ]
+    },
+    {
+      "hash": "b1d1e8997b74",
+      "copies": 2,
+      "distinctCombos": 2,
+      "slot": "fabric/enchantment/custom_enchantment.java",
+      "members": [
+        "templates/fabric/1.21.1/enchantment/custom_enchantment.java",
+        "templates/fabric/1.20.6/enchantment/custom_enchantment.java"
+      ]
+    },
+    {
+      "hash": "a4bcf1621de4",
+      "copies": 2,
+      "distinctCombos": 2,
+      "slot": "fabric/entity/entity_renderer.java",
+      "members": [
+        "templates/fabric/1.21.1/entity/entity_renderer.java",
+        "templates/fabric/1.20.6/entity/entity_renderer.java"
+      ]
+    },
+    {
+      "hash": "96326795a806",
+      "copies": 2,
+      "distinctCombos": 2,
+      "slot": "fabric/entity/simple_entity.java",
+      "members": [
+        "templates/fabric/1.21.1/entity/simple_entity.java",
+        "templates/fabric/1.20.6/entity/simple_entity.java"
+      ]
+    },
+    {
+      "hash": "3481559cf931",
+      "copies": 2,
+      "distinctCombos": 2,
+      "slot": "fabric/entity/spawn_egg_item.java",
+      "members": [
+        "templates/fabric/1.21.1/entity/spawn_egg_item.java",
+        "templates/fabric/1.20.6/entity/spawn_egg_item.java"
+      ]
+    },
+    {
+      "hash": "19aaf83b92d3",
+      "copies": 2,
+      "distinctCombos": 2,
+      "slot": "fabric/gui/screen_with_menu.java",
+      "members": [
+        "templates/fabric/1.21.1/gui/screen_with_menu.java",
+        "templates/fabric/1.20.6/gui/screen_with_menu.java"
+      ]
+    },
+    {
+      "hash": "6d0fb9b57771",
+      "copies": 2,
+      "distinctCombos": 2,
+      "slot": "fabric/item/armor_item.java",
+      "members": [
+        "templates/fabric/1.21.1/item/armor_item.java",
+        "templates/fabric/1.20.6/item/armor_item.java"
+      ]
+    },
+    {
+      "hash": "b79de8e86b02",
+      "copies": 2,
+      "distinctCombos": 2,
+      "slot": "fabric/item/food_item.java",
+      "members": [
+        "templates/fabric/1.21.1/item/food_item.java",
+        "templates/fabric/1.20.6/item/food_item.java"
+      ]
+    },
+    {
+      "hash": "ca17d93f90a6",
+      "copies": 2,
+      "distinctCombos": 2,
+      "slot": "fabric/item/simple_item.java",
+      "members": [
+        "templates/fabric/1.21.1/item/simple_item.java",
+        "templates/fabric/1.20.6/item/simple_item.java"
+      ]
+    },
+    {
+      "hash": "82506aeebaf6",
+      "copies": 2,
+      "distinctCombos": 2,
+      "slot": "fabric/item/tool_item.java",
+      "members": [
+        "templates/fabric/1.21.1/item/tool_item.java",
+        "templates/fabric/1.20.6/item/tool_item.java"
+      ]
+    },
+    {
+      "hash": "af2ec6512fba",
+      "copies": 2,
+      "distinctCombos": 2,
+      "slot": "fabric/worldgen/ore_feature.java",
+      "members": [
+        "templates/fabric/1.21.1/worldgen/ore_feature.java",
+        "templates/fabric/1.20.6/worldgen/ore_feature.java"
+      ]
+    },
+    {
+      "hash": "c67a9cc77fb2",
+      "copies": 2,
+      "distinctCombos": 2,
+      "slot": "fabric/block/block_entity.java",
+      "members": [
+        "templates/fabric/1.19.2/block/block_entity.java",
+        "templates/fabric/1.18.2/block/block_entity.java"
+      ]
+    },
+    {
+      "hash": "2321c0ccbed8",
+      "copies": 2,
+      "distinctCombos": 2,
+      "slot": "fabric/worldgen/ore_feature.java",
+      "members": [
+        "templates/fabric/1.19.2/worldgen/ore_feature.java",
+        "templates/fabric/1.18.2/worldgen/ore_feature.java"
+      ]
+    },
+    {
+      "hash": "d92b1058f227",
+      "copies": 2,
+      "distinctCombos": 2,
+      "slot": "fabric/command/simple_command.java",
+      "members": [
+        "templates/fabric/1.18.2/command/simple_command.java",
+        "templates/fabric/1.16.5/command/simple_command.java"
+      ]
+    },
+    {
+      "hash": "a4234b827c13",
+      "copies": 2,
+      "distinctCombos": 2,
+      "slot": "fabric/gui/simple_screen.java",
+      "members": [
+        "templates/fabric/1.18.2/gui/simple_screen.java",
+        "templates/fabric/1.16.5/gui/simple_screen.java"
+      ]
+    },
+    {
+      "hash": "c98d85e99a20",
+      "copies": 2,
+      "distinctCombos": 2,
+      "slot": "fabric/mixin/modify_arg_mixin.java",
+      "members": [
+        "templates/fabric/1.18.2/mixin/modify_arg_mixin.java",
+        "templates/fabric/1.16.5/mixin/modify_arg_mixin.java"
+      ]
+    },
+    {
+      "hash": "b83164aad844",
+      "copies": 2,
+      "distinctCombos": 2,
+      "slot": "neoforge/gui/screen_with_menu.java",
+      "members": [
+        "templates/neoforge/1.20.6/gui/screen_with_menu.java",
+        "templates/neoforge/1.20.4/gui/screen_with_menu.java"
+      ]
+    },
+    {
+      "hash": "676d6345438e",
+      "copies": 2,
+      "distinctCombos": 2,
+      "slot": "forge/block/block_entity.java",
+      "members": [
+        "templates/forge/1.19.2/block/block_entity.java",
+        "templates/forge/1.18.2/block/block_entity.java"
+      ]
+    },
+    {
+      "hash": "30471ccd8f70",
+      "copies": 2,
+      "distinctCombos": 2,
+      "slot": "forge/block/simple_block.java",
+      "members": [
+        "templates/forge/1.19.2/block/simple_block.java",
+        "templates/forge/1.18.2/block/simple_block.java"
+      ]
+    },
+    {
+      "hash": "56474e692644",
+      "copies": 2,
+      "distinctCombos": 2,
+      "slot": "forge/gui/screen_with_menu.java",
+      "members": [
+        "templates/forge/1.19.2/gui/screen_with_menu.java",
+        "templates/forge/1.18.2/gui/screen_with_menu.java"
+      ]
+    },
+    {
+      "hash": "2453a73a480f",
+      "copies": 2,
+      "distinctCombos": 2,
+      "slot": "forge/item/simple_item.java",
+      "members": [
+        "templates/forge/1.19.2/item/simple_item.java",
+        "templates/forge/1.18.2/item/simple_item.java"
+      ]
+    },
+    {
+      "hash": "fe830fe55eed",
+      "copies": 2,
+      "distinctCombos": 2,
+      "slot": "forge/entity/custom_goal_container_interaction.java",
+      "members": [
+        "templates/forge/1.20.1/entity/custom_goal_container_interaction.java",
+        "templates/neoforge/1.21.1/entity/custom_goal_container_interaction.java"
+      ]
+    },
+    {
+      "hash": "1a60a0c3c59c",
+      "copies": 2,
+      "distinctCombos": 2,
+      "slot": "forge/entity/custom_goal_stateful_behavior.java",
+      "members": [
+        "templates/forge/1.20.1/entity/custom_goal_stateful_behavior.java",
+        "templates/neoforge/1.21.1/entity/custom_goal_stateful_behavior.java"
+      ]
+    },
+    {
+      "hash": "65ea1d1c09b4",
+      "copies": 2,
+      "distinctCombos": 2,
+      "slot": "forge/entity/biped_model_extra_cube.java",
+      "members": [
+        "templates/forge/1.20.1/entity/biped_model_extra_cube.java",
+        "templates/neoforge/1.21.1/entity/biped_model_extra_cube.java"
+      ]
+    }
+  ],
+  "slotTable": [
+    {
+      "loader": "fabric",
+      "slot": "entity/entity_attribute.java",
+      "combos": 16
+    },
+    {
+      "loader": "fabric",
+      "slot": "mixin/inject_mixin.java",
+      "combos": 16
+    },
+    {
+      "loader": "fabric",
+      "slot": "project/ModClient.java",
+      "combos": 16
+    },
+    {
+      "loader": "fabric",
+      "slot": "project/ModMain.java",
+      "combos": 16
+    },
+    {
+      "loader": "fabric",
+      "slot": "project/ModServer.java",
+      "combos": 16
+    },
+    {
+      "loader": "fabric",
+      "slot": "block/block_entity.java",
+      "combos": 16
+    },
+    {
+      "loader": "fabric",
+      "slot": "block/processing_block.java",
+      "combos": 16
+    },
+    {
+      "loader": "fabric",
+      "slot": "block/simple_block.java",
+      "combos": 16
+    },
+    {
+      "loader": "fabric",
+      "slot": "command/simple_command.java",
+      "combos": 16
+    },
+    {
+      "loader": "fabric",
+      "slot": "enchantment/custom_enchantment.java",
+      "combos": 16
+    },
+    {
+      "loader": "fabric",
+      "slot": "entity/entity_renderer.java",
+      "combos": 16
+    },
+    {
+      "loader": "fabric",
+      "slot": "entity/simple_entity.java",
+      "combos": 16
+    },
+    {
+      "loader": "fabric",
+      "slot": "entity/spawn_egg_item.java",
+      "combos": 16
+    },
+    {
+      "loader": "fabric",
+      "slot": "gui/screen_with_menu.java",
+      "combos": 16
+    },
+    {
+      "loader": "fabric",
+      "slot": "gui/simple_screen.java",
+      "combos": 16
+    },
+    {
+      "loader": "fabric",
+      "slot": "item/armor_item.java",
+      "combos": 16
+    },
+    {
+      "loader": "fabric",
+      "slot": "item/food_item.java",
+      "combos": 16
+    },
+    {
+      "loader": "fabric",
+      "slot": "item/simple_item.java",
+      "combos": 16
+    },
+    {
+      "loader": "fabric",
+      "slot": "item/tool_item.java",
+      "combos": 16
+    },
+    {
+      "loader": "fabric",
+      "slot": "mixin/modify_arg_mixin.java",
+      "combos": 16
+    },
+    {
+      "loader": "fabric",
+      "slot": "worldgen/ore_feature.java",
+      "combos": 16
+    },
+    {
+      "loader": "neoforge",
+      "slot": "block/processing_block.java",
+      "combos": 12
+    },
+    {
+      "loader": "neoforge",
+      "slot": "block/simple_block.java",
+      "combos": 12
+    },
+    {
+      "loader": "neoforge",
+      "slot": "command/simple_command.java",
+      "combos": 12
+    },
+    {
+      "loader": "neoforge",
+      "slot": "entity/entity_attribute.java",
+      "combos": 12
+    },
+    {
+      "loader": "neoforge",
+      "slot": "entity/simple_entity.java",
+      "combos": 12
+    },
+    {
+      "loader": "neoforge",
+      "slot": "entity/spawn_egg_item.java",
+      "combos": 12
+    },
+    {
+      "loader": "neoforge",
+      "slot": "gui/simple_screen.java",
+      "combos": 12
+    },
+    {
+      "loader": "neoforge",
+      "slot": "item/armor_item.java",
+      "combos": 12
+    },
+    {
+      "loader": "neoforge",
+      "slot": "item/simple_item.java",
+      "combos": 12
+    },
+    {
+      "loader": "neoforge",
+      "slot": "item/tool_item.java",
+      "combos": 12
+    },
+    {
+      "loader": "neoforge",
+      "slot": "mixin/inject_mixin.java",
+      "combos": 12
+    },
+    {
+      "loader": "neoforge",
+      "slot": "mixin/modify_arg_mixin.java",
+      "combos": 12
+    },
+    {
+      "loader": "neoforge",
+      "slot": "project/ModClient.java",
+      "combos": 12
+    },
+    {
+      "loader": "neoforge",
+      "slot": "project/ModMain.java",
+      "combos": 12
+    },
+    {
+      "loader": "neoforge",
+      "slot": "project/ModServer.java",
+      "combos": 12
+    },
+    {
+      "loader": "neoforge",
+      "slot": "worldgen/ore_feature.java",
+      "combos": 12
+    },
+    {
+      "loader": "neoforge",
+      "slot": "block/block_entity.java",
+      "combos": 12
+    },
+    {
+      "loader": "neoforge",
+      "slot": "entity/entity_renderer.java",
+      "combos": 12
+    },
+    {
+      "loader": "neoforge",
+      "slot": "gui/screen_with_menu.java",
+      "combos": 12
+    },
+    {
+      "loader": "neoforge",
+      "slot": "item/food_item.java",
+      "combos": 12
+    },
+    {
+      "loader": "forge",
+      "slot": "block/block_entity.java",
+      "combos": 7
+    },
+    {
+      "loader": "forge",
+      "slot": "block/processing_block.java",
+      "combos": 7
+    },
+    {
+      "loader": "forge",
+      "slot": "block/simple_block.java",
+      "combos": 7
+    },
+    {
+      "loader": "forge",
+      "slot": "command/simple_command.java",
+      "combos": 7
+    },
+    {
+      "loader": "forge",
+      "slot": "enchantment/custom_enchantment.java",
+      "combos": 7
+    },
+    {
+      "loader": "forge",
+      "slot": "entity/entity_attribute.java",
+      "combos": 7
+    },
+    {
+      "loader": "forge",
+      "slot": "entity/entity_renderer.java",
+      "combos": 7
+    },
+    {
+      "loader": "forge",
+      "slot": "entity/simple_entity.java",
+      "combos": 7
+    },
+    {
+      "loader": "forge",
+      "slot": "entity/spawn_egg_item.java",
+      "combos": 7
+    },
+    {
+      "loader": "forge",
+      "slot": "gui/screen_with_menu.java",
+      "combos": 7
+    },
+    {
+      "loader": "forge",
+      "slot": "gui/simple_screen.java",
+      "combos": 7
+    },
+    {
+      "loader": "forge",
+      "slot": "item/armor_item.java",
+      "combos": 7
+    },
+    {
+      "loader": "forge",
+      "slot": "item/food_item.java",
+      "combos": 7
+    },
+    {
+      "loader": "forge",
+      "slot": "item/simple_item.java",
+      "combos": 7
+    },
+    {
+      "loader": "forge",
+      "slot": "item/tool_item.java",
+      "combos": 7
+    },
+    {
+      "loader": "forge",
+      "slot": "mixin/inject_mixin.java",
+      "combos": 7
+    },
+    {
+      "loader": "forge",
+      "slot": "mixin/modify_arg_mixin.java",
+      "combos": 7
+    },
+    {
+      "loader": "forge",
+      "slot": "project/ModClient.java",
+      "combos": 7
+    },
+    {
+      "loader": "forge",
+      "slot": "project/ModMain.java",
+      "combos": 7
+    },
+    {
+      "loader": "forge",
+      "slot": "project/ModServer.java",
+      "combos": 7
+    },
+    {
+      "loader": "forge",
+      "slot": "worldgen/ore_feature.java",
+      "combos": 7
+    },
+    {
+      "loader": "fabric",
+      "slot": "entity/freeform/biped_model_extra_cube.java",
+      "combos": 1
+    },
+    {
+      "loader": "fabric",
+      "slot": "entity/freeform/custom_goal_container_interaction.java",
+      "combos": 1
+    },
+    {
+      "loader": "fabric",
+      "slot": "entity/freeform/custom_goal_stateful_behavior.java",
+      "combos": 1
+    },
+    {
+      "loader": "fabric",
+      "slot": "entity/freeform/entity_renderer_client_reg.java",
+      "combos": 1
+    },
+    {
+      "loader": "fabric",
+      "slot": "entity/freeform/spawn_egg_natural_spawn.java",
+      "combos": 1
+    },
+    {
+      "loader": "forge",
+      "slot": "entity/biped_model_extra_cube.java",
+      "combos": 1
+    },
+    {
+      "loader": "forge",
+      "slot": "entity/custom_goal_container_interaction.java",
+      "combos": 1
+    },
+    {
+      "loader": "forge",
+      "slot": "entity/custom_goal_stateful_behavior.java",
+      "combos": 1
+    },
+    {
+      "loader": "forge",
+      "slot": "entity/entity_renderer_client_reg.java",
+      "combos": 1
+    },
+    {
+      "loader": "forge",
+      "slot": "entity/spawn_egg_natural_spawn.java",
+      "combos": 1
+    },
+    {
+      "loader": "neoforge",
+      "slot": "entity/biped_model_extra_cube.java",
+      "combos": 1
+    },
+    {
+      "loader": "neoforge",
+      "slot": "entity/custom_goal_container_interaction.java",
+      "combos": 1
+    },
+    {
+      "loader": "neoforge",
+      "slot": "entity/custom_goal_stateful_behavior.java",
+      "combos": 1
+    },
+    {
+      "loader": "neoforge",
+      "slot": "entity/entity_renderer_client_reg.java",
+      "combos": 1
+    },
+    {
+      "loader": "neoforge",
+      "slot": "entity/spawn_egg_natural_spawn.java",
+      "combos": 1
+    }
+  ],
+  "combosWithVariants": [
+    {
+      "combo": "fabric/1.16.5",
+      "variants": 18,
+      "canonical": 26,
+      "variantSlots": [
+        "block/block_entity.java",
+        "block/processing_block.java",
+        "block/simple_block.java",
+        "command/simple_command.java",
+        "enchantment/custom_enchantment.java",
+        "entity/entity_renderer.java",
+        "entity/simple_entity.java",
+        "entity/spawn_egg_item.java",
+        "gui/screen_with_menu.java",
+        "gui/simple_screen.java",
+        "item/armor_item.java",
+        "item/food_item.java",
+        "item/simple_item.java",
+        "item/tool_item.java",
+        "mixin/modify_arg_mixin.java",
+        "project/README.md",
+        "project/gradle.properties",
+        "worldgen/ore_feature.java"
+      ]
+    },
+    {
+      "combo": "fabric/1.18.2",
+      "variants": 15,
+      "canonical": 29,
+      "variantSlots": [
+        "block/block_entity.java",
+        "block/processing_block.java",
+        "block/simple_block.java",
+        "command/simple_command.java",
+        "enchantment/custom_enchantment.java",
+        "entity/simple_entity.java",
+        "entity/spawn_egg_item.java",
+        "gui/screen_with_menu.java",
+        "gui/simple_screen.java",
+        "item/armor_item.java",
+        "item/food_item.java",
+        "item/simple_item.java",
+        "item/tool_item.java",
+        "mixin/modify_arg_mixin.java",
+        "worldgen/ore_feature.java"
+      ]
+    },
+    {
+      "combo": "fabric/1.19.2",
+      "variants": 14,
+      "canonical": 30,
+      "variantSlots": [
+        "block/block_entity.java",
+        "block/processing_block.java",
+        "block/simple_block.java",
+        "command/simple_command.java",
+        "enchantment/custom_enchantment.java",
+        "entity/simple_entity.java",
+        "entity/spawn_egg_item.java",
+        "gui/screen_with_menu.java",
+        "gui/simple_screen.java",
+        "item/armor_item.java",
+        "item/food_item.java",
+        "item/simple_item.java",
+        "item/tool_item.java",
+        "worldgen/ore_feature.java"
+      ]
+    },
+    {
+      "combo": "fabric/1.20.1",
+      "variants": 1,
+      "canonical": 48,
+      "variantSlots": [
+        "project/gradle.properties"
+      ]
+    },
+    {
+      "combo": "fabric/1.20.4",
+      "variants": 3,
+      "canonical": 41,
+      "variantSlots": [
+        "block/processing_block.java",
+        "gui/screen_with_menu.java",
+        "gui/simple_screen.java"
+      ]
+    },
+    {
+      "combo": "fabric/1.20.6",
+      "variants": 15,
+      "canonical": 29,
+      "variantSlots": [
+        "block/block_entity.java",
+        "block/processing_block.java",
+        "block/simple_block.java",
+        "enchantment/custom_enchantment.java",
+        "entity/entity_renderer.java",
+        "entity/simple_entity.java",
+        "entity/spawn_egg_item.java",
+        "gui/screen_with_menu.java",
+        "gui/simple_screen.java",
+        "item/armor_item.java",
+        "item/food_item.java",
+        "item/simple_item.java",
+        "item/tool_item.java",
+        "project/gradle.properties",
+        "worldgen/ore_feature.java"
+      ]
+    },
+    {
+      "combo": "fabric/1.21.1",
+      "variants": 15,
+      "canonical": 29,
+      "variantSlots": [
+        "block/block_entity.java",
+        "block/processing_block.java",
+        "block/simple_block.java",
+        "enchantment/custom_enchantment.java",
+        "entity/entity_renderer.java",
+        "entity/simple_entity.java",
+        "entity/spawn_egg_item.java",
+        "gui/screen_with_menu.java",
+        "gui/simple_screen.java",
+        "item/armor_item.java",
+        "item/food_item.java",
+        "item/simple_item.java",
+        "item/tool_item.java",
+        "project/gradle.properties",
+        "worldgen/ore_feature.java"
+      ]
+    },
+    {
+      "combo": "fabric/1.21.10",
+      "variants": 1,
+      "canonical": 43,
+      "variantSlots": [
+        "project/gradle.properties"
+      ]
+    },
+    {
+      "combo": "fabric/1.21.11",
+      "variants": 1,
+      "canonical": 43,
+      "variantSlots": [
+        "project/gradle.properties"
+      ]
+    },
+    {
+      "combo": "fabric/1.21.4",
+      "variants": 1,
+      "canonical": 43,
+      "variantSlots": [
+        "project/gradle.properties"
+      ]
+    },
+    {
+      "combo": "fabric/1.21.5",
+      "variants": 1,
+      "canonical": 43,
+      "variantSlots": [
+        "project/gradle.properties"
+      ]
+    },
+    {
+      "combo": "fabric/1.21.6",
+      "variants": 1,
+      "canonical": 43,
+      "variantSlots": [
+        "project/gradle.properties"
+      ]
+    },
+    {
+      "combo": "fabric/1.21.7",
+      "variants": 1,
+      "canonical": 43,
+      "variantSlots": [
+        "project/gradle.properties"
+      ]
+    },
+    {
+      "combo": "fabric/1.21.8",
+      "variants": 1,
+      "canonical": 43,
+      "variantSlots": [
+        "project/gradle.properties"
+      ]
+    },
+    {
+      "combo": "fabric/1.21.9",
+      "variants": 1,
+      "canonical": 43,
+      "variantSlots": [
+        "project/gradle.properties"
+      ]
+    },
+    {
+      "combo": "fabric/26.3",
+      "variants": 9,
+      "canonical": 35,
+      "variantSlots": [
+        "item/armor_item.java",
+        "item/food_item.java",
+        "item/tool_item.java",
+        "project/ModClient.java",
+        "project/ModMain.java",
+        "project/ModServer.java",
+        "project/README.md",
+        "project/build.gradle",
+        "project/gradle.properties"
+      ]
+    },
+    {
+      "combo": "forge/1.16.5",
+      "variants": 24,
+      "canonical": 20,
+      "variantSlots": [
+        "block/block_entity.java",
+        "block/processing_block.java",
+        "block/simple_block.java",
+        "command/simple_command.java",
+        "enchantment/custom_enchantment.java",
+        "entity/entity_attribute.java",
+        "entity/entity_renderer.java",
+        "entity/simple_entity.java",
+        "entity/spawn_egg_item.java",
+        "gui/screen_with_menu.java",
+        "gui/simple_screen.java",
+        "item/armor_item.java",
+        "item/food_item.java",
+        "item/simple_item.java",
+        "item/tool_item.java",
+        "mixin/inject_mixin.java",
+        "mixin/modify_arg_mixin.java",
+        "project/ModClient.java",
+        "project/ModMain.java",
+        "project/ModServer.java",
+        "project/README.md",
+        "project/build.gradle",
+        "project/settings.gradle",
+        "worldgen/ore_feature.java"
+      ]
+    },
+    {
+      "combo": "forge/1.18.2",
+      "variants": 9,
+      "canonical": 35,
+      "variantSlots": [
+        "block/block_entity.java",
+        "block/simple_block.java",
+        "entity/simple_entity.java",
+        "entity/spawn_egg_item.java",
+        "gui/screen_with_menu.java",
+        "gui/simple_screen.java",
+        "item/simple_item.java",
+        "project/ModClient.java",
+        "worldgen/ore_feature.java"
+      ]
+    },
+    {
+      "combo": "forge/1.19.2",
+      "variants": 6,
+      "canonical": 38,
+      "variantSlots": [
+        "block/block_entity.java",
+        "block/simple_block.java",
+        "entity/spawn_egg_item.java",
+        "gui/screen_with_menu.java",
+        "gui/simple_screen.java",
+        "item/simple_item.java"
+      ]
+    },
+    {
+      "combo": "forge/1.21.1",
+      "variants": 8,
+      "canonical": 36,
+      "variantSlots": [
+        "block/block_entity.java",
+        "block/simple_block.java",
+        "enchantment/custom_enchantment.java",
+        "item/food_item.java",
+        "item/tool_item.java",
+        "project/README.md",
+        "project/build.gradle",
+        "project/settings.gradle"
+      ]
+    },
+    {
+      "combo": "forge/26.3",
+      "variants": 2,
+      "canonical": 42,
+      "variantSlots": [
+        "block/simple_block.java",
+        "project/README.md"
+      ]
+    },
+    {
+      "combo": "neoforge/1.20.4",
+      "variants": 4,
+      "canonical": 40,
+      "variantSlots": [
+        "block/block_entity.java",
+        "entity/entity_renderer.java",
+        "gui/screen_with_menu.java",
+        "item/food_item.java"
+      ]
+    },
+    {
+      "combo": "neoforge/1.20.6",
+      "variants": 2,
+      "canonical": 42,
+      "variantSlots": [
+        "entity/entity_renderer.java",
+        "gui/screen_with_menu.java"
+      ]
+    },
+    {
+      "combo": "neoforge/1.21.3",
+      "variants": 11,
+      "canonical": 33,
+      "variantSlots": [
+        "block/processing_block.java",
+        "block/simple_block.java",
+        "entity/entity_renderer.java",
+        "entity/simple_entity.java",
+        "entity/spawn_egg_item.java",
+        "gui/screen_with_menu.java",
+        "gui/simple_screen.java",
+        "item/armor_item.java",
+        "item/food_item.java",
+        "item/simple_item.java",
+        "item/tool_item.java"
+      ]
+    }
+  ],
+  "comboTable": [
+    {
+      "combo": "fabric/1.16.5",
+      "seed": "fabric/1.20.1",
+      "canonical": 26,
+      "variants": 18,
+      "variantSlots": [
+        "block/block_entity.java",
+        "block/processing_block.java",
+        "block/simple_block.java",
+        "command/simple_command.java",
+        "enchantment/custom_enchantment.java",
+        "entity/entity_renderer.java",
+        "entity/simple_entity.java",
+        "entity/spawn_egg_item.java",
+        "gui/screen_with_menu.java",
+        "gui/simple_screen.java",
+        "item/armor_item.java",
+        "item/food_item.java",
+        "item/simple_item.java",
+        "item/tool_item.java",
+        "mixin/modify_arg_mixin.java",
+        "project/README.md",
+        "project/gradle.properties",
+        "worldgen/ore_feature.java"
+      ],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "fabric/1.18.2",
+      "seed": "fabric/1.20.1",
+      "canonical": 29,
+      "variants": 15,
+      "variantSlots": [
+        "block/block_entity.java",
+        "block/processing_block.java",
+        "block/simple_block.java",
+        "command/simple_command.java",
+        "enchantment/custom_enchantment.java",
+        "entity/simple_entity.java",
+        "entity/spawn_egg_item.java",
+        "gui/screen_with_menu.java",
+        "gui/simple_screen.java",
+        "item/armor_item.java",
+        "item/food_item.java",
+        "item/simple_item.java",
+        "item/tool_item.java",
+        "mixin/modify_arg_mixin.java",
+        "worldgen/ore_feature.java"
+      ],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "fabric/1.19.2",
+      "seed": "fabric/1.20.1",
+      "canonical": 30,
+      "variants": 14,
+      "variantSlots": [
+        "block/block_entity.java",
+        "block/processing_block.java",
+        "block/simple_block.java",
+        "command/simple_command.java",
+        "enchantment/custom_enchantment.java",
+        "entity/simple_entity.java",
+        "entity/spawn_egg_item.java",
+        "gui/screen_with_menu.java",
+        "gui/simple_screen.java",
+        "item/armor_item.java",
+        "item/food_item.java",
+        "item/simple_item.java",
+        "item/tool_item.java",
+        "worldgen/ore_feature.java"
+      ],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "fabric/1.20.1",
+      "seed": "fabric/1.20.1",
+      "canonical": 48,
+      "variants": 1,
+      "variantSlots": [
+        "project/gradle.properties"
+      ],
+      "crlf": 0,
+      "noHeader": 48,
+      "headerStyles": [
+        "-"
+      ]
+    },
+    {
+      "combo": "fabric/1.20.4",
+      "seed": "fabric/1.20.1",
+      "canonical": 41,
+      "variants": 3,
+      "variantSlots": [
+        "block/processing_block.java",
+        "gui/screen_with_menu.java",
+        "gui/simple_screen.java"
+      ],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "fabric/1.20.6",
+      "seed": "fabric/1.20.1",
+      "canonical": 29,
+      "variants": 15,
+      "variantSlots": [
+        "block/block_entity.java",
+        "block/processing_block.java",
+        "block/simple_block.java",
+        "enchantment/custom_enchantment.java",
+        "entity/entity_renderer.java",
+        "entity/simple_entity.java",
+        "entity/spawn_egg_item.java",
+        "gui/screen_with_menu.java",
+        "gui/simple_screen.java",
+        "item/armor_item.java",
+        "item/food_item.java",
+        "item/simple_item.java",
+        "item/tool_item.java",
+        "project/gradle.properties",
+        "worldgen/ore_feature.java"
+      ],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "fabric/1.21.1",
+      "seed": "fabric/1.20.1",
+      "canonical": 29,
+      "variants": 15,
+      "variantSlots": [
+        "block/block_entity.java",
+        "block/processing_block.java",
+        "block/simple_block.java",
+        "enchantment/custom_enchantment.java",
+        "entity/entity_renderer.java",
+        "entity/simple_entity.java",
+        "entity/spawn_egg_item.java",
+        "gui/screen_with_menu.java",
+        "gui/simple_screen.java",
+        "item/armor_item.java",
+        "item/food_item.java",
+        "item/simple_item.java",
+        "item/tool_item.java",
+        "project/gradle.properties",
+        "worldgen/ore_feature.java"
+      ],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "fabric/1.21.10",
+      "seed": "fabric/1.20.1",
+      "canonical": 43,
+      "variants": 1,
+      "variantSlots": [
+        "project/gradle.properties"
+      ],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "fabric/1.21.11",
+      "seed": "fabric/1.20.1",
+      "canonical": 43,
+      "variants": 1,
+      "variantSlots": [
+        "project/gradle.properties"
+      ],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "fabric/1.21.4",
+      "seed": "fabric/1.20.1",
+      "canonical": 43,
+      "variants": 1,
+      "variantSlots": [
+        "project/gradle.properties"
+      ],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "fabric/1.21.5",
+      "seed": "fabric/1.20.1",
+      "canonical": 43,
+      "variants": 1,
+      "variantSlots": [
+        "project/gradle.properties"
+      ],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "fabric/1.21.6",
+      "seed": "fabric/1.20.1",
+      "canonical": 43,
+      "variants": 1,
+      "variantSlots": [
+        "project/gradle.properties"
+      ],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "fabric/1.21.7",
+      "seed": "fabric/1.20.1",
+      "canonical": 43,
+      "variants": 1,
+      "variantSlots": [
+        "project/gradle.properties"
+      ],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "fabric/1.21.8",
+      "seed": "fabric/1.20.1",
+      "canonical": 43,
+      "variants": 1,
+      "variantSlots": [
+        "project/gradle.properties"
+      ],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "fabric/1.21.9",
+      "seed": "fabric/1.20.1",
+      "canonical": 43,
+      "variants": 1,
+      "variantSlots": [
+        "project/gradle.properties"
+      ],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "fabric/26.3",
+      "seed": "fabric/1.20.1",
+      "canonical": 35,
+      "variants": 9,
+      "variantSlots": [
+        "item/armor_item.java",
+        "item/food_item.java",
+        "item/tool_item.java",
+        "project/ModClient.java",
+        "project/ModMain.java",
+        "project/ModServer.java",
+        "project/README.md",
+        "project/build.gradle",
+        "project/gradle.properties"
+      ],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "forge/1.16.5",
+      "seed": "forge/1.20.1",
+      "canonical": 20,
+      "variants": 24,
+      "variantSlots": [
+        "block/block_entity.java",
+        "block/processing_block.java",
+        "block/simple_block.java",
+        "command/simple_command.java",
+        "enchantment/custom_enchantment.java",
+        "entity/entity_attribute.java",
+        "entity/entity_renderer.java",
+        "entity/simple_entity.java",
+        "entity/spawn_egg_item.java",
+        "gui/screen_with_menu.java",
+        "gui/simple_screen.java",
+        "item/armor_item.java",
+        "item/food_item.java",
+        "item/simple_item.java",
+        "item/tool_item.java",
+        "mixin/inject_mixin.java",
+        "mixin/modify_arg_mixin.java",
+        "project/ModClient.java",
+        "project/ModMain.java",
+        "project/ModServer.java",
+        "project/README.md",
+        "project/build.gradle",
+        "project/settings.gradle",
+        "worldgen/ore_feature.java"
+      ],
+      "crlf": 0,
+      "noHeader": 18,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "forge/1.18.2",
+      "seed": "forge/1.20.1",
+      "canonical": 35,
+      "variants": 9,
+      "variantSlots": [
+        "block/block_entity.java",
+        "block/simple_block.java",
+        "entity/simple_entity.java",
+        "entity/spawn_egg_item.java",
+        "gui/screen_with_menu.java",
+        "gui/simple_screen.java",
+        "item/simple_item.java",
+        "project/ModClient.java",
+        "worldgen/ore_feature.java"
+      ],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "forge/1.19.2",
+      "seed": "forge/1.20.1",
+      "canonical": 38,
+      "variants": 6,
+      "variantSlots": [
+        "block/block_entity.java",
+        "block/simple_block.java",
+        "entity/spawn_egg_item.java",
+        "gui/screen_with_menu.java",
+        "gui/simple_screen.java",
+        "item/simple_item.java"
+      ],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "forge/1.20.1",
+      "seed": "forge/1.20.1",
+      "canonical": 49,
+      "variants": 0,
+      "variantSlots": [],
+      "crlf": 0,
+      "noHeader": 49,
+      "headerStyles": [
+        "-"
+      ]
+    },
+    {
+      "combo": "forge/1.20.4",
+      "seed": "forge/1.20.1",
+      "canonical": 44,
+      "variants": 0,
+      "variantSlots": [],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "forge/1.21.1",
+      "seed": "forge/1.20.1",
+      "canonical": 36,
+      "variants": 8,
+      "variantSlots": [
+        "block/block_entity.java",
+        "block/simple_block.java",
+        "enchantment/custom_enchantment.java",
+        "item/food_item.java",
+        "item/tool_item.java",
+        "project/README.md",
+        "project/build.gradle",
+        "project/settings.gradle"
+      ],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "forge/26.3",
+      "seed": "forge/1.20.1",
+      "canonical": 42,
+      "variants": 2,
+      "variantSlots": [
+        "block/simple_block.java",
+        "project/README.md"
+      ],
+      "crlf": 0,
+      "noHeader": 18,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "neoforge/1.20.4",
+      "seed": "neoforge/1.21.1",
+      "canonical": 40,
+      "variants": 4,
+      "variantSlots": [
+        "block/block_entity.java",
+        "entity/entity_renderer.java",
+        "gui/screen_with_menu.java",
+        "item/food_item.java"
+      ],
+      "crlf": 0,
+      "noHeader": 20,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "neoforge/1.20.6",
+      "seed": "neoforge/1.21.1",
+      "canonical": 42,
+      "variants": 2,
+      "variantSlots": [
+        "entity/entity_renderer.java",
+        "gui/screen_with_menu.java"
+      ],
+      "crlf": 0,
+      "noHeader": 20,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "neoforge/1.21.1",
+      "seed": "neoforge/1.21.1",
+      "canonical": 49,
+      "variants": 0,
+      "variantSlots": [],
+      "crlf": 0,
+      "noHeader": 49,
+      "headerStyles": [
+        "-"
+      ]
+    },
+    {
+      "combo": "neoforge/1.21.10",
+      "seed": "neoforge/1.21.1",
+      "canonical": 44,
+      "variants": 0,
+      "variantSlots": [],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "neoforge/1.21.11",
+      "seed": "neoforge/1.21.1",
+      "canonical": 44,
+      "variants": 0,
+      "variantSlots": [],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "neoforge/1.21.3",
+      "seed": "neoforge/1.21.1",
+      "canonical": 33,
+      "variants": 11,
+      "variantSlots": [
+        "block/processing_block.java",
+        "block/simple_block.java",
+        "entity/entity_renderer.java",
+        "entity/simple_entity.java",
+        "entity/spawn_egg_item.java",
+        "gui/screen_with_menu.java",
+        "gui/simple_screen.java",
+        "item/armor_item.java",
+        "item/food_item.java",
+        "item/simple_item.java",
+        "item/tool_item.java"
+      ],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "neoforge/1.21.4",
+      "seed": "neoforge/1.21.1",
+      "canonical": 44,
+      "variants": 0,
+      "variantSlots": [],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "neoforge/1.21.5",
+      "seed": "neoforge/1.21.1",
+      "canonical": 44,
+      "variants": 0,
+      "variantSlots": [],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "neoforge/1.21.6",
+      "seed": "neoforge/1.21.1",
+      "canonical": 44,
+      "variants": 0,
+      "variantSlots": [],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "neoforge/1.21.7",
+      "seed": "neoforge/1.21.1",
+      "canonical": 44,
+      "variants": 0,
+      "variantSlots": [],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "neoforge/1.21.8",
+      "seed": "neoforge/1.21.1",
+      "canonical": 44,
+      "variants": 0,
+      "variantSlots": [],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    },
+    {
+      "combo": "neoforge/1.21.9",
+      "seed": "neoforge/1.21.1",
+      "canonical": 44,
+      "variants": 0,
+      "variantSlots": [],
+      "crlf": 0,
+      "noHeader": 19,
+      "headerStyles": [
+        "-",
+        "block",
+        "hash",
+        "html"
+      ]
+    }
+  ],
+  "status": {
+    "total": 1576,
+    "build": {
+      "pass": 716,
+      "pending": 860
+    },
+    "verified": {
+      "null": 1522,
+      "true": 0,
+      "false": 0,
+      "versionString": 54,
+      "other": 0
+    },
+    "provenance": {
+      "handwritten": 4,
+      "pdf": 35,
+      "manual-verified": 50,
+      "scaffold": 6,
+      "mdk-adapted": 92,
+      "translated-from-fabric-1.20.1": 657,
+      "translated-from-neoforge-1.21.1": 475,
+      "translated-from-forge-1.20.1": 229,
+      "rewritten-for-1.16.5-mojmap-unverified-build": 21,
+      "hand-curated": 7
+    },
+    "activeCombosWithTemplates": 34
+  },
+  "schemaAnomalies": {
+    "buildOutsideEnum": [],
+    "verifiedNotStringOrNull": [],
+    "provenanceOutsideUnion": [],
+    "loaderOutsideEnum": [],
+    "typeOutsideEnum": [],
+    "contentTypeOutsideEnum": []
+  },
+  "retrievalLeak": {
+    "activeTemplates": 1531,
+    "servedNowPool": 1531,
+    "notFactBaseline": 818,
+    "notFactEffective": 132,
+    "overlayApplied": true,
+    "byCombo": {
+      "fabric/1.20.1": {
+        "total": 51,
+        "notFact": 0
+      },
+      "forge/1.20.1": {
+        "total": 51,
+        "notFact": 0
+      },
+      "neoforge/1.21.1": {
+        "total": 50,
+        "notFact": 0
+      },
+      "fabric/1.21.1": {
+        "total": 45,
+        "notFact": 0
+      },
+      "fabric/1.20.4": {
+        "total": 45,
+        "notFact": 0
+      },
+      "fabric/1.20.6": {
+        "total": 45,
+        "notFact": 0
+      },
+      "fabric/1.19.2": {
+        "total": 45,
+        "notFact": 0
+      },
+      "fabric/1.18.2": {
+        "total": 45,
+        "notFact": 0
+      },
+      "fabric/1.16.5": {
+        "total": 45,
+        "notFact": 0
+      },
+      "neoforge/1.21.3": {
+        "total": 44,
+        "notFact": 0
+      },
+      "neoforge/1.20.6": {
+        "total": 44,
+        "notFact": 0
+      },
+      "neoforge/1.20.4": {
+        "total": 44,
+        "notFact": 0
+      },
+      "forge/1.21.1": {
+        "total": 44,
+        "notFact": 0
+      },
+      "forge/1.20.4": {
+        "total": 44,
+        "notFact": 0
+      },
+      "forge/1.19.2": {
+        "total": 44,
+        "notFact": 0
+      },
+      "forge/1.18.2": {
+        "total": 44,
+        "notFact": 0
+      },
+      "fabric/1.21.4": {
+        "total": 45,
+        "notFact": 0
+      },
+      "fabric/1.21.5": {
+        "total": 45,
+        "notFact": 0
+      },
+      "fabric/1.21.6": {
+        "total": 45,
+        "notFact": 0
+      },
+      "fabric/1.21.7": {
+        "total": 45,
+        "notFact": 0
+      },
+      "fabric/1.21.8": {
+        "total": 45,
+        "notFact": 0
+      },
+      "fabric/1.21.9": {
+        "total": 45,
+        "notFact": 0
+      },
+      "fabric/1.21.10": {
+        "total": 45,
+        "notFact": 0
+      },
+      "fabric/1.21.11": {
+        "total": 45,
+        "notFact": 0
+      },
+      "fabric/26.3": {
+        "total": 45,
+        "notFact": 0
+      },
+      "neoforge/1.21.4": {
+        "total": 44,
+        "notFact": 0
+      },
+      "neoforge/1.21.5": {
+        "total": 44,
+        "notFact": 0
+      },
+      "neoforge/1.21.6": {
+        "total": 44,
+        "notFact": 44
+      },
+      "neoforge/1.21.7": {
+        "total": 44,
+        "notFact": 44
+      },
+      "neoforge/1.21.8": {
+        "total": 44,
+        "notFact": 0
+      },
+      "neoforge/1.21.9": {
+        "total": 44,
+        "notFact": 44
+      },
+      "neoforge/1.21.10": {
+        "total": 44,
+        "notFact": 0
+      },
+      "neoforge/1.21.11": {
+        "total": 44,
+        "notFact": 0
+      },
+      "forge/26.3": {
+        "total": 44,
+        "notFact": 0
+      }
+    }
+  },
+  "note": "只读体检；overlay 仅当 --overlay 路径存在时并入有效状态（默认读 .dev-userdata）。"
+}

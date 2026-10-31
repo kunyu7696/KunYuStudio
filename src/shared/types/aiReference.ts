@@ -27,13 +27,22 @@ export type ContentType =
 /** 模板编译回测状态（探针签字前为 pending） */
 export type BuildStatus = 'pending' | 'pass' | 'fail'
 
-/** 模板来源：pdf=从源 PDF 原样提取；scaffold=依 README 清单重构；mdk-adapted=依官方 MDK 适配改写；translated-from-<loader>-<version>=脚本从种子组合复制并按目标 versionFingerprint 重写版本号（M23 矩阵补齐）；hand-curated=实体域自由代码手工精编（P0 grounding，对照 Yarn 源码逐条核验签名） */
+/**
+ * 模板来源：
+ * - pdf=从源 PDF 原样提取；scaffold=依 README 清单重构；mdk-adapted=依官方 MDK 适配改写；
+ * - translated-from-<loader>-<version>=脚本从种子组合复制并按目标 versionFingerprint 重写版本号（M23 矩阵补齐）；
+ * - rewritten-for-<版本/映射>=按目标映射手写改写的未验证稿（forge/1.16.5 mojmap）；
+ * - hand-curated / handwritten=按源码或官方文档手工精编；manual-verified=人工核对后签字。
+ */
 export type TemplateProvenance =
   | 'pdf'
   | 'scaffold'
   | 'mdk-adapted'
   | 'hand-curated'
+  | 'handwritten'
+  | 'manual-verified'
   | `translated-from-${string}`
+  | `rewritten-for-${string}`
 
 export interface AppliesTo {
   loaders: LoaderId[]

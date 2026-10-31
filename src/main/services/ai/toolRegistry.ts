@@ -205,6 +205,18 @@ export interface ToolRegistryDeps {
    */
   launchDevClient?: (root: string) => Promise<{ ok: boolean; text: string; error?: string }>
   /**
+   * M10：游戏测试沙箱编排端口（mc_run_test 工具）。
+   * 缺省走 sandboxService.createSandboxRunner（同一套六阶段编排，不复制逻辑）；
+   * 单测注入 fake runner，避免真实 Gradle 构建与客户端启动。
+   */
+  sandboxRunner?: () => {
+    run: (
+      config: import('../../../shared/types/sandbox').SandboxConfig,
+      sink: (event: import('../../../shared/types/sandbox').SandboxEvent) => void
+    ) => Promise<import('../../../shared/types/sandbox').SandboxReport>
+    cancel: (runId?: string) => void
+  }
+  /**
    * T1 write-through 端口（orchestrator per-run 注入，经 AsyncLocalStorage scope 读取）：
    * write_project_file 验收通过后立即写盘，工作台实时可见 AI 产出。
    * 返回 null（无项目 run / 测试未注入）时退回旧行为——仅登记，generate 结束统一写盘。

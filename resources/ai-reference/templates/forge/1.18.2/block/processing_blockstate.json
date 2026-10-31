@@ -1,6 +1,0 @@
-{
-  "variants": {
-    "lit=false": { "model": "examplemod:block/processing_block" },
-    "lit=true": { "model": "examplemod:block/processing_block_on" }
-  }
-}

@@ -73,6 +73,18 @@ export interface CorpusRoot {
   dir: string
 }
 
+/**
+ * 一条语料：通常只给真实文件路径（file），由服务自己读盘；
+ * 参考包压缩布局下模板不再是独立文件，改由 listFiles 直接注入组合好的正文
+ * （content + 内容指纹 mtimeMs），file 仍保留虚拟路径以免 relPath/缓存键漂移。
+ */
+export interface CorpusFile {
+  alias: string
+  file: string
+  content?: string
+  mtimeMs?: number
+}
+
 /** 内部状态：面板展示字段（roots/cacheBytes/watching）在 status() 读取时计算 */
 type CoreStatus = Omit<KbRagStatus, 'roots' | 'cacheBytes' | 'watching'>
 
@@ -92,7 +104,7 @@ export interface CreateKbRagOptions {
    * 精确语料清单（如按 manifest 活跃组合挑选模板文件）。
    * 返回 null / 空数组时回退 roots 目录遍历；与遍历结果一样排序后按 maxFiles 截断。
    */
-  listFiles?: () => Array<{ alias: string; file: string }> | null
+  listFiles?: () => CorpusFile[] | null
   /** 语料文件数上限（排序后截断），默认 2048（manifest 清单规模 + 余量） */
   maxFiles?: number
   /** 监听语料目录变更并热重载 chunk（fs.watch 递归，平台不支持时静默降级） */
@@ -111,8 +123,8 @@ const DEFAULT_MODEL = 'Xenova/bge-small-zh-v1.5'
 /* ------------------------------------------------------------------ */
 
 /** 递归收集语料文件（结果为 [rootAlias, absolutePath]，排序后截断保证确定性）。 */
-export function collectCorpusFiles(roots: CorpusRoot[], maxFiles = MAX_FILES): Array<{ alias: string; file: string }> {
-  const out: Array<{ alias: string; file: string }> = []
+export function collectCorpusFiles(roots: CorpusRoot[], maxFiles = MAX_FILES): CorpusFile[] {
+  const out: CorpusFile[] = []
   const walk = (alias: string, dir: string): void => {
     let entries: Dirent[]
     try {
@@ -137,9 +149,13 @@ export function collectCorpusFiles(roots: CorpusRoot[], maxFiles = MAX_FILES): A
   return out.slice(0, Math.max(1, maxFiles))
 }
 
-/** 去掉 BOM 并规范换行 */
+/** 去掉 BOM 并规范换行（真实文件与注入正文共用同一口径） */
+function normalizeText(text: string): string {
+  return text.replace(/^﻿/, '').replace(/\r\n/g, '\n')
+}
+
 function readText(file: string): string {
-  return readFileSync(file, 'utf-8').replace(/^﻿/, '').replace(/\r\n/g, '\n')
+  return normalizeText(readFileSync(file, 'utf-8'))
 }
 
 /**
@@ -377,12 +393,14 @@ export function createKbRag(options: CreateKbRagOptions) {
   const maxChunks = options.maxChunksPerFile ?? 80
   const maxFiles = options.maxFiles ?? MAX_FILES
 
-  let currentFiles: Array<{ alias: string; file: string }> = []
+  let currentFiles: CorpusFile[] = []
+  /** 注入正文的语料（参考包虚拟路径）没有真实 mtime，用内容指纹替代 */
+  const stampedMtimes = new Map<string, number>()
   const chunks: KbChunk[] = []
   const fileAlias = new Map<string, string>()
 
   /** 语料清单：优先调用方精确清单（manifest 活跃组合），缺失回退目录遍历；统一排序截断 */
-  function gatherFiles(): Array<{ alias: string; file: string }> {
+  function gatherFiles(): CorpusFile[] {
     const listed = options.listFiles?.()
     if (listed && listed.length > 0) {
       const seen = new Set<string>()
@@ -409,13 +427,15 @@ export function createKbRag(options: CreateKbRagOptions) {
       return abs !== cacheAbs && abs !== legacyAbs
     })
     fileAlias.clear()
+    stampedMtimes.clear()
     const next: KbChunk[] = []
-    for (const { alias, file } of currentFiles) {
+    for (const { alias, file, content, mtimeMs } of currentFiles) {
       try {
         const rootDir = options.roots.find((r) => r.alias === alias)?.dir ?? dirname(file)
         const rel = `${alias}/${relative(rootDir, file).replace(/\\/g, '/')}`
-        next.push(...chunkText(rel, file, readText(file), maxChunks))
+        next.push(...chunkText(rel, file, content !== undefined ? normalizeText(content) : readText(file), maxChunks))
         fileAlias.set(file, alias)
+        if (mtimeMs !== undefined) stampedMtimes.set(file, mtimeMs)
       } catch {
         /* 单个文件读失败跳过 */
       }
@@ -427,8 +447,10 @@ export function createKbRag(options: CreateKbRagOptions) {
   // 启动即扫语料（纯文件 IO，失败不致命）
   scanCorpus()
 
-  /** 文件 → mtime（缓存有效性判定用） */
+  /** 文件 → mtime（缓存有效性判定用；注入正文走内容指纹） */
   function fileMtime(file: string): number {
+    const stamped = stampedMtimes.get(file)
+    if (stamped !== undefined) return stamped
     try {
       return statSync(file).mtimeMs
     } catch {

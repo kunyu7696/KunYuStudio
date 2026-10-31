@@ -234,7 +234,9 @@ export function createProbeService(deps: {
         const combo = ACTIVE_PROBE_COMBOS[comboId]
         const verified = toolchainSignature(combo.loader, combo.mcVersion, state.javaHome)
         const templates = deps.reference
-          .listTemplates(combo.loader, combo.mcVersion)
+          // 探针是「让 pending 变成 pass」的唯一入口：必须看到未验证模板，
+          // 否则新装环境下会陷入「没验证就不给看，不给看就永远验证不了」的死循环
+          .listTemplates(combo.loader, combo.mcVersion, undefined, { includeCandidates: true })
           .map((t) => ({ id: t.id, build: 'pass' as const, verified }))
         deps.reference.recordProbeResult({ comboId, health: 'green', verifiedAt: at, templates })
         finish(

@@ -5,22 +5,27 @@
  *   node scripts/migrate-reference-templates.mjs --loader fabric --version 1.21.1
  *   node scripts/migrate-reference-templates.mjs --all       # 按 .migration-progress.json 全部 pending 项
  *
- * 流程：
- *   1. 从种子组合目录复制到目标组合目录（已存在则跳过文件级，加 --force 强制覆盖）
+ * 流程（压缩布局下不再复制整棵树）：
+ *   1. 以 templates/versions/<loader>/<种子>.json + templates/vars/<loader>.json 为源，
+ *      组合出种子组合的每个槽位正文（不含迁移注释头）
  *   2. 按 versionFingerprints[loader/mcVersion].templatePin 替换版本号字符串
- *   3. 在每个文件顶部追加「翻译自种子组合 + 目标版本」警示注释头（.java/.gradle/.toml/.json/.md/.properties）
- *   4. 更新 manifest.json：
- *      - templates 数组追加目标组合条目（verified=null, build=pending, active=true, provenance="translated-from-<seed>"）
- *      - stats.templateCount 同步
- *   5. 更新 .migration-progress.json 状态为 done
+ *   3. 反推占位符在新组合的取值：逐行对齐 canonical 与目标正文，能完整解释的槽位
+ *      走 canonical（只记 vars 差异）；解释不了的槽位落 templates/variants/<loader>/<mc>/
+ *   4. 写 templates/versions/<loader>/<mc>.json（canonical/variants/crlf/headers/noHeader）
+ *   5. 更新 manifest.json：templates 追加目标组合条目 + stats.templateCount
+ *   6. 更新 .migration-progress.json 状态为 done
+ *
+ * 等价保障：写盘前对每个槽位用「canonical + 新 vars」重新展开并与目标正文逐字节比对，
+ * 不一致就自动降级为 variant——绝不写出组合不回去的声明。
  */
-import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync, copyFileSync } from 'node:fs'
-import { dirname, join, relative, resolve } from 'node:path'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const __filename = fileURLToPath(import.meta.url)
 const ROOT = resolve(dirname(__filename), '..')
 const REF_DIR = join(ROOT, 'resources', 'ai-reference')
+const TPL_DIR = join(REF_DIR, 'templates')
 const MANIFEST_PATH = join(REF_DIR, 'manifest.json')
 const PROGRESS_PATH = join(REF_DIR, '.migration-progress.json')
 
@@ -42,18 +47,13 @@ function parseArgs() {
 }
 
 /* ---------------- 工具 ---------------- */
-function walk(dir, files = []) {
-  for (const name of readdirSync(dir)) {
-    const abs = join(dir, name)
-    const st = statSync(abs)
-    if (st.isDirectory()) walk(abs, files)
-    else files.push(abs)
-  }
-  return files
-}
-
 function readJson(p) { return JSON.parse(readFileSync(p, 'utf-8')) }
 function writeJson(p, v) { writeFileSync(p, JSON.stringify(v, null, 2) + '\n', 'utf-8') }
+
+const versionPath = (loader, mc) => join(TPL_DIR, 'versions', loader, `${mc}.json`)
+const varsPath = (loader) => join(TPL_DIR, 'vars', `${loader}.json`)
+const canonPath = (loader, slot) => join(TPL_DIR, 'canonical', loader, slot)
+const variantPath = (loader, mc, slot) => join(TPL_DIR, 'variants', loader, mc, slot)
 
 /** 取目标组合在 versionFingerprints 里的 templatePin（含 loaderVersion/loom/gradle 等） */
 function findPin(manifest, loader, mcVersion) {
@@ -64,32 +64,34 @@ function findPin(manifest, loader, mcVersion) {
   return fp
 }
 
-/** 每类文本文件的「警示注释头」前缀（按文件类型选注释符号） */
-function headerFor(filename, seedCombo, targetCombo, pin) {
+/** 注释头风格（与 templateStore 同构） */
+function styleOf(slot) {
+  if (/\.(java|gradle)$/.test(slot)) return 'block'
+  if (/\.md$/.test(slot)) return 'html'
+  if (/\.(properties|toml)$/.test(slot)) return 'hash'
+  return '-'
+}
+
+/** 每类文本文件的「警示注释头」（只依赖样式，与具体文件名无关） */
+function headerForStyle(style, seedCombo, targetCombo, pin) {
+  const targetMc = targetCombo.split('/')[1]
+  const docs = targetCombo.split('/')[0] === 'fabric'
+    ? 'Fabric docs'
+    : targetCombo.split('/')[0] === 'forge' ? 'Forge docs' : 'NeoForge docs'
   const lines = [
     `KunYuEcosystem AI Reference 模板迁移（${seedCombo} -> ${targetCombo}）`,
     `provenance: translated-from-${seedCombo.split('/')[0]}-${seedCombo.split('/')[1]}`,
-    `目标 loader=${targetCombo.split('/')[0]} mc=${targetCombo.split('/')[1]} loaderVersion=${pin.loaderVersion}`,
+    `目标 loader=${targetCombo.split('/')[0]} mc=${targetMc} loaderVersion=${pin.loaderVersion}`,
     `注意：本文件由脚本从种子组合复制并替换版本号得到。Java API、Yarn/Mojmap 命名、`,
-    `      加载器 DSL 在 ${targetCombo.split('/')[1]} 上可能与种子版本存在差异，构建失败时`,
-    `      请优先查阅 ${targetCombo.split('/')[1]} 官方文档/${targetCombo.split('/')[0] === 'fabric' ? 'Fabric docs' : targetCombo.split('/')[0] === 'forge' ? 'Forge docs' : 'NeoForge docs'}。`,
+    `      加载器 DSL 在 ${targetMc} 上可能与种子版本存在差异，构建失败时`,
+    `      请优先查阅 ${targetMc} 官方文档/${docs}。`,
     `verifiedAt 为 null 表示本模板尚未在目标版本真机编译验证。`
   ]
-  if (/\.(java|gradle|groovy|kt|kts|xml|toml|properties|json|md|mcmeta|json5)$/i.test(filename) === false) {
-    return null // 不识别的扩展名不加头
-  }
-  if (/\.(json|mcmeta)$/i.test(filename)) {
-    // JSON 不允许注释，但项目里的模板 JSON 实际都是「带注释的 JSONC」风格模板；保守起见不注入，改用 manifest keywords 标注
-    return null
-  }
-  if (/\.(md|markdown)$/i.test(filename)) {
-    return `<!--\n${lines.map((l) => `  ${l}`).join('\n')}\n-->\n\n`
-  }
-  if (/\.(properties|toml)$/i.test(filename)) {
-    return lines.map((l) => `# ${l}`).join('\n') + '\n\n'
-  }
-  // .java / .gradle / .groovy / .kt 用块注释
-  return `/*\n${lines.map((l) => ` * ${l}`).join('\n')}\n */\n`
+  const flat = lines.join('\n') + '\n'
+  if (style === 'html') return `<!--\n${lines.map((l) => `  ${l}`).join('\n')}\n-->\n\n`
+  if (style === 'hash') return lines.map((l) => `# ${l}`).join('\n') + '\n\n'
+  if (style === 'block') return `/*\n${lines.map((l) => ` * ${l}`).join('\n')}\n */\n`
+  return flat // style '-'：理论上不使用
 }
 
 /* ---------------- 版本替换规则 ---------------- */
@@ -184,64 +186,196 @@ function applyRules(text, rules) {
   return out
 }
 
+/* ---------------- 组合 / 反推占位符取值 ---------------- */
+
+/** canonical 展开（不含注释头、不做换行转换）；values 缺省回退种子值 */
+function expand(canonical, vars, values) {
+  return canonical.replace(/\{\{([A-Za-z0-9_]+)\}\}/g, (m, name) => {
+    const v = vars[name]
+    if (!v) throw new Error(`占位符未定义：${name}`)
+    const val = values?.get(name)
+    return val !== undefined ? val : String(v.seed)
+  })
+}
+
+/** 单行占位符匹配器：canonical 字面段 + 每处占位符捕获一个 token */
+function lineMatcher(canonLine) {
+  const names = []
+  let src = '^'
+  let last = 0
+  for (const m of canonLine.matchAll(/\{\{([A-Za-z0-9_]+)\}\}/g)) {
+    src += escapeReg(canonLine.slice(last, m.index)) + '([0-9][0-9A-Za-z.+_-]*)'
+    names.push(m[1])
+    last = m.index + m[0].length
+  }
+  src += escapeReg(canonLine.slice(last)) + '$'
+  return { regex: new RegExp(src), names }
+}
+
+/**
+ * 逐行对齐 canonical 与目标正文，反推每个占位符在目标组合的取值。
+ * 占位符之外的任何行内差异都判为无法解释（该槽位必须落 variants）。
+ */
+function deriveValues(canonical, seedText, targetText) {
+  const cl = canonical.split('\n')
+  const sl = seedText.split('\n')
+  const tl = targetText.split('\n')
+  if (cl.length !== sl.length || cl.length !== tl.length) return null
+  const values = new Map()
+  for (let i = 0; i < cl.length; i++) {
+    if (!cl[i].includes('{{')) {
+      if (tl[i] !== sl[i]) return null
+      continue
+    }
+    const { regex, names } = lineMatcher(cl[i])
+    const m = regex.exec(tl[i])
+    if (!m) return null
+    for (let k = 0; k < names.length; k++) {
+      const val = m[k + 1]
+      if (val === undefined) return null
+      const prev = values.get(names[k])
+      if (prev !== undefined && prev !== val) return null
+      values.set(names[k], val)
+    }
+  }
+  return values
+}
+
 /* ---------------- 主流程 ---------------- */
 async function migrateOne(manifest, loader, targetMc, opts) {
   const seedMc = SEED_COMBO[loader]
   const seedCombo = `${loader}/${seedMc}`
   const targetCombo = `${loader}/${targetMc}`
-  const seedDir = join(REF_DIR, 'templates', loader, seedMc)
-  const targetDir = join(REF_DIR, 'templates', loader, targetMc)
-  if (!existsSync(seedDir)) throw new Error(`种子目录不存在：${seedDir}`)
+  const seedRecPath = versionPath(loader, seedMc)
+  if (!existsSync(seedRecPath)) throw new Error(`种子组合声明不存在：${seedRecPath}`)
+  if (existsSync(versionPath(loader, targetMc)) && !opts.force) {
+    return { skippedCombo: true, canonical: 0, variants: 0, manifestEntries: 0 }
+  }
 
+  const seedRec = readJson(seedRecPath)
+  const varsFile = existsSync(varsPath(loader)) ? readJson(varsPath(loader)) : { vars: {} }
   const pin = findPin(manifest, loader, targetMc)
   const seedFp = findPin(manifest, loader, seedMc)
   const rules = buildReplacements(loader, seedMc, targetMc, pin, seedFp)
 
-  const files = walk(seedDir)
-  let copied = 0, skipped = 0, wrote = 0
-  const newTemplateEntries = []
+  const slots = [...seedRec.canonical, ...seedRec.variants].sort()
+  const derived = new Map() // slot -> { targetText, values } 仅可走 canonical 的
+  let variants = []
 
-  for (const srcAbs of files) {
-    const rel = relative(seedDir, srcAbs)
-    const dstAbs = join(targetDir, rel)
-    if (existsSync(dstAbs) && !opts.force) { skipped++; continue }
-    if (opts.dryRun) { copied++; continue }
-    mkdirSync(dirname(dstAbs), { recursive: true })
-    const raw = readFileSync(srcAbs, 'utf-8')
-    const replaced = applyRules(raw, rules)
-    const header = headerFor(rel, seedCombo, targetCombo, pin)
-    const finalText = header ? header + replaced : replaced
-    writeFileSync(dstAbs, finalText, 'utf-8')
-    copied++; wrote++
+  for (const slot of slots) {
+    const isSeedVariant = seedRec.variants.includes(slot)
+    const canonAbs = canonPath(loader, slot)
+    if (isSeedVariant || !existsSync(canonAbs)) {
+      // 种子里本身就是真实差异：目标组合同样保留为 variant（不做占位符反推）
+      const seedText = readFileSync(variantPath(loader, seedMc, slot), 'utf-8').replace(/\r\n/g, '\n')
+      derived.set(slot, { targetText: applyRules(seedText, rules), values: null })
+      variants.push(slot)
+      continue
+    }
+    const canonical = readFileSync(canonAbs, 'utf-8').replace(/\r\n/g, '\n')
+    const seedText = expand(canonical, varsFile.vars, null)
+    const targetText = applyRules(seedText, rules)
+    derived.set(slot, { targetText, values: deriveValues(canonical, seedText, targetText) })
+    if (derived.get(slot).values === null) variants.push(slot)
   }
 
-  /* ---------- 更新 manifest.json templates 数组 ---------- */
+  // 合并各槽位反推出的取值（多数票；同一 seed 字面值经同一规则表替换，正常不会冲突）
+  const votes = new Map() // name -> Map(value -> count)
+  for (const [slot, d] of derived) {
+    if (!d.values) continue
+    for (const [name, val] of d.values) {
+      const m = votes.get(name) ?? new Map()
+      m.set(val, (m.get(val) ?? 0) + 1)
+      votes.set(name, m)
+    }
+  }
+  const newValues = {}
+  for (const [name, m] of votes) {
+    newValues[name] = [...m.entries()].sort((a, b) => b[1] - a[1])[0][0]
+  }
+
+  // 等价自检：用合并后的取值重新展开，不一致的槽位降级为 variant
+  for (const [slot, d] of derived) {
+    if (!d.values) continue
+    const canonical = readFileSync(canonPath(loader, slot), 'utf-8').replace(/\r\n/g, '\n')
+    if (expand(canonical, varsFile.vars, new Map(Object.entries(newValues))) !== d.targetText) {
+      variants.push(slot)
+      d.values = null
+    }
+  }
+
+  const canonicalSlots = slots.filter((s) => !variants.includes(s))
+
+  if (opts.dryRun) {
+    return { skippedCombo: false, canonical: canonicalSlots.length, variants: variants.length, manifestEntries: 0 }
+  }
+
+  /* ---------- 1) vars：写入新组合的占位符取值 ---------- */
+  const vars = varsFile.vars ?? {}
+  for (const [name, val] of Object.entries(newValues)) {
+    const v = vars[name]
+    if (!v) continue
+    if (val !== String(v.seed)) v.values = { ...(v.values ?? {}), [targetMc]: val }
+    else if (v.values) delete v.values[targetMc]
+  }
+  writeJson(varsPath(loader), { loader, seed: seedMc, vars })
+
+  /* ---------- 2) 无法用占位符解释的槽位落 variants ---------- */
+  for (const slot of variants) {
+    const d = derived.get(slot)
+    let text = d.targetText
+    if (seedRec.crlf.includes(slot)) text = text.replace(/\n/g, '\r\n')
+    const abs = variantPath(loader, targetMc, slot)
+    mkdirSync(dirname(abs), { recursive: true })
+    writeFileSync(abs, text, 'utf-8')
+  }
+
+  /* ---------- 3) versions：声明该组合由哪些槽位组成 ---------- */
+  const headers = {}
+  for (const style of Object.keys(seedRec.headers ?? {})) {
+    headers[style] = style === '-' ? '' : headerForStyle(style, seedCombo, targetCombo, pin)
+  }
+  writeJson(versionPath(loader, targetMc), {
+    loader,
+    mcVersion: targetMc,
+    seed: seedMc,
+    headers,
+    canonical: canonicalSlots,
+    variants: variants.slice().sort(),
+    crlf: seedRec.crlf.filter((s) => canonicalSlots.includes(s)),
+    noHeader: (seedRec.noHeader ?? []).filter((s) => canonicalSlots.includes(s))
+  })
+
+  /* ---------- 4) 更新 manifest.json templates 数组 ---------- */
   const seedEntries = manifest.templates.filter(
     (t) => t.loader === loader && t.version === seedMc
   )
-  if (!opts.dryRun) {
-    // 移除目标组合旧条目（如果存在）
-    manifest.templates = manifest.templates.filter(
-      (t) => !(t.loader === loader && t.version === targetMc)
-    )
-    for (const se of seedEntries) {
-      const clone = JSON.parse(JSON.stringify(se))
-      clone.id = se.id.replace(`${loader}-${seedMc}-`, `${loader}-${targetMc}-`)
-      clone.version = targetMc
-      clone.file = se.file.replace(`templates/${loader}/${seedMc}/`, `templates/${loader}/${targetMc}/`)
-      clone.appliesTo = { loaders: [loader], mcVersions: [targetMc] }
-      clone.verified = null
-      clone.verifiedAt = null
-      clone.build = 'pending'
-      clone.active = true
-      clone.provenance = `translated-from-${loader}-${seedMc}`
-      newTemplateEntries.push(clone)
-    }
-    manifest.templates.push(...newTemplateEntries)
-    manifest.stats.templateCount = manifest.templates.length
+  manifest.templates = manifest.templates.filter(
+    (t) => !(t.loader === loader && t.version === targetMc)
+  )
+  const newTemplateEntries = []
+  for (const se of seedEntries) {
+    const clone = JSON.parse(JSON.stringify(se))
+    clone.id = se.id.replace(`${loader}-${seedMc}-`, `${loader}-${targetMc}-`)
+    clone.version = targetMc
+    clone.file = se.file.replace(`templates/${loader}/${seedMc}/`, `templates/${loader}/${targetMc}/`)
+    clone.appliesTo = { loaders: [loader], mcVersions: [targetMc] }
+    clone.verified = null
+    clone.verifiedAt = null
+    clone.build = 'pending'
+    clone.active = true
+    clone.provenance = `translated-from-${loader}-${seedMc}`
+    newTemplateEntries.push(clone)
   }
+  manifest.templates.push(...newTemplateEntries)
+  manifest.stats.templateCount = manifest.templates.length
 
-  return { copied, skipped, wrote, manifestEntries: newTemplateEntries.length }
+  return {
+    skippedCombo: false,
+    canonical: canonicalSlots.length,
+    variants: variants.length,
+    manifestEntries: newTemplateEntries.length
+  }
 }
 
 async function main() {
@@ -266,7 +400,11 @@ async function main() {
     process.stdout.write(`\n>>> ${t.loader}/${t.version} ... `)
     try {
       const r = await migrateOne(manifest, t.loader, t.version, opts)
-      console.log(`copied=${r.copied} skipped=${r.skipped} wrote=${r.wrote} manifest+${r.manifestEntries}`)
+      if (r.skippedCombo) {
+        console.log('skip（目标组合声明已存在，用 --force 覆盖）')
+        continue
+      }
+      console.log(`canonical=${r.canonical} variants=${r.variants} manifest+${r.manifestEntries}`)
       if (!opts.dryRun) {
         const c = progress.combos.find((x) => x.loader === t.loader && x.version === t.version)
         if (c) { c.status = 'done'; c.doneAt = new Date().toISOString() }
