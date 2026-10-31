@@ -13,7 +13,7 @@
 import { validateContentId } from '../types/content'
 import type { PackMcVersion } from '../types/project'
 import { createDatapackDefault } from './datapack/forms'
-import { dataPath, tagRegistryPath } from '../dataPath'
+import { dataPath, tagRegistryPath, type TagRegistryKind } from '../dataPath'
 import { sharedT, type SharedLocale } from '../i18n'
 
 /** 数据包元数据（存于项目 .kunyu/datapack.json） */
@@ -182,6 +182,28 @@ export function dataPackEntryPath(
   if (!info) throw new Error(sharedT('schema.datapack.errCategoryInvalid', { category }))
   const ext = category === 'function' ? '.mcfunction' : '.json'
   return `data/${namespace}/${info.dir(version)}/${id}${ext}`
+}
+
+/**
+ * 标签条目路径：data/<ns>/tags/<registry 目录>/<id>.json。
+ * registry 目录统一走 shared/dataPath.tagRegistryPath（1.20.x 复数 / 1.21+ 单数）。
+ */
+export function dataPackTagEntryPath(
+  namespace: string,
+  version: McVersion,
+  registry: TagRegistryKind,
+  id: string
+): string {
+  return `data/${namespace}/tags/${tagRegistryPath(registry, version)}/${id}.json`
+}
+
+/** 标签条目（多注册表维度；与 DataPackEntry 分开，供统一编辑器加载） */
+export interface DataPackTagEntry {
+  id: string
+  registry: TagRegistryKind
+  /** 数据包相对路径 data/<ns>/tags/<registry 目录>/<id>.json */
+  path: string
+  updatedAt: number
 }
 
 /** 数据包条目（文件树节点 + 编辑区目标） */

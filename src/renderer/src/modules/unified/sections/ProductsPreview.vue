@@ -16,10 +16,11 @@
           </li>
         </ul>
         <ul v-else>
-          <li>{{ active.java.packageName.replace(/\./g, '/') }}/{{ active.java.className }}.java</li>
+          <li v-if="active.type !== 'enchantment'">{{ active.java.packageName.replace(/\./g, '/') }}/{{ active.java.className }}.java</li>
           <li v-if="active.type === 'block'">{{ t('unified.products.javaClass.block') }}</li>
           <li v-if="active.type === 'item'">{{ t('unified.products.javaClass.item') }}</li>
           <li v-if="active.type === 'entity'">{{ t('unified.products.javaClass.entity') }}</li>
+          <li v-if="active.type === 'enchantment'">{{ t('unified.products.javaClass.enchantment') }}</li>
         </ul>
       </div>
       <div class="uo-product-col">
@@ -38,7 +39,8 @@
         <ul>
           <li v-for="r in recipes" :key="r.id">data/{{ ns }}/{{ recipeDir }}/{{ r.id }}.json</li>
           <li v-if="loot">data/{{ ns }}/{{ lootTableDir }}/{{ lootSubDir }}/{{ active.id }}.json</li>
-          <li v-if="!recipes.length && !loot" class="uo-product-empty">{{ t('unified.products.empty') }}</li>
+          <li v-if="active.type === 'enchantment'">data/{{ ns }}/enchantment/{{ active.id }}.json</li>
+          <li v-if="!recipes.length && !loot && active.type !== 'enchantment'" class="uo-product-empty">{{ t('unified.products.empty') }}</li>
         </ul>
       </div>
     </div>

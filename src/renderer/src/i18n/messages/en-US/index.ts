@@ -1003,39 +1003,6 @@ const enUS: Messages = {
     exportOkList: 'Workflows: {list}',
     exportFailed: 'Export failed: {error}'
   },
-  enchant: {
-    title: 'Enchantment editor',
-    subtitle:
-      'Manage custom enchantment assets; on save, the workshop code/resource generator emits Fabric/Forge Java registration classes or NeoForge 1.21 data-driven JSON for your loader.',
-    refresh: 'Refresh',
-    create: 'New enchantment',
-    needProject: 'Open a mod project first.',
-    listTitle: 'Enchantments',
-    delete: 'Delete',
-    emptyList: 'No enchantments yet — use "New enchantment" above',
-    registryId: 'Registry ID',
-    idPlaceholder: 'Lowercase letters / underscores, e.g. life_steal',
-    save: 'Save',
-    damageBonus: 'Attack damage bonus',
-    damageHint:
-      'When enabled, generates getAttackDamage / getDamageBonus (1.20.1) or a minecraft:damage effect (1.21)',
-    damageBase: 'Level 1 base bonus',
-    damagePerLevel: 'Additional per level',
-    selectOrCreate: 'Select an enchantment on the left, or create a new one to start editing.',
-    loadFailed: 'Load failed: {error}',
-    createTitle: 'New enchantment',
-    createPrompt: 'Enter a registry name for the new enchantment (lowercase letters / underscores)',
-    idInvalid: 'Start with a lowercase letter; lowercase letters, digits, underscores only; max 64 characters',
-    duplicate: 'An enchantment with this name already exists: {id}',
-    saved: 'Enchantment saved: {id}',
-    saveFailed: 'Save failed: {error}',
-    deleteTitle: 'Delete enchantment',
-    deleteConfirm:
-      'Delete enchantment "{name}"? Only the semantic description is removed; generated Java/resources are cleaned up on the next generation.',
-    deleteConfirmBtn: 'Delete',
-    deleted: 'Deleted: {id}',
-    deleteFailed: 'Delete failed: {error}'
-  },
   performance: {
     title: 'Mod performance profiles',
     subtitle:
@@ -2422,131 +2389,6 @@ const enUS: Messages = {
       'File {name} was modified externally. Discard local changes and reload?',
     externalChangeTitle: 'File changed'
   },
-  debug: {
-    title: 'Run and Debug',
-    desc: 'Build a Fabric mod and launch the Minecraft dev client in one click. Compile errors are clickable, and crashes produce automatic summaries.',
-    emptyDesc: 'Open a Fabric mod project in Projects first',
-    gotoProjectManager: 'Go to Projects',
-    buildTasks: 'Build tasks',
-    buildBtn: 'Build (Ctrl+B)',
-    buildRunBtn: 'Build & Run (F5)',
-    runClientOnly: 'Run client only',
-    cleanBuild: 'Clean build',
-    stopTask: 'Stop task',
-    progress: 'Progress',
-    sandboxTitle: 'Game test sandbox',
-    startTest: 'Start full-auto test',
-    abortTest: 'Abort test',
-    attachTitle: 'Built-in probe (kunyu-observer-agent) offline',
-    attachDesc:
-      'In-game probes and screenshots were skipped. Make sure the client was launched with -javaagent (KunYu attaches the probe automatically on runClient), or enter a world before running the sandbox for additional checks.',
-    probePass: 'Pass',
-    probeFail: 'Fail',
-    testCancelled: 'Test aborted',
-    testPass: 'Test passed',
-    testIssues: 'Issues found',
-    duration: 'Took {s}s',
-    causeLabel: 'Root cause: ',
-    suggestionLabel: 'Suggestion: ',
-    colLevel: 'Level',
-    colType: 'Type',
-    colEvidence: 'Evidence',
-    modsLabel: 'run/mods ({n}):',
-    jdkTitle: 'JDK environment',
-    redetect: 'Re-detect',
-    jdkOk: 'JDK {version} available (requires {major}+)',
-    jdkNoCompatible: 'No compatible JDK',
-    chosen: 'Selected',
-    lastResultTitle: 'Latest result',
-    buildOutputLead: 'Build artifacts are in the project',
-    buildOutputTail: '; click "Run game" at the top to verify in the client.',
-    errorSummary: '{errors} compile errors, {warnings} warnings —',
-    viewInProblems: 'View in Problems',
-    crashTitle: 'Game crash report',
-    crashKeyword: 'Attribution',
-    crashDesc: 'Description',
-    crashCause: 'Root cause',
-    crashReportFile: 'Report file',
-    footTip: 'Shortcuts: Ctrl+B build · F5 build & run · Ctrl+` toggle terminal panel',
-    stageBuild: 'Build',
-    stageLaunch: 'Launch client',
-    stageWaitWorld: 'Wait for world',
-    stageProbes: 'In-game probes',
-    stageCollect: 'Collect artifacts',
-    stageShutdown: 'Close client',
-    resCancelled: 'Task cancelled',
-    resTimeout: 'Task timed out',
-    resOk: 'Succeeded',
-    resFail: 'Failed',
-    compatRecommended: 'Recommended',
-    compatCompatible: 'Compatible',
-    compatTooLow: 'Too low',
-    compatTooHigh: 'Too high'
-  },
-  launcher: {
-    title: 'Launcher integration',
-    subtitle: 'Develop → Build → Test → Import → Launch — the last mile of the ecosystem loop',
-    autoIntegrate: 'Auto integrate',
-    redetect: 'Re-detect',
-    addLauncher: 'Add launcher',
-    detectedTitle: 'Detected launchers',
-    tagAuto: 'Auto',
-    tagManual: 'Manual',
-    emptyLaunchers: 'No launchers detected',
-    instancesTitle: 'Instances & import',
-    importTooltip: 'Import the build artifact into this instance',
-    activateTooltip: 'Set active',
-    emptyInstances: 'No Minecraft instances under this launcher',
-    emptyNoLauncher: 'Select or detect a launcher on the left first',
-    importSection: 'One-click import',
-    artifactPlaceholder: 'Full path of the built jar (e.g. D:\\build\\libs\\mymod-1.0.0.jar)',
-    overwrite: 'Overwrite same-name file',
-    importToActive: 'Import into active instance',
-    modsHint:
-      'Tip: the instance mods directory is inferred from the launcher type (Official/HMCL/PCL2 = gamePath/mods, Prism/MultiMC/BakaXL = gamePath/.minecraft/mods).',
-    loopTitle: 'Ecosystem loop',
-    launchInstance: 'Launch {name}',
-    launchNeedActive: 'Activate an instance first',
-    candidatesTitle: 'Auto-integration candidates',
-    hitReason: 'Match reason: {reason}',
-    historyTitle: 'Import history',
-    emptyRecords: 'No import records yet',
-    autoDialogTitle: 'Auto integration',
-    autoDialogDesc:
-      'Scan launchers installed on this machine (including non-standard install paths and the registry), pick the best-matching Minecraft instance and set it active.',
-    targetVersion: 'Target version',
-    targetVersionPlaceholder: 'Empty = pick by instance availability, e.g. 1.20.1',
-    targetLoader: 'Target loader',
-    targetLoaderPlaceholder: 'Empty = do not filter by loader',
-    startScan: 'Start scan',
-    addDialogTitle: 'Add launcher manually',
-    fieldKind: 'Type',
-    fieldName: 'Name',
-    namePlaceholder: 'e.g. My PCL2',
-    fieldExe: 'exe path',
-    exePlaceholder: 'e.g. D:\\Tools\\PCL2.exe',
-    fieldDataDir: 'Data directory',
-    dataDirPlaceholder: 'Empty = derived from the exe path',
-    add: 'Add',
-    warnNoArtifact: 'Fill in the build artifact path first',
-    imported: 'Imported: {name}',
-    conflict: 'Conflict: {name} already exists. Tick "Overwrite same-name file" and retry',
-    warnNameExe: 'Fill in the name and exe path',
-    added: 'Added',
-    integrated: 'Integrated {launcher} · {instance}',
-    integrateDone: 'Auto integration finished',
-    loaderVanilla: 'Vanilla',
-    loopDev: 'Develop',
-    loopDevDesc: 'Visual editing / code',
-    loopBuild: 'Build',
-    loopBuildDesc: 'Gradle build artifacts',
-    loopTest: 'Test',
-    loopTestDesc: 'Sandbox validation (M10)',
-    loopImport: 'Import',
-    loopImportDesc: 'One-click copy into mods',
-    loopLaunch: 'Launch',
-    loopLaunchDesc: 'Enter the game via the launcher'
-  },
   vcs: {
     selectProject: 'Select project',
     refresh: 'Refresh',
@@ -3320,7 +3162,9 @@ const enUS: Messages = {
       block: 'Block',
       entity: 'Entity',
       biome: 'Biome',
-      advancement: 'Advancement'
+      advancement: 'Advancement',
+      enchantment: 'Enchantment',
+      tag: 'Tag'
     },
     objectSelect: 'Select an object',
     create: 'New',
@@ -3330,14 +3174,17 @@ const enUS: Messages = {
       entity: 'New entity',
       biome: 'New biome',
       advancement: 'New advancement',
+      enchantment: 'New enchantment',
+      tag: 'New tag',
       customBlock: 'Custom block…',
       customItem: 'Custom item…',
       customEntity: 'Custom entity…',
       customBiome: 'Custom biome…',
-      customAdvancement: 'Custom advancement…'
+      customAdvancement: 'Custom advancement…',
+      customEnchantment: 'Custom enchantment…',
+      customTag: 'Custom tag…'
     },
     quickCreate: 'Quick create',
-    quickCreateDisabledTip: 'Quick create templates apply to blocks / items / entities',
     quickTemplate: {
       block: { label: 'Block', hint: 'Standard full block (hardness 2, comes with a block item)' },
       item: { label: 'Item', hint: 'Plain stackable material item' },
@@ -3384,6 +3231,7 @@ const enUS: Messages = {
       reverseSyncTip: 'Parse manual property edits in ModBlocks.java back into the form',
       generate: 'Generate code',
       dpSyncHint: 'Datapack JSON is written automatically on save',
+      enchSyncHint: 'After saving, click "Generate code" to emit the registry class or data JSON per loader',
       navHint: 'Drag to rotate · scroll to zoom'
     },
     textureDialogTitle: 'Edit texture · {id}',
@@ -3475,6 +3323,9 @@ const enUS: Messages = {
       entityAttack: 'Attack damage',
       customLogic: 'Custom code snippet',
       customLogicPlaceholder: 'Leave empty to use the generator default',
+      damageBonus: 'Attack damage bonus',
+      damageBase: 'Base bonus at level 1',
+      damagePerLevel: 'Added per extra level',
       assetsSide: 'Resource pack',
       blockTexPath: 'Block texture path',
       itemTexPath: 'Item texture path',
@@ -3485,6 +3336,10 @@ const enUS: Messages = {
       langAdd: '+ Add',
       biomeDefinition: 'Biome definition',
       advancementDefinition: 'Advancement definition',
+      tagDefinition: 'Tag definition',
+      tagRegistry: 'Tag registry',
+      tagHint:
+        'The registry decides the output directory (data/<namespace>/tags/<registry dir>/<id>.json); the form edits replace and values, other fields are available in source mode.',
       biomeHint:
         'Climate and environment colors are editable as a form; advanced fields such as spawners, features and carvers require source mode.'
     },
@@ -3497,7 +3352,15 @@ const enUS: Messages = {
       armorMaterial: { leather: 'Leather', chainmail: 'Chainmail', iron: 'Iron', gold: 'Golden', diamond: 'Diamond', netherite: 'Netherite' },
       rarity: { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', epic: 'Epic' },
       entityType: { passive: 'Passive', hostile: 'Hostile', neutral: 'Neutral', projectile: 'Projectile' },
-      modelType: { cube_all: 'All faces cube_all', cube: 'Six faces cube', cross: 'Cross', custom: 'Custom' }
+      modelType: { cube_all: 'All faces cube_all', cube: 'Six faces cube', cross: 'Cross', custom: 'Custom' },
+      tagRegistry: {
+        block: 'Block',
+        item: 'Item',
+        entity_type: 'Entity type',
+        fluid: 'Fluid',
+        game_event: 'Game event',
+        enchantment: 'Enchantment'
+      }
     },
     products: {
       title: 'Generated files',
@@ -3509,7 +3372,8 @@ const enUS: Messages = {
       javaClass: {
         block: 'ModBlocks.java (registration)',
         item: 'ModItems.java (registration)',
-        entity: 'ModEntities.java (registration)'
+        entity: 'ModEntities.java (registration)',
+        enchantment: 'ModEnchantments.java (registration)'
       }
     },
     loot: {
@@ -3543,6 +3407,11 @@ const enUS: Messages = {
       desc: 'This object produces no Java class or resource pack files; the datapack JSON is written on save:',
       biomePath: 'data/{ns}/worldgen/biome/{id}.json',
       advancementPath: 'data/{ns}/advancements/{id}.json (advancement/ in 1.21+)',
+      tagPath: 'data/{ns}/tags/{registry}/{id}.json (registry dirs are plural in 1.20.x, singular in 1.21+)',
+      enchDesc: 'Enchantments produce no textures or models; per loader they emit a Java registry class or datapack JSON:',
+      enchPathJava: 'ModEnchantments.java (Fabric / Forge)',
+      enchPathData: 'data/{ns}/enchantment/{id}.json (NeoForge 1.21+)',
+      enchNote: 'After saving, click "Generate code" to emit the files for your loader — no manual steps needed.',
       note: 'To make it effective in game, ensure the project has datapacks enabled (saving writes both automatically).'
     },
     actions: {
@@ -3801,16 +3670,11 @@ const enUS: Messages = {
       name: 'Model workshop',
       description: 'General 3D modeler: hierarchy outliner, read-only viewport and document management (.kunyu/modeler)'
     },
-    enchant: {
-      name: 'Enchantment editor',
-      description: 'Create and edit custom enchantments: Java registration for Fabric/Forge, data JSON for NeoForge 1.21'
-    },
     gallery: {
       name: 'Asset library',
       description: 'Unified library for AI texture candidates, project pixel assets and 3D models: cross-project aggregation, write-back / re-editing, share pack import and export'
     },
     vcs: { name: 'Versioning & artifacts', description: 'Git commits, branch management and build artifact management' },
-    debug: { name: 'Run and debug', description: 'Launch the game and debug with breakpoints' },
     market: {
       name: 'Mods & marketplace',
       description: 'Browse the mod marketplace and public community bridge (available in modpack projects; browsable without a project)'
@@ -3839,7 +3703,6 @@ const enUS: Messages = {
       name: 'KubeJS scripts',
       description: 'Edit KubeJS scripts across the three folders: startup registration, server and client events, with one-click template scaffolds'
     },
-    launcher: { name: 'Launcher integration', description: 'Detect local launchers, import build artifacts and launch the game quickly' },
     performance: {
       name: 'Performance profile',
       description: 'Five-dimension mod performance ranking, conflicts and suggestions, JFR / Spark sampling attribution'

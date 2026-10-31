@@ -7,9 +7,14 @@ import { ElMessageBox } from 'element-plus'
 import { useProjectStore } from '../../../stores/project'
 import { useUnifiedStore } from '../../../stores/unified'
 import { t } from '../../../i18n'
-import type { UnifiedContentType } from '../../../../../shared/schemas/unified.schema'
+import type { UnifiedContent, UnifiedContentType } from '../../../../../shared/schemas/unified.schema'
 
-const CONTENT_TYPES: UnifiedContentType[] = ['block', 'item', 'entity', 'biome', 'advancement']
+const CONTENT_TYPES: UnifiedContentType[] = ['block', 'item', 'entity', 'biome', 'advancement', 'enchantment', 'tag']
+
+/** 对象选择键：标签带注册表维度（同 id 不同注册表是两个对象） */
+export function objectKey(o: UnifiedContent): string {
+  return o.type === 'tag' ? `tag:${o.data.tags?.[0]?.registry ?? ''}:${o.id}` : o.id
+}
 
 export function useObjectNav() {
   const projectStore = useProjectStore()
@@ -25,7 +30,9 @@ export function useObjectNav() {
       type !== 'item' &&
       type !== 'entity' &&
       type !== 'biome' &&
-      type !== 'advancement'
+      type !== 'advancement' &&
+      type !== 'enchantment' &&
+      type !== 'tag'
     ) {
       return
     }
@@ -42,7 +49,9 @@ export function useObjectNav() {
       { label: t('unified.kind.item'), type: 'item' },
       { label: t('unified.kind.entity'), type: 'entity' },
       { label: t('unified.kind.biome'), type: 'biome' },
-      { label: t('unified.kind.advancement'), type: 'advancement' }
+      { label: t('unified.kind.advancement'), type: 'advancement' },
+      { label: t('unified.kind.enchantment'), type: 'enchantment' },
+      { label: t('unified.kind.tag'), type: 'tag' }
     ]
     return defs.map((d) => ({
       label: d.label,
@@ -50,8 +59,8 @@ export function useObjectNav() {
     }))
   })
 
-  function onSwitchObject(id: string): void {
-    const target = store.objects.find((o) => o.id === id)
+  function onSwitchObject(key: string): void {
+    const target = store.objects.find((o) => objectKey(o) === key)
     if (target) store.select(target)
   }
 
@@ -83,5 +92,5 @@ export function useObjectNav() {
     }
   }
 
-  return { objectGroups, onKindTab, onSwitchObject, onNewObject }
+  return { objectGroups, objectKey, onKindTab, onSwitchObject, onNewObject }
 }

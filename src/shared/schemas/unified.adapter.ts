@@ -15,10 +15,13 @@ import type {
   UnifiedAssetsSide,
   UnifiedTextureRef,
   UnifiedModel,
-  UnifiedDataSide
+  UnifiedDataSide,
+  EnchantmentJavaProperties
 } from './unified.schema'
 import type { LootTableDef } from './loot.schema'
 import type { RecipeDef } from './recipe.schema'
+import type { EnchantmentSchema } from './enchantment.schema'
+import type { TagDef } from './datapack/tag.schema'
 import type { BiomeDefinition, AdvancementDefinition } from '../types/content'
 import { deriveContentClassName } from './unified.schema'
 
@@ -440,6 +443,133 @@ export function unifiedToAdvancement(u: UnifiedContent): AdvancementDefinition {
     displayName: u.displayName.zh_cn.trim() || u.displayName.en_us.trim() || u.id,
     description: u.description ?? '',
     doc: JSON.parse(JSON.stringify(u.data.advancementDoc ?? {})) as Record<string, unknown>,
+    createdAt: u.meta.createdAt,
+    updatedAt: u.meta.updatedAt
+  }
+}
+
+/* ================================================================== */
+/* Enchantment（附魔：无独立 Java 类，语义字段承载于 java.properties）      */
+/* ================================================================== */
+
+/**
+ * EnchantmentSchema → UnifiedContent。
+ * java 端 className/packageName 留空（生成器按加载器出固定 ModEnchantments 或数据 JSON）；
+ * 双语 description 收进 properties 保证无损往返，u.description 仅作 en_us 展示冗余。
+ */
+export function enchantmentToUnified(e: EnchantmentSchema, namespace = 'mymod'): UnifiedContent {
+  const properties: EnchantmentJavaProperties = {
+    rarity: e.rarity,
+    target: e.target,
+    slots: [...e.slots],
+    maxLevel: e.maxLevel,
+    treasure: e.treasure,
+    curse: e.curse,
+    minCostBase: e.minCostBase,
+    minCostPerLevel: e.minCostPerLevel,
+    maxCostExtra: e.maxCostExtra,
+    anvilCost: e.anvilCost,
+    damageBonus: e.damageBonus ? { ...e.damageBonus } : null,
+    description: { ...e.description }
+  }
+  return {
+    id: e.id,
+    type: 'enchantment',
+    displayName: { ...e.displayName },
+    description: e.description.en_us,
+    java: { className: '', packageName: '', properties, customLogic: null },
+    assets: {
+      textures: {},
+      model: { type: 'custom', customJson: null },
+      lang: {
+        [`enchantment.${namespace}.${e.id}`]: e.displayName.en_us,
+        ...(e.displayName.zh_cn && e.displayName.zh_cn !== e.displayName.en_us
+          ? { [`enchantment.${namespace}.${e.id}.zh_cn`]: e.displayName.zh_cn }
+          : {})
+      }
+    },
+    data: {},
+    meta: {
+      createdAt: e.createdAt,
+      updatedAt: e.updatedAt,
+      verified: false,
+      buildStatus: 'pending'
+    }
+  }
+}
+
+/** UnifiedContent → EnchantmentSchema（键序与 normalizeEnchantmentSchema 对齐，保证往返深比较稳定） */
+export function unifiedToEnchantment(u: UnifiedContent): EnchantmentSchema {
+  const p = u.java.properties as EnchantmentJavaProperties
+  return {
+    kind: 'enchantment',
+    id: u.id,
+    displayName: { ...u.displayName },
+    description: { ...p.description },
+    rarity: p.rarity,
+    target: p.target,
+    slots: [...p.slots],
+    maxLevel: p.maxLevel,
+    treasure: p.treasure,
+    curse: p.curse,
+    minCostBase: p.minCostBase,
+    minCostPerLevel: p.minCostPerLevel,
+    maxCostExtra: p.maxCostExtra,
+    anvilCost: p.anvilCost,
+    damageBonus: p.damageBonus ? { ...p.damageBonus } : null,
+    createdAt: u.meta.createdAt,
+    updatedAt: u.meta.updatedAt
+  }
+}
+
+/* ================================================================== */
+/* Tag（标签：无 lang/assets 语义，JSON 本体承载于 data.tags[0]）          */
+/* ================================================================== */
+
+/** TagDef → UnifiedContent */
+export function tagToUnified(t: TagDef): UnifiedContent {
+  return {
+    id: t.id,
+    type: 'tag',
+    displayName: { en_us: t.displayName, zh_cn: t.displayName },
+    description: t.description ?? '',
+    java: {
+      className: '',
+      packageName: '',
+      properties: {} as UnifiedJavaSide['properties'],
+      customLogic: null
+    },
+    assets: { textures: {}, model: { type: 'custom', customJson: null }, lang: {} },
+    data: {
+      tags: [
+        {
+          registry: t.registry,
+          id: t.id,
+          replace: t.replace,
+          values: [...t.values]
+        }
+      ]
+    },
+    meta: {
+      createdAt: t.createdAt,
+      updatedAt: t.updatedAt,
+      verified: false,
+      buildStatus: 'pending'
+    }
+  }
+}
+
+/** UnifiedContent → TagDef（displayName 采用 zh → en → id 回落链） */
+export function unifiedToTag(u: UnifiedContent): TagDef {
+  const entry = u.data.tags?.[0]
+  return {
+    kind: 'tag',
+    id: u.id,
+    displayName: u.displayName.zh_cn.trim() || u.displayName.en_us.trim() || u.id,
+    description: u.description ?? '',
+    registry: entry?.registry ?? 'item',
+    replace: entry?.replace ?? false,
+    values: entry ? [...entry.values] : [],
     createdAt: u.meta.createdAt,
     updatedAt: u.meta.updatedAt
   }

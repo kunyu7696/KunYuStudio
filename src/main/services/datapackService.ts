@@ -7,16 +7,24 @@
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { join } from 'node:path'
-import type { DataPackCategory, DataPackEntry, DataPackMeta, McVersion } from '../../shared/schemas/datapack.schema'
+import type {
+  DataPackCategory,
+  DataPackEntry,
+  DataPackMeta,
+  DataPackTagEntry,
+  McVersion
+} from '../../shared/schemas/datapack.schema'
 import {
   DATA_PACK_CATEGORIES,
   PACK_FORMATS,
   buildPackMcmeta,
   dataPackCategory,
   dataPackEntryPath,
+  dataPackTagEntryPath,
   mcVersionFromPackFormat,
   validateDataPackMeta
 } from '../../shared/schemas/datapack.schema'
+import { TAG_REGISTRY_KINDS, tagRegistryPath, type TagRegistryKind } from '../../shared/dataPath'
 import { validateContentId } from '../../shared/types/content'
 import { assertWithinRoot, readFile, writeFile } from './fsService'
 
@@ -195,6 +203,102 @@ export function deleteDataPackEntry(
     packRoot(root, mode),
     ...entryRelPath(meta.namespace, info.key, meta.mcVersion, id).split('/')
   )
+  if (!existsSync(abs)) return false
+  rmSync(abs, { force: true })
+  return true
+}
+
+/* ------------------------------------------------------------------ */
+/* 标签条目（多注册表维度，供统一编辑器读写；目录走 tagRegistryPath）      */
+/* ------------------------------------------------------------------ */
+
+/** 包根：standalone（项目根有 pack.mcmeta）/ embedded（src/main/resources） */
+function tagPackBase(root: string): string {
+  return existsSync(join(root, 'pack.mcmeta')) ? root : join(root, 'src', 'main', 'resources')
+}
+
+function requireTagRegistry(registry: string): TagRegistryKind {
+  if (!(TAG_REGISTRY_KINDS as readonly string[]).includes(registry)) {
+    throw new Error(`标签注册表类型不合法: ${registry}`)
+  }
+  return registry as TagRegistryKind
+}
+
+/** 扫描全部标签注册表下的 .json 条目 */
+export function listDataPackTagEntries(root: string): DataPackTagEntry[] {
+  const meta = readDataPackMeta(root)
+  if (!meta) return []
+  assertWithinRoot(root)
+  const dataDir = join(tagPackBase(root), 'data', meta.namespace)
+  const result: DataPackTagEntry[] = []
+  if (!existsSync(dataDir)) return result
+  for (const registry of TAG_REGISTRY_KINDS) {
+    const dir = join(dataDir, 'tags', tagRegistryPath(registry, meta.mcVersion))
+    if (!existsSync(dir)) continue
+    for (const name of readdirSync(dir)) {
+      if (!name.endsWith('.json')) continue
+      const id = name.slice(0, -'.json'.length)
+      if (!validateContentId(id)) continue
+      const abs = join(dir, name)
+      try {
+        result.push({
+          id,
+          registry,
+          path: dataPackTagEntryPath(meta.namespace, meta.mcVersion, registry, id),
+          updatedAt: statSync(abs).mtimeMs
+        })
+      } catch {
+        // 跳过不可读条目
+      }
+    }
+  }
+  return result.sort((a, b) => a.path.localeCompare(b.path))
+}
+
+/** 读取标签 JSON 原始文本 */
+export function readDataPackTagEntry(root: string, registry: string, id: string): string {
+  const meta = requireMeta(root)
+  const reg = requireTagRegistry(registry)
+  assertWithinRoot(root)
+  if (!validateContentId(id)) throw new Error(`标签 ID 不合法: ${id}`)
+  const rel = dataPackTagEntryPath(meta.namespace, meta.mcVersion, reg, id)
+  const abs = join(tagPackBase(root), ...rel.split('/'))
+  assertWithinRoot(abs)
+  return readFile(abs).content
+}
+
+/** 写入标签 JSON（新建或覆盖），返回条目信息 */
+export function writeDataPackTagEntry(
+  root: string,
+  registry: string,
+  id: string,
+  content: string
+): DataPackTagEntry {
+  const meta = requireMeta(root)
+  const reg = requireTagRegistry(registry)
+  assertWithinRoot(root)
+  if (!validateContentId(id)) {
+    throw new Error('条目 ID 不合法：小写字母开头，仅含小写字母、数字、下划线，最长 64 字符')
+  }
+  if (!content || !content.trim()) throw new Error('文件内容不能为空')
+  const rel = dataPackTagEntryPath(meta.namespace, meta.mcVersion, reg, id)
+  const abs = join(tagPackBase(root), ...rel.split('/'))
+  assertWithinRoot(abs)
+  const dir = join(abs, '..')
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true })
+  writeFile(abs, content.endsWith('\n') ? content : content + '\n')
+  return { id, registry: reg, path: rel, updatedAt: statSync(abs).mtimeMs }
+}
+
+/** 删除标签 JSON 文件 */
+export function deleteDataPackTagEntry(root: string, registry: string, id: string): boolean {
+  const meta = requireMeta(root)
+  const reg = requireTagRegistry(registry)
+  assertWithinRoot(root)
+  if (!validateContentId(id)) throw new Error(`标签 ID 不合法: ${id}`)
+  const rel = dataPackTagEntryPath(meta.namespace, meta.mcVersion, reg, id)
+  const abs = join(tagPackBase(root), ...rel.split('/'))
+  assertWithinRoot(abs)
   if (!existsSync(abs)) return false
   rmSync(abs, { force: true })
   return true

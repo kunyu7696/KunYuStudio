@@ -13,6 +13,7 @@ import {
   createDefaultUnifiedItem,
   createDefaultUnifiedEntity,
   type EntityJavaProperties,
+  type ItemJavaProperties,
   type UnifiedContent
 } from './unified.schema'
 import { createDefaultCube } from '../types/content'
@@ -205,7 +206,7 @@ function quickTool(id: string, namespace: string, zhName?: string): UnifiedConte
     miningLevel: 2
   }
   // 工具有耐久，不可堆叠
-  obj.java.properties = { ...obj.java.properties, maxCount: 1 }
+  obj.java.properties = { ...(obj.java.properties as ItemJavaProperties), maxCount: 1 }
   obj.assets.textures.item = { path: `item/${id}`, generated: true, color: '#d8d8d8' }
   // 默认 3D 镐：柄 + 镐头两 cube（六面 #all 映射，贴图走贴图编辑器/texture_paint 补齐）
   const handle = createDefaultCube('handle')
@@ -236,7 +237,7 @@ function quickArmor(id: string, namespace: string, zhName?: string): UnifiedCont
     toughness: 0,
     knockbackResistance: 0
   }
-  obj.java.properties = { ...obj.java.properties, maxCount: 1 }
+  obj.java.properties = { ...(obj.java.properties as ItemJavaProperties), maxCount: 1 }
   obj.assets.textures.item = { path: `item/${id}`, generated: true, color: '#c0c0c0' }
   applyName(obj, namespace, id, zhName ?? sharedT('schema.quickCreate.defaultArmor'))
   return obj

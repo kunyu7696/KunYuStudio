@@ -2,11 +2,15 @@ import { ipcMain } from 'electron'
 import { IpcChannels } from '../../../shared/types/ipc'
 import {
   deleteDataPackEntry,
+  deleteDataPackTagEntry,
   initDataPack,
   listDataPackEntries,
+  listDataPackTagEntries,
   readDataPackEntry,
   readDataPackMeta,
+  readDataPackTagEntry,
   writeDataPackEntry,
+  writeDataPackTagEntry,
   type PackMode as DataPackMode
 } from '../../services/datapackService'
 import {
@@ -64,6 +68,22 @@ export function registerEditorPackHandlers(_ctx: IpcContext): void {
     IpcChannels.DATAPACK_DELETE_ENTRY,
     (_event, root: string, category: string, id: string, mode: DataPackMode) =>
       deleteDataPackEntry(root, category, id, mode)
+  )
+  ipcMain.handle(IpcChannels.DATAPACK_LIST_TAG_ENTRIES, (_event, root: string) =>
+    listDataPackTagEntries(root)
+  )
+  ipcMain.handle(
+    IpcChannels.DATAPACK_READ_TAG_ENTRY,
+    (_event, root: string, registry: string, id: string) => readDataPackTagEntry(root, registry, id)
+  )
+  ipcMain.handle(
+    IpcChannels.DATAPACK_WRITE_TAG_ENTRY,
+    (_event, root: string, registry: string, id: string, content: string) =>
+      writeDataPackTagEntry(root, registry, id, content)
+  )
+  ipcMain.handle(
+    IpcChannels.DATAPACK_DELETE_TAG_ENTRY,
+    (_event, root: string, registry: string, id: string) => deleteDataPackTagEntry(root, registry, id)
   )
 
   // 光影包编辑器（P0）

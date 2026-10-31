@@ -5,7 +5,7 @@
 import { computed } from 'vue'
 import { useUnifiedStore } from '../../../stores/unified'
 import type { BlockProperties } from '../../../../../shared/schemas/block.schema'
-import type { ItemJavaProperties, EntityJavaProperties, UnifiedModel } from '../../../../../shared/schemas/unified.schema'
+import type { ItemJavaProperties, EntityJavaProperties, EnchantmentJavaProperties, UnifiedModel } from '../../../../../shared/schemas/unified.schema'
 import type { EntityAttributes } from '../../../../../shared/schemas/entity.schema'
 import type { UnifiedTextureRef } from '../../../../../shared/schemas/unified.schema'
 
@@ -17,6 +17,16 @@ export function useFieldBindings() {
   const itemProps = computed(() => store.active?.java.properties as ItemJavaProperties)
   const entityProps = computed(() => store.active?.java.properties as EntityJavaProperties)
   const entityAttrs = computed(() => (store.active?.java.attributes ?? {}) as EntityAttributes)
+  const enchProps = computed(() => store.active?.java.properties as EnchantmentJavaProperties)
+
+  /* ---- 附魔：伤害加成 null ↔ 开关互转（开启时给默认曲线） ---- */
+  const enchDamageEnabled = computed<boolean>({
+    get: () => Boolean(enchProps.value?.damageBonus),
+    set: (v: boolean) => {
+      const p = store.active?.java.properties as EnchantmentJavaProperties | undefined
+      if (p) p.damageBonus = v ? { base: 0, perLevel: 0 } : null
+    }
+  })
 
   const itemModel = computed<UnifiedModel>(() => store.active?.assets.model ?? { type: 'item_generated' })
 
@@ -82,6 +92,8 @@ export function useFieldBindings() {
     itemProps,
     entityProps,
     entityAttrs,
+    enchProps,
+    enchDamageEnabled,
     itemModel,
     customLogicText,
     blockTexPath,

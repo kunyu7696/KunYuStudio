@@ -21,7 +21,7 @@
           <span>{{ t('unified.ops.displayZh') }}</span>
           <input v-model="active.displayName.zh_cn" />
         </label>
-        <label class="uo-field">
+        <label v-if="active.type !== 'enchantment'" class="uo-field">
           <span>{{ t('unified.ops.description') }}</span>
           <input v-model="active.description" :placeholder="t('unified.ops.optional')" />
         </label>
@@ -32,14 +32,16 @@
         <h3 class="uo-title">
           <span class="uev-dot dot-java"></span>{{ t('unified.ops.javaSide') }}
         </h3>
-        <label class="uo-field">
-          <span>{{ t('unified.ops.className') }}</span>
-          <input v-model="active.java.className" />
-        </label>
-        <label class="uo-field">
-          <span>{{ t('unified.ops.packageName') }}</span>
-          <input v-model="active.java.packageName" />
-        </label>
+        <template v-if="active.type !== 'enchantment'">
+          <label class="uo-field">
+            <span>{{ t('unified.ops.className') }}</span>
+            <input v-model="active.java.className" />
+          </label>
+          <label class="uo-field">
+            <span>{{ t('unified.ops.packageName') }}</span>
+            <input v-model="active.java.packageName" />
+          </label>
+        </template>
 
         <!-- 方块属性 -->
         <template v-if="active.type === 'block'">
@@ -221,7 +223,7 @@
         </template>
 
         <!-- 实体属性 -->
-        <template v-else>
+        <template v-else-if="active.type === 'entity'">
           <label class="uo-field">
             <span>{{ t('unified.ops.entityType') }}</span>
             <el-select v-model="active.java.entityType" size="small">
@@ -253,7 +255,94 @@
           </label>
         </template>
 
-        <label class="uo-field">
+        <!-- 附魔属性（无独立 Java 类：由生成器聚合进 ModEnchantments 或数据 JSON） -->
+        <template v-else-if="active.type === 'enchantment'">
+          <label class="uo-field">
+            <span>{{ st('schema.enchantment.formDescEn') }}</span>
+            <input v-model="enchProps.description.en_us" />
+          </label>
+          <label class="uo-field">
+            <span>{{ st('schema.enchantment.formDescZh') }}</span>
+            <input v-model="enchProps.description.zh_cn" />
+          </label>
+          <label class="uo-field">
+            <span>{{ st('schema.enchantment.formRarity') }}</span>
+            <el-select v-model="enchProps.rarity" size="small">
+              <el-option
+                v-for="opt in enchRarityOptions"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </el-select>
+          </label>
+          <label class="uo-field">
+            <span>{{ st('schema.enchantment.formTarget') }}</span>
+            <el-select v-model="enchProps.target" size="small">
+              <el-option
+                v-for="opt in enchTargetOptions"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </el-select>
+          </label>
+          <label class="uo-field">
+            <span>{{ st('schema.enchantment.formSlots') }}</span>
+            <el-select v-model="enchProps.slots" multiple size="small">
+              <el-option
+                v-for="opt in enchSlotOptions"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </el-select>
+          </label>
+          <label class="uo-field">
+            <span>{{ st('schema.enchantment.formMaxLevel') }}</span>
+            <el-input-number v-model="enchProps.maxLevel" :min="1" :max="255" size="small" />
+          </label>
+          <label class="uo-field uo-inline">
+            <span>{{ st('schema.enchantment.formTreasure') }}</span>
+            <el-switch v-model="enchProps.treasure" />
+          </label>
+          <label class="uo-field uo-inline">
+            <span>{{ st('schema.enchantment.formCurse') }}</span>
+            <el-switch v-model="enchProps.curse" />
+          </label>
+          <label class="uo-field">
+            <span>{{ st('schema.enchantment.formMinCostBase') }}</span>
+            <el-input-number v-model="enchProps.minCostBase" :min="0" size="small" />
+          </label>
+          <label class="uo-field">
+            <span>{{ st('schema.enchantment.formMinCostPerLevel') }}</span>
+            <el-input-number v-model="enchProps.minCostPerLevel" :min="0" size="small" />
+          </label>
+          <label class="uo-field">
+            <span>{{ st('schema.enchantment.formMaxCostExtra') }}</span>
+            <el-input-number v-model="enchProps.maxCostExtra" :min="0" size="small" />
+          </label>
+          <label class="uo-field">
+            <span>{{ st('schema.enchantment.formAnvilCost') }}</span>
+            <el-input-number v-model="enchProps.anvilCost" :min="0" size="small" />
+          </label>
+          <label class="uo-field uo-inline">
+            <span>{{ t('unified.ops.damageBonus') }}</span>
+            <el-switch v-model="enchDamageEnabled" />
+          </label>
+          <template v-if="enchProps.damageBonus">
+            <label class="uo-field">
+              <span>{{ t('unified.ops.damageBase') }}</span>
+              <el-input-number v-model="enchProps.damageBonus.base" :min="0" :step="0.5" size="small" />
+            </label>
+            <label class="uo-field">
+              <span>{{ t('unified.ops.damagePerLevel') }}</span>
+              <el-input-number v-model="enchProps.damageBonus.perLevel" :min="0" :step="0.5" size="small" />
+            </label>
+          </template>
+        </template>
+
+        <label v-if="active.type !== 'enchantment'" class="uo-field">
           <span>{{ t('unified.ops.customLogic') }}</span>
           <textarea
             v-model="customLogicText"
@@ -263,8 +352,8 @@
         </label>
       </div>
 
-      <!-- 资源包端（biome/advancement 无资源产物，隐藏） -->
-      <div v-if="!isDatapackContent" class="uo-block">
+      <!-- 资源包端（biome/advancement/enchantment 无资源产物，隐藏） -->
+      <div v-if="!isDatapackContent && active.type !== 'enchantment'" class="uo-block">
         <h3 class="uo-title">
           <span class="uev-dot dot-assets"></span>{{ t('unified.ops.assetsSide') }}
         </h3>
@@ -313,14 +402,32 @@
         </div>
       </div>
 
-      <!-- 生物群系 / 进度：数据包文档双模式编辑（M17） -->
+      <!-- 生物群系 / 进度 / 标签：数据包文档双模式编辑（M17） -->
       <div v-if="isDatapackContent" class="uo-block">
         <h3 class="uo-title">
-          <span class="uev-dot dot-data"></span>{{ t(active.type === 'biome' ? 'unified.ops.biomeDefinition' : 'unified.ops.advancementDefinition') }}
+          <span class="uev-dot dot-data"></span>{{ t(hintKey) }}
         </h3>
         <p v-if="active.type === 'biome'" class="uo-hint">
           {{ t('unified.ops.biomeHint') }}
         </p>
+        <p v-else-if="active.type === 'tag'" class="uo-hint">
+          {{ t('unified.ops.tagHint') }}
+        </p>
+        <label v-if="active.type === 'tag'" class="uo-field">
+          <span>{{ t('unified.ops.tagRegistry') }}</span>
+          <el-select
+            :model-value="active.data.tags?.[0]?.registry ?? 'item'"
+            size="small"
+            @change="onTagRegistryChange"
+          >
+            <el-option
+              v-for="r in tagRegistryOptions"
+              :key="r"
+              :label="t(`unified.enum.tagRegistry.${r}`)"
+              :value="r"
+            />
+          </el-select>
+        </label>
         <PackDualEditor
           v-model:mode="dpMode"
           v-model:form-value="dpFormValue"
@@ -358,7 +465,16 @@ import {
   getArmorMaterialOptions,
   type ItemKindType
 } from '../../../../../shared/schemas/item.schema'
-import { t, te, locale } from '../../../i18n'
+import {
+  ENCHANTMENT_RARITIES,
+  ENCHANTMENT_TARGETS,
+  ENCHANTMENT_SLOTS,
+  type EnchantmentRarity,
+  type EnchantmentItemTarget,
+  type EnchantmentSlot
+} from '../../../../../shared/schemas/enchantment.schema'
+import { t, te, locale, st } from '../../../i18n'
+import { TAG_REGISTRY_KINDS, type TagRegistryKind } from '../../../../../shared/dataPath'
 
 /** 枚举文案走语言包，缺失时回落共享 schema 里的中文原名（新增枚举值不受影响） */
 function enumLabel(value: string, label: string): string {
@@ -375,6 +491,48 @@ const toolMaterialOptions = computed(() => getToolMaterialOptions(locale.value))
 const armorSlotOptions = computed(() => getArmorSlotOptions(locale.value))
 const armorMaterialOptions = computed(() => getArmorMaterialOptions(locale.value))
 
+/* ---- 附魔枚举选项：文案复用共享 schema.enchantment.*（st 随语言切换重算） ---- */
+const ENCH_RARITY_KEY: Record<EnchantmentRarity, string> = {
+  COMMON: 'schema.enchantment.rarityCommon',
+  UNCOMMON: 'schema.enchantment.rarityUncommon',
+  RARE: 'schema.enchantment.rarityRare',
+  VERY_RARE: 'schema.enchantment.rarityVeryRare'
+}
+const ENCH_TARGET_KEY: Record<EnchantmentItemTarget, string> = {
+  ALL: 'schema.enchantment.targetAll',
+  ARMOR: 'schema.enchantment.targetArmor',
+  ARMOR_FEET: 'schema.enchantment.targetArmorFeet',
+  ARMOR_LEGS: 'schema.enchantment.targetArmorLegs',
+  ARMOR_CHEST: 'schema.enchantment.targetArmorChest',
+  ARMOR_HEAD: 'schema.enchantment.targetArmorHead',
+  WEAPON: 'schema.enchantment.targetWeapon',
+  TOOL: 'schema.enchantment.targetTool',
+  BOW: 'schema.enchantment.targetBow',
+  CROSSBOW: 'schema.enchantment.targetCrossbow',
+  TRIDENT: 'schema.enchantment.targetTrident',
+  FISHING_ROD: 'schema.enchantment.targetFishingRod',
+  WEARABLE: 'schema.enchantment.targetWearable',
+  BREAKABLE: 'schema.enchantment.targetBreakable',
+  VANISHABLE: 'schema.enchantment.targetVanishable'
+}
+const ENCH_SLOT_KEY: Record<EnchantmentSlot, string> = {
+  mainhand: 'schema.enchantment.slotMainhand',
+  offhand: 'schema.enchantment.slotOffhand',
+  head: 'schema.enchantment.slotHead',
+  chest: 'schema.enchantment.slotChest',
+  legs: 'schema.enchantment.slotLegs',
+  feet: 'schema.enchantment.slotFeet'
+}
+const enchRarityOptions = computed(() =>
+  ENCHANTMENT_RARITIES.map((r) => ({ value: r, label: st(ENCH_RARITY_KEY[r]) }))
+)
+const enchTargetOptions = computed(() =>
+  ENCHANTMENT_TARGETS.map((x) => ({ value: x, label: st(ENCH_TARGET_KEY[x]) }))
+)
+const enchSlotOptions = computed(() =>
+  ENCHANTMENT_SLOTS.map((s) => ({ value: s, label: st(ENCH_SLOT_KEY[s]) }))
+)
+
 /** 双模式编辑器状态由父视图统一持有（onSave 提交同一份），经 props 传入 */
 const props = defineProps<{ dp: ReturnType<typeof useDatapackEditor> }>()
 const { isDatapackContent, dpForm, dpMode, dpFormValue, dpFormContext, dpSourceText } = props.dp
@@ -383,6 +541,8 @@ const {
   itemProps,
   entityProps,
   entityAttrs,
+  enchProps,
+  enchDamageEnabled,
   itemModel,
   customLogicText,
   blockTexPath,
@@ -404,6 +564,26 @@ const itemType = computed<ItemKindType>(() =>
 /** 切换物品子类型：清空旧类型专属配置并填入默认值（语义层 applyUnifiedItemType） */
 function onItemTypeChange(next: unknown): void {
   applyUnifiedItemType(active.value, next as ItemKindType)
+}
+
+/** 数据包文档块的标题键（仅 biome/advancement/tag 会渲染该块） */
+const hintKey = computed<string>(() =>
+  active.value.type === 'biome'
+    ? 'unified.ops.biomeDefinition'
+    : active.value.type === 'advancement'
+      ? 'unified.ops.advancementDefinition'
+      : 'unified.ops.tagDefinition'
+)
+
+const tagRegistryOptions = TAG_REGISTRY_KINDS
+
+/** 切换标签注册表（产物目录随之改变；id 保持不变） */
+function onTagRegistryChange(next: unknown): void {
+  if (typeof next !== 'string') return
+  if (!(TAG_REGISTRY_KINDS as readonly string[]).includes(next)) return
+  const entry = active.value.data.tags?.[0]
+  if (!entry) return
+  entry.registry = next as TagRegistryKind
 }
 </script>
 

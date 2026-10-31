@@ -361,6 +361,9 @@ const zhCN = {
       typeBiome: '生物群系',
       typeRecipe: '配方',
       typeAdvancement: '进度',
+      typeEnchantment: '附魔',
+      typeTag: '标签',
+      errTagRegistryRequired: '标签注册表类型不合法',
       errBiomeDocRequired: '缺少生物群系数文档（biomeDoc）',
       errAdvancementDocRequired: '缺少进度文档（advancementDoc）',
       errClassNameRequired: 'Java 类名不能为空',
@@ -516,7 +519,8 @@ const zhCN = {
         values: '物品列表',
         valuesDesc: '填写物品 ID（如 minecraft:iron_ingot）；以 # 开头可引用其他标签',
         itemId: '物品 ID',
-        formHint: '以 # 开头的条目表示引用其他标签'
+        formHint: '以 # 开头的条目表示引用其他标签',
+        errValuesRequired: '标签条目必须是合法字符串列表'
       },
       advancement: {
         frameTask: '普通（task）',
@@ -1319,6 +1323,9 @@ const enUS: typeof zhCN = {
       typeBiome: 'Biome',
       typeRecipe: 'Recipe',
       typeAdvancement: 'Advancement',
+      typeEnchantment: 'Enchantment',
+      typeTag: 'Tag',
+      errTagRegistryRequired: 'Invalid tag registry type',
       errBiomeDocRequired: 'Missing biome document (biomeDoc)',
       errAdvancementDocRequired: 'Missing advancement document (advancementDoc)',
       errClassNameRequired: 'Java class name cannot be empty',
@@ -1382,7 +1389,8 @@ const enUS: typeof zhCN = {
         values: 'Item list',
         valuesDesc: 'Enter item IDs (e.g. minecraft:iron_ingot); prefix with # to reference other tags',
         itemId: 'Item ID',
-        formHint: 'Entries starting with # reference other tags'
+        formHint: 'Entries starting with # reference other tags',
+        errValuesRequired: 'Tag entries must be a valid string list'
       },
       advancement: {
         frameTask: 'Normal (task)',

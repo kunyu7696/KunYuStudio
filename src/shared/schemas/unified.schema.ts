@@ -27,10 +27,18 @@ import type {
 } from './entity.schema'
 import type { LootTableDef } from './loot.schema'
 import type { RecipeDef } from './recipe.schema'
+import type {
+  EnchantmentRarity,
+  EnchantmentItemTarget,
+  EnchantmentSlot,
+  EnchantmentDamageBonus
+} from './enchantment.schema'
 import { createBiomeDefault, validateBiomeDoc } from './datapack/biome.schema'
 import { createAdvancementDefault, validateAdvancementDoc } from './datapack/advancement.schema'
 import type { CubeFaceName, EmbeddedCubeModel } from '../types/content'
 import { validateContentId } from '../types/content'
+import type { TagRegistryKind } from '../dataPath'
+import { TAG_REGISTRY_KINDS } from '../dataPath'
 import { sharedT, type SharedLocale } from '../i18n'
 
 /* ------------------------------------------------------------------ */
@@ -38,7 +46,15 @@ import { sharedT, type SharedLocale } from '../i18n'
 /* ------------------------------------------------------------------ */
 
 /** 内容对象类型（统一编辑器支持的可编辑对象） */
-export type UnifiedContentType = 'block' | 'item' | 'entity' | 'biome' | 'recipe' | 'advancement'
+export type UnifiedContentType =
+  | 'block'
+  | 'item'
+  | 'entity'
+  | 'biome'
+  | 'recipe'
+  | 'advancement'
+  | 'enchantment'
+  | 'tag'
 
 /** 语言键 */
 export type LangKey = 'en_us' | 'zh_cn'
@@ -63,8 +79,36 @@ export interface ItemJavaProperties {
 /** 实体专属属性（复用 entity.schema 的 EntityProperties） */
 export type EntityJavaProperties = EntityProperties
 
+/**
+ * 附魔专属属性：附魔无独立 Java 类（Fabric/Forge 生成固定 ModEnchantments 注册类，
+ * NeoForge 1.21 出数据 JSON），全部语义字段承载于 java.properties。
+ * description 为双语对象：UnifiedContent.description 是单字符串，
+ * 双语原文存于此以保证扁平 schema 无损往返。
+ */
+export interface EnchantmentJavaProperties {
+  rarity: EnchantmentRarity
+  target: EnchantmentItemTarget
+  /** 生效槽位，至少 1 个 */
+  slots: EnchantmentSlot[]
+  maxLevel: number
+  treasure: boolean
+  curse: boolean
+  minCostBase: number
+  minCostPerLevel: number
+  maxCostExtra: number
+  anvilCost: number
+  /** 可选：攻击伤害加成曲线 */
+  damageBonus: EnchantmentDamageBonus | null
+  /** 附魔说明（语言键 enchantment.<ns>.<id>.desc） */
+  description: DisplayName
+}
+
 /** Java 端属性联合 */
-export type ContentJavaProperties = BlockJavaProperties | ItemJavaProperties | EntityJavaProperties
+export type ContentJavaProperties =
+  | BlockJavaProperties
+  | ItemJavaProperties
+  | EntityJavaProperties
+  | EnchantmentJavaProperties
 
 /** 方块物品注册配置（是否生成 BlockItem 及物品栏标签） */
 export interface BlockItemConfig {
@@ -193,10 +237,14 @@ export interface UnifiedAdvancementEntry {
   criteria: Record<string, unknown>
 }
 
-/** 标签条目 */
+/** 标签条目（registry 决定产物目录 data/<ns>/tags/<registry 目录>/） */
 export interface UnifiedTagEntry {
-  /** 标签 id，如 minecraft:mineable/pickaxe */
+  /** 标签注册表类型（block / item / entity_type / fluid / game_event / enchantment） */
+  registry: TagRegistryKind
+  /** 标签 id，如 mineable/pickaxe */
   id: string
+  /** 是否覆盖同名标签（false = 追加） */
+  replace: boolean
   /** 标签下的条目 id 列表 */
   values: string[]
 }
@@ -468,6 +516,71 @@ export function createDefaultUnifiedEntity(id: string, namespace = 'mymod'): Uni
   }
 }
 
+/** 创建默认附魔内容对象（默认值与 enchantment.schema 的 createDefaultEnchantment 对齐） */
+export function createDefaultUnifiedEnchantment(id: string, namespace = 'mymod'): UnifiedContent {
+  return {
+    id,
+    type: 'enchantment',
+    displayName: { en_us: id, zh_cn: id },
+    description: '',
+    java: {
+      className: '',
+      packageName: '',
+      properties: {
+        rarity: 'RARE',
+        target: 'WEAPON',
+        slots: ['mainhand'],
+        maxLevel: 3,
+        treasure: false,
+        curse: false,
+        minCostBase: 10,
+        minCostPerLevel: 15,
+        maxCostExtra: 50,
+        anvilCost: 2,
+        damageBonus: null,
+        description: { en_us: '', zh_cn: '' }
+      },
+      customLogic: null
+    },
+    assets: {
+      textures: {},
+      model: { type: 'custom', customJson: null },
+      lang: { [`enchantment.${namespace}.${id}`]: id }
+    },
+    data: {},
+    meta: defaultMeta()
+  }
+}
+
+/** 创建默认标签内容对象（registry 维度承载于 data.tags[0]） */
+export function createDefaultUnifiedTag(
+  id: string,
+  namespace = 'mymod',
+  registry: TagRegistryKind = 'item'
+): UnifiedContent {
+  return {
+    id,
+    type: 'tag',
+    displayName: { en_us: id, zh_cn: id },
+    description: '',
+    java: {
+      className: '',
+      packageName: namespace,
+      properties: {} as ContentJavaProperties,
+      customLogic: null
+    },
+    assets: { textures: {}, model: { type: 'custom', customJson: null }, lang: {} },
+    data: { tags: [{ registry, id, replace: false, values: [] }] },
+    meta: defaultMeta()
+  }
+}
+
+/** 取标签对象的注册表类型；非标签返回 null */
+export function unifiedTagRegistry(c: UnifiedContent): TagRegistryKind | null {
+  if (c.type !== 'tag') return null
+  return c.data.tags?.[0]?.registry ?? null
+}
+
 /** 纯数据包类型（biome/advancement）的三端骨架：java 空壳 + 最小 assets，doc 承载产物 JSON */
 function createDefaultUnifiedDatapackContent(
   type: 'biome' | 'advancement',
@@ -507,6 +620,10 @@ export function createDefaultUnifiedContent(
     case 'biome':
     case 'advancement':
       return createDefaultUnifiedDatapackContent(type, id)
+    case 'enchantment':
+      return createDefaultUnifiedEnchantment(id, namespace)
+    case 'tag':
+      return createDefaultUnifiedTag(id, namespace)
     default:
       // recipe P0 暂用空结构占位
       return {
@@ -548,6 +665,28 @@ export function validateUnifiedContent(c: UnifiedContent): string | null {
     if (!c.data.advancementDoc) return sharedT('schema.unified.errAdvancementDocRequired')
     return validateAdvancementDoc(c.data.advancementDoc)
   }
+  // 标签：纯数据包类型，无 Java/assets 产物，校验注册表与条目字段
+  if (c.type === 'tag') {
+    const entry = c.data.tags?.[0]
+    if (!entry || !TAG_REGISTRY_KINDS.includes(entry.registry)) {
+      return sharedT('schema.unified.errTagRegistryRequired')
+    }
+    if (!Array.isArray(entry.values)) {
+      return sharedT('schema.datapack.tag.errValuesRequired')
+    }
+    return null
+  }
+  // 附魔：无独立 Java 类，跳过 className 校验，改校验语义字段
+  if (c.type === 'enchantment') {
+    const p = c.java.properties as EnchantmentJavaProperties
+    if (!Array.isArray(p.slots) || p.slots.length === 0) {
+      return sharedT('schema.enchantment.errSlotsRequired')
+    }
+    if (!Number.isInteger(p.maxLevel) || p.maxLevel < 1 || p.maxLevel > 255) {
+      return sharedT('schema.enchantment.errMaxLevel')
+    }
+    return null
+  }
   if (!c.java.className.trim()) {
     return sharedT('schema.unified.errClassNameRequired')
   }
@@ -586,7 +725,9 @@ function buildUnifiedTypeLabels(locale?: SharedLocale): Record<UnifiedContentTyp
     entity: t('schema.unified.typeEntity'),
     biome: t('schema.unified.typeBiome'),
     recipe: t('schema.unified.typeRecipe'),
-    advancement: t('schema.unified.typeAdvancement')
+    advancement: t('schema.unified.typeAdvancement'),
+    enchantment: t('schema.unified.typeEnchantment'),
+    tag: t('schema.unified.typeTag')
   }
 }
 

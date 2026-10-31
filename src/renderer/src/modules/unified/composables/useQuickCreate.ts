@@ -15,13 +15,11 @@ export function useQuickCreate() {
 
   const ns = computed(() => projectStore.currentProject?.namespace || 'mymod')
 
-  /** 快速创建模板仅适用于方块/物品/实体 */
-  const quickCreateEnabled = computed<boolean>(() => {
-    const t = store.active?.type
-    return !t || t === 'block' || t === 'item' || t === 'entity'
-  })
-
-  /* ================= QuickCreate 快速创建（C5） ================= */
+  /**
+   * QuickCreate 快速创建（C5）：始终可用——它是「新建一个内容对象」，
+   * 各模板自带目标类型（block/item/entity），beginQuickCreate 直接替换 active，
+   * 与当前对象类型无关。仅「配方」模板依赖当前对象，由 canQuickRecipe 判断。
+   */
   const quickTemplates = computed(() => getQuickCreateTemplates(locale.value))
 
   /** 配方模板需要当前对象为方块或物品 */
@@ -68,5 +66,5 @@ export function useQuickCreate() {
     ElMessage.success(t('unified.actions.quickCreated', { label }))
   }
 
-  return { quickCreateEnabled, quickTemplates, canQuickRecipe, onQuickCreate }
+  return { quickTemplates, canQuickRecipe, onQuickCreate }
 }

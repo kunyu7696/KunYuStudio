@@ -13,13 +13,15 @@
           <el-radio-button value="entity">{{ t('unified.kind.entity') }}</el-radio-button>
           <el-radio-button value="biome">{{ t('unified.kind.biome') }}</el-radio-button>
           <el-radio-button value="advancement">{{ t('unified.kind.advancement') }}</el-radio-button>
+          <el-radio-button value="enchantment">{{ t('unified.kind.enchantment') }}</el-radio-button>
+          <el-radio-button value="tag">{{ t('unified.kind.tag') }}</el-radio-button>
         </el-radio-group>
       </div>
 
       <div class="uev-head-main">
         <!-- 对象切换：侧栏已改为文件树，对象切换放顶部 -->
         <el-select
-          :model-value="store.active?.id ?? ''"
+          :model-value="store.active ? objectKey(store.active) : ''"
           size="small"
           class="uev-object-select"
           :placeholder="t('unified.objectSelect')"
@@ -32,9 +34,9 @@
           >
             <el-option
               v-for="o in grp.items"
-              :key="o.id"
+              :key="objectKey(o)"
               :label="`${unifiedDisplayName(o)}（${o.id}）`"
-              :value="o.id"
+              :value="objectKey(o)"
             />
           </el-option-group>
         </el-select>
@@ -47,11 +49,15 @@
               <el-dropdown-item command="entity">{{ t('unified.newObject.entity') }}</el-dropdown-item>
               <el-dropdown-item command="biome">{{ t('unified.newObject.biome') }}</el-dropdown-item>
               <el-dropdown-item command="advancement">{{ t('unified.newObject.advancement') }}</el-dropdown-item>
+              <el-dropdown-item command="enchantment">{{ t('unified.newObject.enchantment') }}</el-dropdown-item>
+              <el-dropdown-item command="tag">{{ t('unified.newObject.tag') }}</el-dropdown-item>
               <el-dropdown-item divided command="custom:block">{{ t('unified.newObject.customBlock') }}</el-dropdown-item>
               <el-dropdown-item command="custom:item">{{ t('unified.newObject.customItem') }}</el-dropdown-item>
               <el-dropdown-item command="custom:entity">{{ t('unified.newObject.customEntity') }}</el-dropdown-item>
               <el-dropdown-item command="custom:biome">{{ t('unified.newObject.customBiome') }}</el-dropdown-item>
               <el-dropdown-item command="custom:advancement">{{ t('unified.newObject.customAdvancement') }}</el-dropdown-item>
+              <el-dropdown-item command="custom:enchantment">{{ t('unified.newObject.customEnchantment') }}</el-dropdown-item>
+              <el-dropdown-item command="custom:tag">{{ t('unified.newObject.customTag') }}</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -61,8 +67,6 @@
             type="primary"
             plain
             :icon="Lightning"
-            :disabled="!quickCreateEnabled"
-            :title="quickCreateEnabled ? '' : t('unified.quickCreateDisabledTip')"
           >{{ t('unified.quickCreate') }}</el-button>
           <template #dropdown>
             <el-dropdown-menu>
@@ -111,8 +115,8 @@
       <div class="uev-col-left">
         <OpsPanel :dp="dp" />
 
-        <!-- 对应配方编辑（biome/advancement 无配方/战利品概念，隐藏） -->
-        <section v-if="!isDatapackContent" class="uev-linked">
+        <!-- 对应配方编辑（biome/advancement/enchantment 无配方/战利品概念，隐藏） -->
+        <section v-if="!isDatapackContent && store.active.type !== 'enchantment'" class="uev-linked">
           <el-tabs v-model="dataTab" class="uev-data-tabs">
             <!-- 配方 -->
             <el-tab-pane :label="t('unified.tabRecipes')" name="recipes">
@@ -129,8 +133,8 @@
 
       <!-- 右栏：只读模型预览 + 模型摘要（P0：完整建模能力将由独立模型工坊提供） -->
       <aside class="uev-col-right">
-        <!-- ===== 生物群系 / 进度：无 3D 预览，展示数据包说明 ===== -->
-        <DatapackPreview v-if="isDatapackContent" />
+        <!-- ===== 生物群系 / 进度 / 附魔：无 3D 预览，展示产物说明 ===== -->
+        <DatapackPreview v-if="isDatapackContent || store.active.type === 'enchantment'" />
 
         <template v-else>
           <!-- 有嵌入模型：按元素装配只读预览 + 摘要 -->
@@ -170,11 +174,11 @@
         </template>
 
         <footer class="uev-tools">
-          <el-button v-if="!isDatapackContent" size="small" @click="openTextureEditor">
+          <el-button v-if="canCubeModel" size="small" @click="openTextureEditor">
             <el-icon class="uev-btn-icon"><EditPen /></el-icon>{{ t('unified.tools.editTexture') }}
           </el-button>
           <el-button
-            v-if="!isDatapackContent"
+            v-if="canCubeModel"
             size="small"
             :title="t('unified.tools.repaintTip')"
             @click="openRepaint"
@@ -226,6 +230,9 @@
           </el-button>
           <span v-if="isDatapackContent" class="uev-tools-hint">
             {{ t('unified.tools.dpSyncHint') }}
+          </span>
+          <span v-else-if="store.active.type === 'enchantment'" class="uev-tools-hint">
+            {{ t('unified.tools.enchSyncHint') }}
           </span>
           <span v-else class="uev-tools-hint">{{ t('unified.tools.navHint') }}</span>
         </footer>
@@ -333,9 +340,9 @@ const root = computed(() => projectStore.currentProject?.path || '')
 const dataTab = ref<'recipes' | 'loot'>('recipes')
 
 /* ---- 组合式逻辑（内聚块抽出，行为零变更） ---- */
-const { objectGroups, onKindTab, onSwitchObject, onNewObject } = useObjectNav()
+const { objectGroups, objectKey, onKindTab, onSwitchObject, onNewObject } = useObjectNav()
 
-const { quickCreateEnabled, quickTemplates, canQuickRecipe, onQuickCreate } = useQuickCreate()
+const { quickTemplates, canQuickRecipe, onQuickCreate } = useQuickCreate()
 
 /** 模板文案走语言包，缺失时回落共享注册表里的中文原名（新增模板不受影响） */
 function quickTemplateText(tpl: QuickCreateTemplateMeta, field: 'label' | 'hint'): string {
@@ -418,9 +425,17 @@ const {
 function onDiscard(): void {
   const a = store.active
   if (!a) return
-  const origin = store.objects.find((o) => o.type === a.type && o.id === a.id)
+  // 标签的注册表可能已在编辑中改变，先按复合键匹配，再按类型/id 回落到磁盘版本
+  const origin =
+    store.objects.find((o) => objectKey(o) === objectKey(a)) ??
+    (a.type === 'tag'
+      ? store.objects.find((o) => o.type === a.type && o.id === a.id)
+      : undefined)
   store.select(origin ?? null)
-  if (origin && (origin.type === 'biome' || origin.type === 'advancement')) {
+  if (
+    origin &&
+    (origin.type === 'biome' || origin.type === 'advancement' || origin.type === 'tag')
+  ) {
     resetDpEditor()
   }
 }
@@ -556,7 +571,7 @@ async function onSave(): Promise<void> {
   background: var(--ky-bg-elev);
 }
 .uev-head-tabs {
-  width: 320px;
+  /* 宽度随类型 Tab 数量自适应（新增第 7 类后固定 320px 会溢出） */
   flex-shrink: 0;
   display: flex;
   align-items: center;

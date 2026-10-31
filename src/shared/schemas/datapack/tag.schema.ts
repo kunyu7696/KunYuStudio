@@ -4,6 +4,7 @@
  */
 import type { JsonSchema } from '../jsonSchema'
 import { sharedT, type SharedLocale } from '../../i18n'
+import type { TagRegistryKind } from '../../dataPath'
 
 /** 物品标签 JSON 的表单覆盖范围 */
 export interface TagJson {
@@ -51,4 +52,71 @@ export function isTagJson(v: unknown): v is TagJson {
   if (typeof v !== 'object' || v === null) return false
   const t = v as Partial<TagJson>
   return typeof t.replace === 'boolean' && Array.isArray(t.values)
+}
+
+/**
+ * 标签语义定义（统一编辑器与数据包编辑器共用的扁平形态）。
+ * 产物路径：data/<ns>/tags/<registry 目录>/<id>.json，registry 目录由 tagRegistryPath 计算。
+ * displayName / description 仅用于编辑器展示，不写入产物 JSON。
+ */
+export interface TagDef {
+  kind: 'tag'
+  id: string
+  displayName: string
+  description: string
+  registry: TagRegistryKind
+  replace: boolean
+  values: string[]
+  createdAt: number
+  updatedAt: number
+}
+
+/** 新建标签语义定义（默认物品标签，与数据包编辑器 P0 口径一致） */
+export function createTagDef(id: string, registry: TagRegistryKind = 'item'): TagDef {
+  const now = Date.now()
+  return {
+    kind: 'tag',
+    id: id || 'new_tag',
+    displayName: id || 'new_tag',
+    description: '',
+    registry,
+    replace: false,
+    values: [],
+    createdAt: now,
+    updatedAt: now
+  }
+}
+
+/** 从数据包 JSON 构造语义定义（displayName 回落到 id） */
+export function tagDefFromJson(
+  id: string,
+  registry: TagRegistryKind,
+  json: TagJson,
+  updatedAt = Date.now()
+): TagDef {
+  return {
+    kind: 'tag',
+    id,
+    displayName: id,
+    description: '',
+    registry,
+    replace: json.replace,
+    values: [...json.values],
+    createdAt: updatedAt,
+    updatedAt
+  }
+}
+
+/** 语义定义 → 数据包产物 JSON（只保留标签本体字段） */
+export function tagJsonFromDef(def: TagDef): TagJson {
+  return { replace: def.replace, values: [...def.values] }
+}
+
+/** 校验标签语义定义；返回错误消息，合法返回 null */
+export function validateTagDef(def: TagDef): string | null {
+  if (!Array.isArray(def.values)) return sharedT('schema.datapack.tag.errValuesRequired')
+  if (def.values.some((v) => typeof v !== 'string' || !v.trim())) {
+    return sharedT('schema.datapack.tag.errValuesRequired')
+  }
+  return null
 }

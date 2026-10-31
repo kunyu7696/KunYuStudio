@@ -12,7 +12,14 @@ import {
   createDefaultUnifiedEntity,
   createDefaultUnifiedContent
 } from '../../../shared/schemas/unified.schema'
-import { blockToUnified, itemToUnified, entityToUnified, unifiedToBlock, unifiedToItem, unifiedToEntity, biomeToUnified, advancementToUnified, unifiedToBiome, unifiedToAdvancement } from '../../../shared/schemas/unified.adapter'
+import { blockToUnified, itemToUnified, entityToUnified, unifiedToBlock, unifiedToItem, unifiedToEntity, biomeToUnified, advancementToUnified, unifiedToBiome, unifiedToAdvancement, enchantmentToUnified, unifiedToEnchantment, tagToUnified, unifiedToTag } from '../../../shared/schemas/unified.adapter'
+import {
+  isTagJson,
+  tagDefFromJson,
+  tagJsonFromDef,
+  validateTagDef
+} from '../../../shared/schemas/datapack/tag.schema'
+import type { EnchantmentSchema } from '../../../shared/schemas/enchantment.schema'
 import {
   buildQuickRecipe,
   createQuickContent,
@@ -55,7 +62,9 @@ export const useUnifiedStore = defineStore('unified', {
     items: (s) => s.objects.filter((o) => o.type === 'item'),
     entities: (s) => s.objects.filter((o) => o.type === 'entity'),
     biomes: (s) => s.objects.filter((o) => o.type === 'biome'),
-    advancements: (s) => s.objects.filter((o) => o.type === 'advancement')
+    advancements: (s) => s.objects.filter((o) => o.type === 'advancement'),
+    enchantments: (s) => s.objects.filter((o) => o.type === 'enchantment'),
+    tags: (s) => s.objects.filter((o) => o.type === 'tag')
   },
 
   actions: {
@@ -80,7 +89,27 @@ export const useUnifiedStore = defineStore('unified', {
           } else if (s.kind === 'advancement') {
             const def = (await window.api.content.load(root, s.kind, s.id)) as AdvancementDefinition
             objects.push(advancementToUnified(def))
+          } else if (s.kind === 'enchantment') {
+            const def = (await window.api.content.load(root, s.kind, s.id)) as EnchantmentSchema
+            objects.push(enchantmentToUnified(def, namespace))
           }
+        }
+        // 标签走数据包侧读写（content.list 不含 tag；目录由 tagRegistryPath 按注册表推导）
+        try {
+          const tagEntries = await window.api.datapack.listTagEntries(root)
+          for (const e of tagEntries) {
+            try {
+              const text = await window.api.datapack.readTagEntry(root, e.registry, e.id)
+              const doc = JSON.parse(text) as unknown
+              if (isTagJson(doc)) {
+                objects.push(tagToUnified(tagDefFromJson(e.id, e.registry, doc, e.updatedAt)))
+              }
+            } catch {
+              // 单个损坏的标签文件不影响整体加载
+            }
+          }
+        } catch {
+          // 数据包未初始化：没有标签目录
         }
         this.objects = objects
       } finally {
@@ -168,11 +197,56 @@ export const useUnifiedStore = defineStore('unified', {
       try {
         const obj = this.active
 
+        // 标签：content.save 不承载 tag（ContentKind 无该类型），走数据包侧既有写盘能力；
+        // 与 DataPackView 一致「读旧原文 → 合并未知字段 → 整体写回」，不新造生成器
+        if (obj.type === 'tag') {
+          const def = unifiedToTag(obj)
+          const tagErr = validateTagDef(def)
+          if (tagErr) return tagErr
+          const next = tagJsonFromDef(def)
+          let merged: Record<string, unknown> = { ...next }
+          try {
+            const prev = JSON.parse(
+              await window.api.datapack.readTagEntry(root, def.registry, def.id)
+            ) as unknown
+            if (prev && typeof prev === 'object' && !Array.isArray(prev)) {
+              merged = { ...(prev as Record<string, unknown>), ...next }
+            }
+          } catch {
+            // 新建标签没有旧文件
+          }
+          await window.api.datapack.writeTagEntry(
+            root,
+            def.registry,
+            def.id,
+            JSON.stringify(merged, null, 2)
+          )
+          await this.load(root, 'mymod')
+          const registry = def.registry
+          const reloaded = this.objects.find(
+            (o) => o.type === 'tag' && o.id === def.id && o.data.tags?.[0]?.registry === registry
+          )
+          if (reloaded) this.active = structuredClone(toRaw(reloaded))
+          return null
+        }
+
         // 纯数据包类型（biome/advancement）：无 java 产物与 Cube 模型，doc 直转扁平定义保存
         if (obj.type === 'biome' || obj.type === 'advancement') {
           const flat =
             obj.type === 'biome' ? unifiedToBiome(obj) : unifiedToAdvancement(obj)
           const plain = JSON.parse(JSON.stringify(flat)) as BiomeDefinition | AdvancementDefinition
+          const summary = await window.api.content.save(root, plain, undefined)
+          await this.load(root, 'mymod')
+          const reloaded = this.objects.find((o) => o.type === summary.kind && o.id === summary.id)
+          if (reloaded) this.active = structuredClone(toRaw(reloaded))
+          return null
+        }
+
+        // 附魔：无独立 Java 类与贴图，语义字段在 java.properties，直转扁平 schema 保存；
+        // 生成复用 content.generate 既有附魔管线（Fabric/Forge 出注册类，NeoForge 1.21 出数据 JSON）
+        if (obj.type === 'enchantment') {
+          const flat = unifiedToEnchantment(obj)
+          const plain = JSON.parse(JSON.stringify(flat)) as EnchantmentSchema
           const summary = await window.api.content.save(root, plain, undefined)
           await this.load(root, 'mymod')
           const reloaded = this.objects.find((o) => o.type === summary.kind && o.id === summary.id)
@@ -227,21 +301,41 @@ export const useUnifiedStore = defineStore('unified', {
     },
 
     async remove(root: string, obj: UnifiedContent): Promise<void> {
-      const kind: ContentKind =
-        obj.type === 'block'
-          ? 'block'
-          : obj.type === 'item'
-            ? 'item'
-            : obj.type === 'biome'
-              ? 'biome'
-              : obj.type === 'advancement'
-                ? 'advancement'
-                : 'entity'
-      await window.api.content.remove(root, kind, obj.id)
-      if (this.active?.id === obj.id && this.active?.type === obj.type) {
+      if (obj.type === 'tag') {
+        // 标签不属 content 管线，直接删除数据包侧文件
+        const registry = obj.data.tags?.[0]?.registry
+        if (registry) await window.api.datapack.deleteTagEntry(root, registry, obj.id)
+      } else {
+        const kind: ContentKind =
+          obj.type === 'block'
+            ? 'block'
+            : obj.type === 'item'
+              ? 'item'
+              : obj.type === 'biome'
+                ? 'biome'
+                : obj.type === 'advancement'
+                  ? 'advancement'
+                  : obj.type === 'enchantment'
+                    ? 'enchantment'
+                    : 'entity'
+        await window.api.content.remove(root, kind, obj.id)
+      }
+      if (
+        this.active?.id === obj.id &&
+        this.active?.type === obj.type &&
+        (obj.type !== 'tag' ||
+          this.active.data.tags?.[0]?.registry === obj.data.tags?.[0]?.registry)
+      ) {
         this.active = null
       }
-      this.objects = this.objects.filter((o) => !(o.type === obj.type && o.id === obj.id))
+      this.objects = this.objects.filter(
+        (o) =>
+          !(
+            o.type === obj.type &&
+            o.id === obj.id &&
+            (obj.type !== 'tag' || o.data.tags?.[0]?.registry === obj.data.tags?.[0]?.registry)
+          )
+      )
     },
 
     /**
