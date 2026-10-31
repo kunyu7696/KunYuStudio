@@ -87,6 +87,9 @@ function strArg(args: Record<string, unknown>, key: string): string | undefined 
     : undefined
 }
 
+/** 沙箱六阶段顺序（与 sandboxService STAGE_ORDER 一致，用于输出齐全的阶段表） */
+const SANDBOX_STAGE_ORDER: SandboxStage[] = ['build', 'launch', 'wait-world', 'probes', 'collect', 'shutdown']
+
 export function builtinGameControlTools(deps: ToolRegistryDeps): RegisteredTool[] {
   const tools: RegisteredTool[] = []
   const probe = deps.observerProbe ?? probeObserver
@@ -983,9 +986,6 @@ export function builtinGameControlTools(deps: ToolRegistryDeps): RegisteredTool[
 
   return tools
 }
-
-/** 沙箱六阶段顺序（与 sandboxService STAGE_ORDER 一致，用于输出齐全的阶段表） */
-const SANDBOX_STAGE_ORDER: SandboxStage[] = ['build', 'launch', 'wait-world', 'probes', 'collect', 'shutdown']
 
 /** 事件流里最近一个 running 阶段；没有则取最后出现的阶段（用于「卡在哪」文案） */
 function currentStage(stages: Partial<Record<SandboxStage, SandboxStageRecord>>): string {

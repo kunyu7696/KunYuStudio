@@ -1,6 +1,6 @@
 {
   "manifestVersion": "3.3.0",
-  "generatedAt": "2026-10-23T13:24:09.365Z",
+  "generatedAt": "2026-10-31T22:07:25.290Z",
   "description": "KunYuEcosystem anti-hallucination AI reference package (M23: 16 combos active — fabric 7 / forge 5 / neoforge 4, forge 1.16.5 frozen and removed from m7ActiveVersions; V-01: 4 pending combos for 1.21.4/1.21.5; V-02 #18: 12 more pending combos for 1.21.6~1.21.11 — fabric×6 + neoforge×6, coordinates verified via Fabric meta / maven.fabricmc.net / BMCLAPI-neoforge metadata, registeredButInactive pending real-machine verification; 26.3 registered (2026-10): fabric 0.19.5 stable-day support + forge 66.0.11 GA (FG7 mavenizer, Java 25, Mojang mappings — no Yarn build exists) are registeredButInactive pending real-machine verification; neoforge 26.3.0.75-beta stays upstream Beta and is matrix-disabled (health=beta, wizard greyed out) until official GA)",
   "scopeControl": {
     "m7ActiveVersions": [
