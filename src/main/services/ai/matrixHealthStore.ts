@@ -33,6 +33,7 @@ import type {
   ComboOverlayState,
   ReferenceManifest,
   ReferenceOverlay,
+  SlotEvidence,
   TemplateOverlayState
 } from '../../../shared/types/aiReference'
 import type { ComboHealth } from '../../../shared/types/monitor'
@@ -61,9 +62,20 @@ export interface ProbeRecordInput {
   comboId: string
   health: ComboHealth
   verifiedAt: string
-  /** 不传模板结果时只更新组合灯色 */
+  /**
+   * 组合级 build/verified 盖章（历史通道，已不作事实依据——
+   * 事实判定只看 recordSlotEvidences 写入的槽位级证据）
+   */
   templates?: Array<{ id: string; build: BuildStatus; verified: string | null }>
   latestLoaderVersion?: string
+  /** 本次真实注入编译的内容类型；缺省/空 = 纯工具链健康（最小探针工程） */
+  coveredByGate?: string[]
+}
+
+/** 槽位级编译证据回写（javac 逐文件归因后的唯一事实入口） */
+export interface SlotEvidenceRecordInput {
+  at: string
+  evidences: Array<{ id: string; evidence: SlotEvidence }>
 }
 
 export interface UpstreamRecordInput {
@@ -89,8 +101,10 @@ export interface MatrixHealthStore {
   getCombo(comboId: string): ComboOverlayState | null
   /** 模板运行时状态；无记录返回 null（调用方可回退 manifest 基线） */
   getTemplate(templateId: string): TemplateOverlayState | null
-  /** 编译探针回写：组合灯色 + 可选模板逐条 build/verified */
+  /** 编译探针回写：组合灯色 + coveredByGate（组合级盖章不作事实依据） */
   recordProbeResult(input: ProbeRecordInput): void
+  /** 槽位级编译证据回写：模板「事实」状态的唯一写入入口 */
+  recordSlotEvidences(input: SlotEvidenceRecordInput): void
   /** 上游监测回写：最新加载器版本与漂移灯色（不动 verifiedAt） */
   recordUpstreamState(input: UpstreamRecordInput): void
   /** 矩阵门禁回写：灯色（green/yellow）+ matrixHealth 档案；red 留给带错误归因的探针通道 */
@@ -172,16 +186,33 @@ export function createMatrixHealthStore(deps: { path: string }): MatrixHealthSto
         verifiedAt: input.verifiedAt,
         latestLoaderVersion:
           input.latestLoaderVersion ?? overlay.combos[input.comboId]?.latestLoaderVersion,
+        coveredByGate: input.coveredByGate ?? overlay.combos[input.comboId]?.coveredByGate,
         // 门禁档案探针不动（探针无内容注入计数口径）
         matrixHealth: overlay.combos[input.comboId]?.matrixHealth
       }
       if (input.templates) {
         for (const r of input.templates) {
           overlay.templates[r.id] = {
+            ...overlay.templates[r.id],
             verified: r.verified,
             verifiedAt: input.verifiedAt,
             build: r.build
           }
+        }
+      }
+      persist()
+    },
+
+    recordSlotEvidences(input) {
+      syncFromDisk()
+      overlay = structuredClone(overlay)
+      for (const { id, evidence } of input.evidences) {
+        const prev = overlay.templates[id]
+        overlay.templates[id] = {
+          verified: prev?.verified ?? null,
+          verifiedAt: prev?.verifiedAt ?? null,
+          build: prev?.build ?? 'pending',
+          slotEvidence: evidence
         }
       }
       persist()

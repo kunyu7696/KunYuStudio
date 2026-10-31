@@ -20,6 +20,7 @@ import type {
   MatchedErrorPattern,
   ReferenceManifest,
   ReferenceOverlay,
+  SlotEvidence,
   TemplateView,
   VersionFingerprint
 } from '../../../shared/types/aiReference'
@@ -31,6 +32,7 @@ import {
   defaultMatrixHealthPath,
   type MatrixHealthStore,
   type ProbeRecordInput,
+  type SlotEvidenceRecordInput,
   type UpstreamRecordInput
 } from './matrixHealthStore'
 import { contentStamp, createTemplateStore, type CorpusTemplateFile, type TemplateStore } from './templateStore'
@@ -143,17 +145,15 @@ export function loadManifestFromDir(
 /* ------------------------------------------------------------------ */
 
 /**
- * 模板「事实」口径：build=pass，或 verified 为 true / 非空版本串。
+ * 模板「事实」口径：只看槽位级编译证据（slotEvidence.state === 'compiled'）。
  *
- * 参数取 unknown：manifest 历史数据存在脏值（build="verified"/"unverified"、
- * verified=false 布尔），类型层虽然声明为 string|null，运行时仍可能收到布尔，
- * 这里做一次收敛，避免把 verified=false 误判为已签字。
+ * 组合层的 build=pass / verified 签字是「工具链健康」的借来绿灯（最小探针工程
+ * 无示例内容，模板从未进过编译器），不再参与事实判定；历史 overlay/manifest
+ * 里的组合级盖章随之自然失效，无需迁移。「没证据」（skipped/pending/无记录）
+ * 与「通过」（compiled）是两个值。
  */
-export function isFactStatus(build: unknown, verified: unknown): boolean {
-  if (build === 'pass') return true
-  if (verified === true) return true
-  if (typeof verified === 'string' && verified.trim().length > 0) return true
-  return false
+export function isFactStatus(slotEvidence: SlotEvidence | null | undefined): boolean {
+  return slotEvidence?.state === 'compiled'
 }
 
 /* ------------------------------------------------------------------ */
@@ -167,7 +167,7 @@ export interface ReferenceService {
   getManifest(): ReferenceManifest | null
   /**
    * 列出激活组合的模板（inactive 组合永远返回空）。
-   * 默认只返回「事实」模板（build=pass 或已签字）；build=pending 的迁移稿
+   * 默认只返回「事实」模板（槽位级证据 state=compiled）；无证据/未验证稿
    * 仅在 includeCandidates=true 时返回，调用方必须作为候选标注，不得当事实注入。
    */
   listTemplates(
@@ -188,8 +188,10 @@ export interface ReferenceService {
   /** 矩阵单元格（含 inactive，供 UI 展示 33 格：17 既有 + 16 个 1.21.4~1.21.11 待验证） */
   listMatrixCells(): ComboMatrixCell[]
   matchErrorPatterns(loader: LoaderId, version: string, logText: string): MatchedErrorPattern[]
-  /** 探针回写：组合灯色 + 模板逐条 build/verified */
+  /** 探针回写：组合灯色 + coveredByGate（组合级盖章不作事实依据） */
   recordProbeResult(input: ProbeResultInput): void
+  /** 槽位级编译证据回写：模板「事实」状态的唯一写入入口 */
+  recordSlotEvidences(input: SlotEvidenceRecordInput): void
   /** 上游监测回写：最新加载器版本与漂移灯色（不动 verifiedAt；red 由调用方决定是否覆盖） */
   recordUpstreamState(input: UpstreamStateInput): void
   getOverlay(): ReferenceOverlay
@@ -244,9 +246,9 @@ export function createReferenceService(deps: {
         if (t.loader !== loader || t.version !== version) return false
         if (types && types.length > 0 && !types.some((ty) => t.contentTypes.includes(ty))) return false
         if (includeCandidates) return true
-        // 有效状态：overlay 优先，无记录回退 manifest 基线（与 readTemplate 同源）
+        // 事实只看槽位级编译证据；组合级 build/verified（含 manifest 基线）不再参与
         const ov = store.getTemplate(t.id)
-        return isFactStatus(ov ? ov.build : t.build, ov ? ov.verified : t.verified)
+        return isFactStatus(ov?.slotEvidence)
       })
     },
 
@@ -263,6 +265,7 @@ export function createReferenceService(deps: {
         verified: ov ? ov.verified : t.verified,
         verifiedAt: ov ? ov.verifiedAt : t.verifiedAt,
         build: ov ? ov.build : t.build,
+        slotEvidence: ov?.slotEvidence,
         content
       }
       return view
@@ -381,6 +384,10 @@ export function createReferenceService(deps: {
 
     recordProbeResult(input) {
       store.recordProbeResult(input)
+    },
+
+    recordSlotEvidences(input) {
+      store.recordSlotEvidences(input)
     },
 
     recordUpstreamState(input) {

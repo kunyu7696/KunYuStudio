@@ -203,8 +203,8 @@ export function createContextBuilder(service: ReferenceService): ContextBuilder 
           t,
           view,
           content: view?.content ?? '',
-          // 有效状态以 readTemplate 合并 overlay 后的视图为准
-          fact: isFactStatus(view ? view.build : t.build, view ? view.verified : t.verified),
+          // 事实只看槽位级编译证据（readTemplate 合并 overlay 后的视图）
+          fact: isFactStatus(view?.slotEvidence),
           score: scoreTemplate(t.keywords, t.filename, t.type, types, tokens, rawLower)
         }
       })

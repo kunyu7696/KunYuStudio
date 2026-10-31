@@ -1,7 +1,8 @@
 /**
- * 参考包检索门禁（Phase 1）：
- * build=pending 的迁移稿默认不进入检索结果；只有显式 includeCandidates 才返回，
- * 且必须带 [未验证] 前缀、排在事实模板之后。历史脏值（build="unverified"、
+ * 参考包检索门禁（Phase 1 + 字段拆分）：
+ * 无槽位级编译证据的模板默认不进入检索结果；只有显式 includeCandidates 才返回，
+ * 且必须带 [未验证] 前缀、排在事实模板之后。组合层 build=pass / verified 签字
+ * 是「工具链健康」的借来绿灯，不作事实依据；历史脏值（build="unverified"、
  * verified=false 布尔）一律按未验证处理。
  */
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
@@ -122,46 +123,76 @@ afterEach(() => {
 })
 
 describe('isFactStatus', () => {
-  it('只有 pass / 已签字 / 非空版本串算事实', () => {
-    expect(isFactStatus('pass', null)).toBe(true)
-    expect(isFactStatus('pending', '1.20.1')).toBe(true)
-    expect(isFactStatus('pending', null)).toBe(false)
-    expect(isFactStatus('unverified', false)).toBe(false)
-    expect(isFactStatus('pending', '')).toBe(false)
+  it('只有槽位级 compiled 证据算事实；skipped/pending/无记录都不是', () => {
+    expect(isFactStatus({ state: 'compiled', at: '2026-01-01T00:00:00.000Z' })).toBe(true)
+    expect(isFactStatus({ state: 'failed', at: '2026-01-01T00:00:00.000Z' })).toBe(false)
+    expect(isFactStatus({ state: 'skipped', at: '2026-01-01T00:00:00.000Z' })).toBe(false)
+    expect(isFactStatus({ state: 'pending', at: '2026-01-01T00:00:00.000Z' })).toBe(false)
+    expect(isFactStatus(undefined)).toBe(false)
+    expect(isFactStatus(null)).toBe(false)
   })
 })
 
 describe('ReferenceService.listTemplates 门禁', () => {
-  it('默认只返回事实模板，pending 迁移稿不进入检索池', () => {
+  it('组合级 build=pass 不再算事实：无槽位证据时默认检索池为空', () => {
     const svc = createReferenceService({ referenceDir: dir, overlayPath })
-    const list = svc.listTemplates('fabric', '1.20.1')
-    expect(list.map((t) => t.id)).toEqual([PASS_ID])
+    // PASS_ID 在 manifest 里是 build=pass（借来的绿灯），但没有槽位级证据
+    expect(svc.listTemplates('fabric', '1.20.1')).toEqual([])
   })
 
-  it('includeCandidates 才把 pending 稿带出来（脏值仍按未验证处理）', () => {
+  it('recordSlotEvidences 回写 compiled 后，默认视图立刻把它当事实', () => {
     const svc = createReferenceService({ referenceDir: dir, overlayPath })
-    const list = svc.listTemplates('fabric', '1.20.1', undefined, { includeCandidates: true })
-    expect(list.map((t) => t.id)).toContain(PENDING_ID)
-    // build="unverified" / verified=false：不是事实，但作为候选可见
-    expect(list.map((t) => t.id)).toContain(DIRTY_ID)
+    svc.recordSlotEvidences({
+      at: '2026-01-02T00:00:00.000Z',
+      evidences: [{ id: PASS_ID, evidence: { state: 'compiled', at: '2026-01-02T00:00:00.000Z' } }]
+    })
+    expect(svc.listTemplates('fabric', '1.20.1').map((t) => t.id)).toEqual([PASS_ID])
   })
 
-  it('overlay 回写 pass 后，默认视图立刻把它当事实', () => {
+  it('组合级探针盖章（templates build=pass）不再放行任何模板', () => {
     const svc = createReferenceService({ referenceDir: dir, overlayPath })
     svc.recordProbeResult({
       comboId: 'fabric-1.20.1',
       health: 'green',
       verifiedAt: '2026-01-02T00:00:00.000Z',
-      templates: [{ id: PENDING_ID, build: 'pass', verified: '1.20.1' }]
+      templates: [{ id: PENDING_ID, build: 'pass', verified: '1.20.1' }],
+      coveredByGate: []
     })
-    const list = svc.listTemplates('fabric', '1.20.1')
+    expect(svc.listTemplates('fabric', '1.20.1')).toEqual([])
+  })
+
+  it('failed/skipped 证据不放行；includeCandidates 才把无证据稿带出来', () => {
+    const svc = createReferenceService({ referenceDir: dir, overlayPath })
+    svc.recordSlotEvidences({
+      at: '2026-01-02T00:00:00.000Z',
+      evidences: [
+        { id: PENDING_ID, evidence: { state: 'failed', at: '2026-01-02T00:00:00.000Z' } },
+        { id: DIRTY_ID, evidence: { state: 'skipped', at: '2026-01-02T00:00:00.000Z' } }
+      ]
+    })
+    expect(svc.listTemplates('fabric', '1.20.1')).toEqual([])
+    const list = svc.listTemplates('fabric', '1.20.1', undefined, { includeCandidates: true })
     expect(list.map((t) => t.id)).toContain(PENDING_ID)
+    expect(list.map((t) => t.id)).toContain(DIRTY_ID)
   })
 })
 
 describe('ContextBuilder.getTemplateContents 候选标注', () => {
-  it('默认不注入 pending 稿', () => {
+  const compilePass = (svc: ReturnType<typeof createReferenceService>): void =>
+    svc.recordSlotEvidences({
+      at: '2026-01-02T00:00:00.000Z',
+      evidences: [{ id: PASS_ID, evidence: { state: 'compiled', at: '2026-01-02T00:00:00.000Z' } }]
+    })
+
+  it('无槽位证据时默认不注入任何稿（含 manifest build=pass 的历史绿灯）', () => {
     const svc = createReferenceService({ referenceDir: dir, overlayPath })
+    const cb = createContextBuilder(svc)
+    expect(cb.getTemplateContents('fabric', '1.20.1', ['block'], '方块')).toEqual([])
+  })
+
+  it('compiled 证据回写后默认注入事实稿', () => {
+    const svc = createReferenceService({ referenceDir: dir, overlayPath })
+    compilePass(svc)
     const cb = createContextBuilder(svc)
     const got = cb.getTemplateContents('fabric', '1.20.1', ['block'], '方块')
     expect(got.map((t) => t.id)).toEqual([PASS_ID])
@@ -170,6 +201,7 @@ describe('ContextBuilder.getTemplateContents 候选标注', () => {
 
   it('includeCandidates 时候选稿带 [未验证] 前缀且排在事实模板之后', () => {
     const svc = createReferenceService({ referenceDir: dir, overlayPath })
+    compilePass(svc)
     const cb = createContextBuilder(svc)
     const got = cb.getTemplateContents('fabric', '1.20.1', ['block'], '方块', {
       includeCandidates: true

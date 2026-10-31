@@ -10,7 +10,6 @@ import type {
   ProbeStatus
 } from '../../../shared/types/monitor'
 import type { GradleEvent } from '../../../shared/types/build'
-import type { ModLoader } from '../../../shared/types/project'
 import {
   cancelGradle,
   executeGradleBuild,
@@ -34,30 +33,6 @@ const PROBE_TIMEOUT_MS = 30 * 60 * 1000
 const MATCH_LOG_WINDOW = 256 * 1024
 
 const execFileAsync = promisify(execFile)
-
-/** 实测工具链签名（verified 描述串）：版本取自统一版本矩阵，与探针工程实际用法一致 */
-function toolchainSignature(loader: ModLoader, mcVersion: string, javaHome: string | undefined): string {
-  const tc = getToolchain(loader, mcVersion)
-  const jdkNote = `jdk ${tc.jdk}（编译宿主 ${javaHome ?? 'PATH 默认'}）`
-  switch (tc.loader) {
-    case 'fabric':
-      return (
-        `active toolchain: minimal fabric mod gradle build exit 0; ` +
-        `loader ${tc.loaderVersion}, yarn ${tc.yarnVersion}, fabric-api ${tc.fabricVersion}, ` +
-        `loom ${tc.loomVersion}, gradle ${tc.gradleVersion}, ${jdkNote}`
-      )
-    case 'forge':
-      return (
-        `active toolchain: minimal forge mod gradle build exit 0; ` +
-        `forge ${tc.forgeVersion}, forgegradle ${tc.forgeGradleVersion}, gradle ${tc.gradleVersion}, ${jdkNote}`
-      )
-    case 'neoforge':
-      return (
-        `active toolchain: minimal neoforge mod gradle build exit 0; ` +
-        `neoforge ${tc.neoForgeVersion}, moddev ${tc.modDevGradleVersion}, gradle ${tc.gradleVersion}, ${jdkNote}`
-      )
-  }
-}
 
 function javacPath(home: string): string {
   return join(home, 'bin', process.platform === 'win32' ? 'javac.exe' : 'javac')
@@ -231,20 +206,18 @@ export function createProbeService(deps: {
 
       if (ev.exitCode === 0) {
         const at = now().toISOString()
-        const combo = ACTIVE_PROBE_COMBOS[comboId]
-        const verified = toolchainSignature(combo.loader, combo.mcVersion, state.javaHome)
-        const templates = deps.reference
-          // 探针是「让 pending 变成 pass」的唯一入口：必须看到未验证模板，
-          // 否则新装环境下会陷入「没验证就不给看，不给看就永远验证不了」的死循环
-          .listTemplates(combo.loader, combo.mcVersion, undefined, { includeCandidates: true })
-          .map((t) => ({ id: t.id, build: 'pass' as const, verified }))
-        deps.reference.recordProbeResult({ comboId, health: 'green', verifiedAt: at, templates })
+        // 最小探针工程无示例内容：combo green 只证明「工具链健康」，
+        // 不给任何模板盖章（coveredByGate 为空）——模板级事实必须由
+        // referenceVerify 逐文件编译证据（recordSlotEvidences）回写。
+        // 「没验证就不给看，不给看就永远验证不了」的死循环不成立：
+        // 验证走 includeCandidates 拿全量模板，检索只放行已证实的。
+        deps.reference.recordProbeResult({ comboId, health: 'green', verifiedAt: at, coveredByGate: [] })
         finish(
           makeStatus(
             comboId,
             'pass',
             100,
-            `真实编译通过（${templates.length} 个 active 模板标记 pass，用时 ${(ev.durationMs / 1000).toFixed(0)}s）`,
+            `工具链真实编译通过（未注入模板，无槽位盖章，用时 ${(ev.durationMs / 1000).toFixed(0)}s）`,
             'green'
           )
         )

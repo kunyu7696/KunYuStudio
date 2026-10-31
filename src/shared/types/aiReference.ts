@@ -203,10 +203,36 @@ export interface ReferenceManifest {
 
 /* ------------------------- userData overlay（探针回写） ------------------------- */
 
+/**
+ * 槽位级编译证据状态（javac 逐文件归因，referenceVerify 任务回写）。
+ * 纪律：skipped（没跑）与 compiled（通过）必须是两个值——「没证据」不等于「通过」。
+ */
+export type SlotEvidenceState = 'compiled' | 'failed' | 'skipped' | 'pending'
+
+export interface SlotCompileError {
+  file: string
+  line: number
+  col: number
+  code: string
+  message: string
+}
+
+/**
+ * 槽位级编译证据：模板「事实」判定的唯一依据。
+ * 组合层 health/build 只描述工具链健康（矩阵热力图用），不参与事实判定。
+ */
+export interface SlotEvidence {
+  state: SlotEvidenceState
+  at: string
+  errors?: SlotCompileError[]
+}
+
 export interface TemplateOverlayState {
   verified: string | null
   verifiedAt: string | null
   build: BuildStatus
+  /** 槽位级编译证据；无记录 = 从未进过编译器（候选，不是事实） */
+  slotEvidence?: SlotEvidence
 }
 
 export interface ComboOverlayState {
@@ -216,6 +242,11 @@ export interface ComboOverlayState {
   latestLoaderVersion?: string
   /** 组合级门禁健康度档案（矩阵门禁真机构建回写；原存 manifest.matrixHealth，统一后由本层承载） */
   matrixHealth?: MatrixHealthSummary
+  /**
+   * 本次探针/门禁真实注入编译的内容类型（如 ['block','item']）。
+   * 空数组 = 最小探针工程（无示例内容），仅证明工具链健康。
+   */
+  coveredByGate?: string[]
 }
 
 /**
@@ -236,6 +267,8 @@ export interface ReferenceOverlay {
 /** 合并 overlay 后的模板视图（读模板时返回） */
 export interface TemplateView extends ManifestTemplate {
   content: string
+  /** 槽位级编译证据（overlay 合并而来；事实判定唯一依据） */
+  slotEvidence?: SlotEvidence
 }
 
 export interface MatchedErrorPattern {
