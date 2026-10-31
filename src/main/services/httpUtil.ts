@@ -7,7 +7,7 @@
 import { request, ProxyAgent, FormData, getGlobalDispatcher, interceptors, type Dispatcher } from 'undici'
 import { createHash } from 'node:crypto'
 import { createReadStream, createWriteStream } from 'node:fs'
-import { mkdir, stat, unlink } from 'node:fs/promises'
+import { mkdir, open, stat, unlink } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import { PassThrough } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
@@ -231,20 +231,21 @@ export async function httpPostMultipart<T>(
 }
 
 /**
- * 流式下载 URL 到 destPath（自动创建父目录）。
- * 返回写入字节数；非 2xx 抛 HttpUtilError('http')。
- *
- * P1-10 下载完整性：
+ * 下载语义约定（httpDownload / downloadSingleStream / downloadSegmented 共用）：
  * - maxRedirections: 5 —— CF 兜底下载端点是 302，必须跟随；上限防重定向循环。
  * - 429 退避：命中时限流按 Retry-After（缺省 2s/5s）重试。
  * - expected：下完后按文件内容算 sha1/sha256/sha512 与平台权威哈希比对；均无则比 size。
  *   校验失败删除半成品文件并抛 HttpUtilError('http')。
  *
- * 弱网韧性（本次新增）：
+ * 弱网韧性：
  * - 网络抖动/超时/连接被重置时自动重试，并用 HTTP Range 从已落盘字节处断点续传，
  *   不再每次从头开始（此前下载中断只能整包重来，弱网下表现为“反复刷新、始终下不完”）。
  * - 单次尝试使用独立的超时计时（大文件慢速下载不会被总时长掐断）；
  * - 用户主动取消（signal.aborted）不重试，直接失败。
+ *
+ * 多线程分段：
+ * - 大文件且服务端支持 Range 时自动并行分段（见 tryMultithreadDownload 的条件），
+ *   各段独立重试与段内续传，按偏移直接写目标文件；不满足条件自动回退单流。
  */
 export interface DownloadExpected {
   sha1?: string
@@ -330,26 +331,249 @@ async function hashFile(
   return { alg, actual: hash.digest('hex') }
 }
 
-export async function httpDownload(
+/** httpDownload 的可选项（单流与多线程分段共用） */
+export interface HttpDownloadOptions {
+  timeoutMs?: number
+  dispatcher?: Dispatcher
+  signal?: AbortSignal
+  headers?: Record<string, string>
+  expected?: DownloadExpected
+  /** 流式进度回调（逐块触发，调用方自行节流）；totalBytes 未知时为 0 */
+  onProgress?: (loadedBytes: number, totalBytes: number) => void
+  /**
+   * 多线程分段下载：true 强制做 Range 探测；false 禁用；
+   * 缺省仅在 expected.size 达到阈值时探测（大文件零成本启用，小文件不多发请求）
+   */
+  multithread?: boolean
+  /** 分段并发数（2–8，缺省 4） */
+  connections?: number
+  /** 触发多线程的体积阈值（字节，缺省 16MB；测试可调小） */
+  multithreadMinBytes?: number
+}
+
+/** 多线程分段下载默认触发阈值（16MB） */
+const MULTITHREAD_MIN_BYTES = 16 * 1024 * 1024
+/** 单分段最小体积（8MB）：低于该值不再细分，避免碎片请求 */
+const MULTITHREAD_MIN_SEGMENT_BYTES = 8 * 1024 * 1024
+const MULTITHREAD_DEFAULT_CONNECTIONS = 4
+const MULTITHREAD_MAX_CONNECTIONS = 8
+/** HEAD 探测超时上限（不影响正文下载的单次超时） */
+const PROBE_TIMEOUT_CAP_MS = 20_000
+
+/** 服务端声称支持 Range 但正文请求回 200（忽略 Range）时抛出，触发整体回退单流 */
+class RangeNotHonoredError extends Error {}
+
+/** 按 expected 校验已落盘文件（哈希优先，size 兜底）；不符删除文件并抛错 */
+async function assertDownloadIntegrity(
+  destPath: string,
+  expected: DownloadExpected | undefined,
+  url: string
+): Promise<void> {
+  if (!expected) return
+  const bytes = await fileSize(destPath)
+  let mismatch: string | null = null
+  const hashed = await hashFile(destPath, expected)
+  if (hashed) {
+    const want = (expected[hashed.alg] as string).toLowerCase()
+    if (hashed.actual !== want) {
+      mismatch = `${hashed.alg} 不符（期望 ${want.slice(0, 16)}…，实际 ${hashed.actual.slice(0, 16)}…）`
+    }
+  } else if (expected.size && expected.size > 0 && bytes !== expected.size) {
+    mismatch = `大小不符（期望 ${expected.size} 字节，实际 ${bytes} 字节）`
+  }
+  if (mismatch) {
+    await unlink(destPath).catch(() => undefined)
+    throw new HttpUtilError('http', `下载完整性校验失败（${mismatch}）：${url}`)
+  }
+}
+
+/** HEAD 探测远端体积与 Range 支持；不支持/不可达返回 null（调用方回退单流） */
+async function probeRangeCapability(
+  url: string,
+  dispatcher: Dispatcher,
+  timeoutMs: number,
+  headers?: Record<string, string>
+): Promise<{ size: number } | null> {
+  try {
+    const res = await request(url, {
+      method: 'HEAD',
+      dispatcher,
+      signal: AbortSignal.timeout(Math.min(timeoutMs, PROBE_TIMEOUT_CAP_MS)),
+      headers: { ...(headers ?? {}) }
+    })
+    discardBody(res.body)
+    if (res.statusCode >= 400) return null
+    const size = Number(res.headers['content-length']) || 0
+    if (size <= 0) return null
+    const acceptRanges = String(res.headers['accept-ranges'] ?? '').toLowerCase()
+    if (acceptRanges !== 'bytes') return null
+    return { size }
+  } catch {
+    return null
+  }
+}
+
+interface Segment {
+  start: number
+  end: number
+  done: number
+}
+
+/**
+ * 多线程分段下载：按 Range 把文件切成若干段并行拉取，各段独立重试与段内续传，
+ * 直接按偏移写入目标文件（无合并步骤）；完成后由调用方做整体完整性校验。
+ * 服务端对 Range 请求回 200 时抛 RangeNotHonoredError，由调用方清理后回退单流。
+ */
+async function downloadSegmented(
   url: string,
   destPath: string,
-  opts?: {
-    timeoutMs?: number
-    dispatcher?: Dispatcher
-    signal?: AbortSignal
-    headers?: Record<string, string>
-    expected?: DownloadExpected
-    /** 流式进度回调（逐块触发，调用方自行节流）；totalBytes 未知时为 0 */
-    onProgress?: (loadedBytes: number, totalBytes: number) => void
+  size: number,
+  opts: HttpDownloadOptions | undefined,
+  redirecting: Dispatcher,
+  timeoutMs: number
+): Promise<void> {
+  const connections = Math.min(
+    MULTITHREAD_MAX_CONNECTIONS,
+    Math.max(2, opts?.connections ?? MULTITHREAD_DEFAULT_CONNECTIONS)
+  )
+  const segCount = Math.min(
+    connections,
+    Math.max(2, Math.floor(size / MULTITHREAD_MIN_SEGMENT_BYTES))
+  )
+  const segSize = Math.ceil(size / segCount)
+  const segments: Segment[] = []
+  for (let i = 0; i < segCount; i++) {
+    const start = i * segSize
+    const end = Math.min(size, start + segSize) - 1
+    if (end >= start) segments.push({ start, end, done: 0 })
   }
+
+  const fh = await open(destPath, 'w')
+  const report = (): void => {
+    const loaded = segments.reduce((acc, s) => acc + s.done, 0)
+    opts?.onProgress?.(loaded, size)
+  }
+
+  const downloadOne = async (seg: Segment): Promise<void> => {
+    for (let attempt = 1; attempt <= DOWNLOAD_MAX_ATTEMPTS; attempt++) {
+      if (opts?.signal?.aborted) throw new HttpUtilError('network', `下载已取消：${url}`)
+      const from = seg.start + seg.done
+      if (from > seg.end) return
+      const timeoutSignal = AbortSignal.timeout(timeoutMs)
+      const signal = opts?.signal ? AbortSignal.any([opts.signal, timeoutSignal]) : timeoutSignal
+      const headers = { ...(opts?.headers ?? {}), Range: `bytes=${from}-${seg.end}` }
+      let res: Awaited<ReturnType<typeof request>>
+      try {
+        res = await request(url, { method: 'GET', dispatcher: redirecting, signal, headers })
+      } catch (err) {
+        if (attempt < DOWNLOAD_MAX_ATTEMPTS && isTransientDownloadError(err) && !opts?.signal?.aborted) {
+          await new Promise((r) => setTimeout(r, retryDelayMs(attempt)))
+          continue
+        }
+        throw toDownloadError(err, url)
+      }
+      if (res.statusCode === 429 && attempt < DOWNLOAD_MAX_ATTEMPTS) {
+        discardBody(res.body)
+        const retryAfter = Number(res.headers['retry-after'])
+        const waitMs = Number.isFinite(retryAfter) && retryAfter > 0
+          ? Math.min(retryAfter, 30) * 1000
+          : attempt === 1 ? 2000 : 5000
+        await new Promise((r) => setTimeout(r, waitMs))
+        continue
+      }
+      // 416：远端文件变化导致段起点失效 → 重置本段重来
+      if (res.statusCode === 416 && seg.done > 0) {
+        discardBody(res.body)
+        seg.done = 0
+        continue
+      }
+      // 服务端忽略 Range 回 200：多线程不可用，整体回退单流
+      if (res.statusCode === 200) {
+        discardBody(res.body)
+        throw new RangeNotHonoredError(url)
+      }
+      if (res.statusCode !== 206) {
+        discardBody(res.body)
+        throw new HttpUtilError('http', `分段下载失败 HTTP ${res.statusCode}：${url}`, res.statusCode)
+      }
+      try {
+        let pos = from
+        for await (const chunk of res.body as AsyncIterable<Buffer>) {
+          await fh.write(chunk, 0, chunk.length, pos)
+          pos += chunk.length
+          seg.done += chunk.length
+          report()
+        }
+        // 服务端提前结束（字节数少于请求区间）按传输中断处理，从已写偏移续传
+        if (pos <= seg.end) {
+          if (attempt < DOWNLOAD_MAX_ATTEMPTS) {
+            await new Promise((r) => setTimeout(r, retryDelayMs(attempt)))
+            continue
+          }
+          throw new HttpUtilError('network', `分段响应提前结束：${url}`)
+        }
+        return
+      } catch (err) {
+        if (attempt < DOWNLOAD_MAX_ATTEMPTS && isTransientDownloadError(err) && !opts?.signal?.aborted) {
+          await new Promise((r) => setTimeout(r, retryDelayMs(attempt)))
+          continue
+        }
+        throw toDownloadError(err, url)
+      }
+    }
+    throw new HttpUtilError('http', `分段下载失败（已重试 ${DOWNLOAD_MAX_ATTEMPTS} 次）：${url}`)
+  }
+
+  try {
+    await Promise.all(segments.map(downloadOne))
+  } finally {
+    await fh.close()
+  }
+}
+
+/**
+ * 满足条件时执行多线程分段下载：
+ * - multithread === true 强制探测；缺省要求 expected.size 已达阈值（不多发 HEAD）
+ * - 目标已有半成品（上次单流续传残留）时交给单流续传，不混用两种写入方式
+ * - 服务端不支持 Range / 探测失败 / 中途发现 Range 被忽略 → 清理后回退单流
+ * 返回 true 表示多线程已完成（含完整性校验）；false 表示应走单流。
+ */
+async function tryMultithreadDownload(
+  url: string,
+  destPath: string,
+  opts: HttpDownloadOptions | undefined,
+  redirecting: Dispatcher,
+  timeoutMs: number
+): Promise<boolean> {
+  if (opts?.multithread === false || opts?.signal?.aborted) return false
+  const threshold = Math.max(1, opts?.multithreadMinBytes ?? MULTITHREAD_MIN_BYTES)
+  const hinted = (opts?.expected?.size ?? 0) >= threshold
+  if (opts?.multithread !== true && !hinted) return false
+  if ((await fileSize(destPath)) > 0) return false
+  const cap = await probeRangeCapability(url, redirecting, timeoutMs, opts?.headers)
+  if (!cap || cap.size < threshold) return false
+  try {
+    await downloadSegmented(url, destPath, cap.size, opts, redirecting, timeoutMs)
+  } catch (err) {
+    if (err instanceof RangeNotHonoredError) {
+      await unlink(destPath).catch(() => undefined)
+      return false
+    }
+    throw err
+  }
+  await assertDownloadIntegrity(destPath, opts?.expected, url)
+  return true
+}
+
+async function downloadSingleStream(
+  url: string,
+  destPath: string,
+  opts: HttpDownloadOptions | undefined,
+  redirecting: Dispatcher,
+  timeoutMs: number
 ): Promise<number> {
-  await mkdir(dirname(destPath), { recursive: true })
-  // 跟随重定向（CF 兜底下载端点是 302），上限 5 次防循环；超限抛错由调用方兜底
-  const base = opts?.dispatcher ?? (await resolveDispatcher(url)) ?? getGlobalDispatcher()
-  const redirecting = base.compose(interceptors.redirect({ maxRedirections: 5, throwOnMaxRedirect: true }))
-  const timeoutMs = opts?.timeoutMs ?? Math.max(DOWNLOAD_TIMEOUT_FLOOR_MS, networkTimeoutMs())
-  // 断点续传起点：调用方未显式取消时，复用上次已落盘的半成品
-  let resumeFrom = 0
+  // 断点续传起点：复用上次已落盘的半成品（此前恒为 0，跨次调用并未真正续传）
+  let resumeFrom = await fileSize(destPath)
   for (let attempt = 1; attempt <= DOWNLOAD_MAX_ATTEMPTS; attempt++) {
     if (opts?.signal?.aborted) {
       throw new HttpUtilError('network', `下载已取消：${url}`)
@@ -412,24 +636,31 @@ export async function httpDownload(
     }
     const bytes = await fileSize(destPath)
     // 完整性校验：平台哈希（sha512 优先于 sha1）权威，均无则 size 兜底
-    const expected = opts?.expected
-    if (expected) {
-      let mismatch: string | null = null
-      const hashed = await hashFile(destPath, expected)
-      if (hashed) {
-        const want = (expected[hashed.alg] as string).toLowerCase()
-        if (hashed.actual !== want) {
-          mismatch = `${hashed.alg} 不符（期望 ${want.slice(0, 16)}…，实际 ${hashed.actual.slice(0, 16)}…）`
-        }
-      } else if (expected.size && expected.size > 0 && bytes !== expected.size) {
-        mismatch = `大小不符（期望 ${expected.size} 字节，实际 ${bytes} 字节）`
-      }
-      if (mismatch) {
-        await unlink(destPath).catch(() => undefined)
-        throw new HttpUtilError('http', `下载完整性校验失败（${mismatch}）：${url}`)
-      }
-    }
+    await assertDownloadIntegrity(destPath, opts?.expected, url)
     return bytes
   }
   throw new HttpUtilError('http', `下载失败（已重试 ${DOWNLOAD_MAX_ATTEMPTS} 次）：${url}`)
+}
+
+/**
+ * 流式下载 URL 到 destPath（自动创建父目录），返回写入字节数。
+ *
+ * 大文件多线程：满足条件（显式 multithread 或 expected.size 达阈值，且服务端
+ * 支持 Range）时自动切换为分段并行下载；不满足或分段失败可回退时走单流。
+ * 两种写入方式不混用：目标已存在半成品时固定走单流断点续传。
+ */
+export async function httpDownload(
+  url: string,
+  destPath: string,
+  opts?: HttpDownloadOptions
+): Promise<number> {
+  await mkdir(dirname(destPath), { recursive: true })
+  // 跟随重定向（CF 兜底下载端点是 302），上限 5 次防循环；超限抛错由调用方兜底
+  const base = opts?.dispatcher ?? (await resolveDispatcher(url)) ?? getGlobalDispatcher()
+  const redirecting = base.compose(interceptors.redirect({ maxRedirections: 5, throwOnMaxRedirect: true }))
+  const timeoutMs = opts?.timeoutMs ?? Math.max(DOWNLOAD_TIMEOUT_FLOOR_MS, networkTimeoutMs())
+  if (await tryMultithreadDownload(url, destPath, opts, redirecting, timeoutMs)) {
+    return fileSize(destPath)
+  }
+  return downloadSingleStream(url, destPath, opts, redirecting, timeoutMs)
 }
