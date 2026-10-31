@@ -37,3 +37,6 @@ coverage/
 
 # 本地界面调试截图
 .screenshots/
+
+# Trae HTML 分享产物
+.trae-html-share-packages/
