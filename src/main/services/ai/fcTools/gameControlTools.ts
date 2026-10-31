@@ -4,20 +4,30 @@
  * mc_state / mc_screenshot / mc_command / mc_chat / mc_world /
  * mc_observe_entity / mc_inventory / mc_input / mc_ensure_test_world /
  * mc_cleanup_test_world
- * 独立触发：run_game_test（无头 GameTest）/ mc_launch（启动开发客户端）
+ * 独立触发：run_game_test（无头 GameTest）/ mc_launch（启动开发客户端）/
+ * mc_run_test（一键跑完整六阶段游戏测试沙箱，复用 sandboxService 编排）
  *
  * 安全边界：
  * - observer 仅监听 127.0.0.1，且输入注入有 30s/60 次护栏（429 熔断）
  * - 游戏/世界不在线时一律软失败（ok:false + 引导文案），绝不阻断流水线
  * - 写入类工具仅限本地测试世界语义；命令长度与标识符在本地先校验
- * - run_game_test / mc_launch 复用 Gradle 运行槽：已有任务运行时一律软失败，不抢占
+ * - run_game_test / mc_launch / mc_run_test 复用 Gradle 运行槽：已有任务运行时一律软失败，不抢占
  */
+import { isAbsolute, join } from 'node:path'
 import type { RegisteredTool, ToolRegistryDeps, ToolResult } from '../toolRegistry'
 import type { GameTestReport } from '../../../../shared/types/agent'
+import type {
+  SandboxProbeResult,
+  SandboxReport,
+  SandboxStage,
+  SandboxStageRecord,
+  SandboxStageStatus
+} from '../../../../shared/types/sandbox'
 import { hasActiveRun } from '../../gradleService'
+import { createSandboxRunner } from '../../sandboxService'
 import { runGameTestServer } from '../../gameTestRunner'
 import { clipToolText } from './textClip'
-import { clampGameTestTimeout } from './toolPolicy'
+import { clampGameTestTimeout, clampSandboxTimeout } from './toolPolicy'
 import {
   fetchBlockAt,
   fetchGuardStats,
@@ -817,7 +827,243 @@ export function builtinGameControlTools(deps: ToolRegistryDeps): RegisteredTool[
     }
   })
 
+  /* ---------------- mc_run_test：一句话跑完整游戏测试沙箱 ---------------- */
+  // 编排本身复用 sandboxService（六阶段状态机与 IPC 入口同源，此处只做参数适配与结果整形）；
+  // 返回结构化 JSON（text 即 JSON，因编排层只把「ok:true 的 text」回填给模型）。
+  tools.push({
+    kind: 'chat',
+    def: {
+      type: 'function',
+      function: {
+        name: 'mc_run_test',
+        description:
+          '一句话跑完整「游戏测试沙箱」六阶段：构建当前项目 → 启动带 kunyu-observer-agent 的开发客户端 → ' +
+          '自动等待进入世界 → 执行游戏内探针（玩家状态 / 注册表计数 / 世界与实体快照）→ 收集日志、崩溃报告与截图 → ' +
+          '自动关闭客户端。耗时数分钟，过程中会弹出 Minecraft 游戏窗口，期间请勿再点「一键运行」或发起构建。' +
+          '适合改完模组代码后验证功能是否符合预期：一次调用即得到逐阶段状态、逐条探针结果、崩溃根因与产物绝对路径。' +
+          '若客户端未以探针方式（-javaagent）启动，wait-world / probes 会标记 skipped，结果按「环境未就绪」回报而非测试失败。',
+        parameters: {
+          type: 'object',
+          properties: {
+            skipBuild: {
+              type: 'boolean',
+              description: '跳过构建阶段直接启动已有产物（默认 false）；只改了数据资源不想重新编译时置 true'
+            },
+            timeoutMs: {
+              type: 'number',
+              description: '整体超时毫秒（默认 420000，范围 60000..1800000）；超时即取消运行，绝不无限等待'
+            }
+          },
+          required: []
+        }
+      }
+    },
+    visibility: 'project',
+    execute: async (args) => {
+      // 项目根只走 projectRoot（已开启的项目），不接受模型传入的任意路径
+      const root = deps.projectRoot?.()
+      if (!root) return { ok: false, text: '', error: '无打开项目，无法运行游戏测试沙箱' }
+      if (hasActiveRun()) {
+        return {
+          ok: false,
+          text: '',
+          error: '已有 Gradle 任务在运行（构建/客户端），请等其结束后再跑游戏测试沙箱'
+        }
+      }
+      const skipBuild = args['skipBuild'] === true
+      const timeoutMs = clampSandboxTimeout(numArg(args, 'timeoutMs'))
+      const runner = (deps.sandboxRunner ?? createSandboxRunner)()
+
+      // 阶段事件是长任务唯一可观测出口：超时/抛错时仍能回报「卡在哪一段」
+      const liveStages: Partial<Record<SandboxStage, SandboxStageRecord>> = {}
+      const liveProbes: SandboxProbeResult[] = []
+      let liveRunId = ''
+      const run = runner.run({ projectPath: root, skipBuild }, (event) => {
+        liveRunId = event.runId
+        if (event.type === 'phase') liveStages[event.stage] = { status: event.status, detail: event.action }
+        else if (event.type === 'probe') liveProbes.push(event.probe)
+      })
+
+      let timer: ReturnType<typeof setTimeout> | undefined
+      const timedOutSignal = new Promise<{ kind: 'timeout' }>((resolve) => {
+        timer = setTimeout(() => resolve({ kind: 'timeout' }), timeoutMs)
+      })
+      const settled = await Promise.race([
+        run.then(
+          (report) => ({ kind: 'done' as const, report }),
+          (err: unknown) => ({ kind: 'error' as const, err })
+        ),
+        timedOutSignal
+      ]).finally(() => {
+        if (timer !== undefined) clearTimeout(timer)
+      })
+
+      if (settled.kind === 'error') {
+        const stuckAt = currentStage(liveStages)
+        return {
+          ok: false,
+          text: '',
+          error: `游戏测试沙箱异常：${(settled.err as Error).message}（已执行到 ${stuckAt}）`
+        }
+      }
+      const timedOut = settled.kind === 'timeout'
+      if (timedOut) runner.cancel(liveRunId || undefined)
+
+      const report: SandboxReport | null = settled.kind === 'done' ? settled.report : null
+      const stageMap = report?.stages ?? liveStages
+      const probes = report?.probes ?? liveProbes
+
+      // 「探针未挂载 ≠ 测试失败」：参照 DebugView 的 attachHint 判定（wait-world skipped），
+      // 另要求 launch 已 done，以免把「构建/启动失败后连带 skipped」误判成环境未就绪。
+      const envNotReady =
+        stageMap['wait-world']?.status === 'skipped' && stageMap['launch']?.status === 'done'
+      const status: 'passed' | 'failed' | 'env-not-ready' | 'cancelled' | 'timeout' = timedOut
+        ? 'timeout'
+        : report?.cancelled
+          ? 'cancelled'
+          : envNotReady
+            ? 'env-not-ready'
+            : report?.ok
+              ? 'passed'
+              : 'failed'
+      const ok = status === 'passed' || status === 'env-not-ready'
+
+      const stages: Record<string, { status: string; detail: string }> = {}
+      for (const s of SANDBOX_STAGE_ORDER) {
+        const rec = stageMap[s]
+        stages[s] = { status: stageStepStatus(rec?.status), detail: rec?.detail ?? '未执行' }
+      }
+      const diagnosis = report?.diagnosis ?? null
+      const crash = diagnosis
+        ? {
+            category: diagnosis.category,
+            headline: diagnosis.headline,
+            cause: diagnosis.cause,
+            suggestion: diagnosis.suggestion,
+            reportPath: diagnosis.reportPath ? absoluteArtifact(root, diagnosis.reportPath) : null
+          }
+        : null
+      const artifacts = {
+        screenshot: report?.screenshotPath ?? null,
+        crashReport: crash?.reportPath ?? null,
+        modsManifest: report?.modsManifest ?? []
+      }
+      const hint = sandboxHint({ status, stageMap, failedProbes: probes.filter((p) => !p.ok), crash, timeoutMs })
+
+      const payload = {
+        // 环境未就绪（wait-world skipped）时没有测试结论，ok 视为 true，不把「探针未挂载」当测试失败
+        ok,
+        status,
+        runId: report?.runId ?? liveRunId,
+        skipBuild,
+        timeoutMs,
+        durationMs: report?.durationMs ?? null,
+        exitCode: report?.exitCode ?? null,
+        cancelled: report?.cancelled ?? false,
+        stages,
+        probes: probes.map((p) => ({
+          name: p.name,
+          ok: p.ok,
+          verdict: p.ok ? 'pass' : 'fail',
+          detail: p.detail
+        })),
+        crash,
+        artifacts,
+        hint
+      }
+      return {
+        // 工具级 ok 恒为 true：编排层在 ok:false 时只把 error 文本回填给模型（结构化 data 会丢），
+        // 测试结论统一放在 payload.ok / payload.status。
+        ok: true,
+        text: clipToolText(JSON.stringify(payload, null, 2)),
+        data: payload
+      }
+    }
+  })
+
   return tools
+}
+
+/** 沙箱六阶段顺序（与 sandboxService STAGE_ORDER 一致，用于输出齐全的阶段表） */
+const SANDBOX_STAGE_ORDER: SandboxStage[] = ['build', 'launch', 'wait-world', 'probes', 'collect', 'shutdown']
+
+/** 事件流里最近一个 running 阶段；没有则取最后出现的阶段（用于「卡在哪」文案） */
+function currentStage(stages: Partial<Record<SandboxStage, SandboxStageRecord>>): string {
+  const running = SANDBOX_STAGE_ORDER.find((s) => stages[s]?.status === 'running')
+  if (running) return running
+  const seen = SANDBOX_STAGE_ORDER.filter((s) => stages[s])
+  return seen[seen.length - 1] ?? '尚未开始'
+}
+
+/** SandboxStageStatus → 工具回报用状态词（与 DebugView 的 el-steps 语义一致） */
+function stageStepStatus(status?: SandboxStageStatus): string {
+  switch (status) {
+    case 'running':
+      return 'process'
+    case 'done':
+      return 'success'
+    case 'failed':
+      return 'error'
+    case 'skipped':
+      return 'skipped'
+    default:
+      return 'wait'
+  }
+}
+
+/** 产物路径统一为绝对路径（沙箱报告里 crash-report 是项目内相对路径） */
+function absoluteArtifact(root: string, relPath: string): string {
+  return isAbsolute(relPath) ? relPath : join(root, relPath)
+}
+
+/** 失败/未就绪时的下一步建议（给模型看的 hint） */
+function sandboxHint(input: {
+  status: 'passed' | 'failed' | 'env-not-ready' | 'cancelled' | 'timeout'
+  stageMap: Partial<Record<SandboxStage, SandboxStageRecord>>
+  failedProbes: SandboxProbeResult[]
+  crash: { suggestion: string } | null
+  timeoutMs: number
+}): string | null {
+  const { status, stageMap, failedProbes, crash, timeoutMs } = input
+  if (status === 'passed') return null
+  if (status === 'env-not-ready') {
+    return (
+      '环境未就绪（不是测试失败）：客户端未以探针方式启动（-javaagent kunyu-observer-agent 未挂载），' +
+      'wait-world / probes 已跳过，本次没有测试结论。' +
+      '补救：在 KunYuStudio 界面用「一键运行」重启开发客户端（启动器会自动装入 kunyu-observer-agent），' +
+      '确认进入世界后再重试 mc_run_test。详情：' +
+      (stageMap['wait-world']?.detail ?? '（无）')
+    )
+  }
+  if (status === 'timeout') {
+    return (
+      `整体超时（${timeoutMs}ms）已请求取消，卡在「${currentStage(stageMap)}」阶段。` +
+      '可调大 timeoutMs 后重试；若卡在 build，先用 error_analyze 看日志摘要并修复编译错误。'
+    )
+  }
+  if (status === 'cancelled') {
+    return '本次运行被取消，没有测试结论；需要结论请重新调用 mc_run_test。'
+  }
+  if (crash) return `按崩溃根因修复后再跑：${crash.suggestion}`
+  if (stageMap['build']?.status === 'failed') {
+    return '构建失败：先修编译错误再重试；只改了数据资源（json/贴图/语言）可置 skipBuild=true 跳过构建。'
+  }
+  if (stageMap['launch']?.status === 'failed') {
+    return (
+      '客户端未能启动（超时或提前退出）：确认 JDK 可用、run/ 目录正常、无其他 Gradle 任务占用；' +
+      '日志见 run/logs/latest.log。'
+    )
+  }
+  if (stageMap['wait-world']?.status === 'failed') {
+    return '等待进入世界超时：请确认客户端能正常进入本地测试世界（超平坦创造），必要时手动进世界后重试。'
+  }
+  if (failedProbes.length > 0) {
+    return (
+      `有 ${failedProbes.length} 条探针未通过（${failedProbes.map((p) => p.name).join('、')}）：` +
+      '看 probes[].detail 定位失败原因，修复后用 mc_state / mc_test_scenario 复核同一现场。'
+    )
+  }
+  return '测试未通过：按 stages 各阶段的 detail 定位卡点后再重试。'
 }
 
 /** GameTestReport → 中文回执（含失败明细） */

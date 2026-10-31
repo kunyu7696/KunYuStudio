@@ -495,7 +495,11 @@ export function builtinFabricTools(deps: ToolRegistryDeps): RegisteredTool[] {
         const query = asString(args['query']).trim().toLowerCase()
         const type = asString(args['type']).trim() as ContentType
         let list = reference.listTemplates('fabric', mc, type ? [type] : undefined)
-        if (list.length === 0) {
+        // 组合未激活才退一步扫 manifest；active 组合的 pending 迁移稿不在这里列出
+        // （门禁：未验证模板不得作为可用事实暴露）
+        const actives = reference.getManifest()?.scopeControl?.m7ActiveVersions ?? []
+        const comboActive = actives.some((a) => a.loader === 'fabric' && a.version === mc)
+        if (list.length === 0 && !comboActive) {
           // 组合未激活时退一步：直接扫 manifest 的 fabric 模板（仍可读）
           const all = reference.getManifest()?.templates.filter((t) => t.loader === 'fabric') ?? []
           list = all.filter((t) => !type || t.contentTypes.includes(type))

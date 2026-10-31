@@ -124,6 +124,16 @@ export type TagRegistryKind =
   | 'game_event'
   | 'enchantment'
 
+/** 全部受支持的标签注册表（UI 选项与主进程扫描共用同一来源，避免各处硬编码） */
+export const TAG_REGISTRY_KINDS: readonly TagRegistryKind[] = [
+  'block',
+  'item',
+  'entity_type',
+  'fluid',
+  'game_event',
+  'enchantment'
+]
+
 const TAG_PLURAL: Record<TagRegistryKind, string> = {
   block: 'blocks',
   item: 'items',

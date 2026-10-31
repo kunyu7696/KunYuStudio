@@ -16,7 +16,6 @@ const PUSH_CHANNEL_WHITELIST: ReadonlySet<string> = new Set<string>([
   IpcChannels.AGENT_EVENT,
   IpcChannels.MONITOR_EVENT,
   IpcChannels.MODEL_EVENT,
-  IpcChannels.SANDBOX_EVENT,
   IpcChannels.WIN_MAXIMIZED_CHANGED,
   IpcChannels.UPDATE_STATE_CHANGED,
   IpcChannels.INTEGRATION_AUTH_REQUEST,
@@ -250,7 +249,15 @@ const api: IpcApi = {
     writeEntry: (root, category, id, content, mode) =>
       ipcRenderer.invoke(IpcChannels.DATAPACK_WRITE_ENTRY, root, category, id, content, mode),
     deleteEntry: (root, category, id, mode) =>
-      ipcRenderer.invoke(IpcChannels.DATAPACK_DELETE_ENTRY, root, category, id, mode)
+      ipcRenderer.invoke(IpcChannels.DATAPACK_DELETE_ENTRY, root, category, id, mode),
+    listTagEntries: (root) =>
+      ipcRenderer.invoke(IpcChannels.DATAPACK_LIST_TAG_ENTRIES, root),
+    readTagEntry: (root, registry, id) =>
+      ipcRenderer.invoke(IpcChannels.DATAPACK_READ_TAG_ENTRY, root, registry, id),
+    writeTagEntry: (root, registry, id, content) =>
+      ipcRenderer.invoke(IpcChannels.DATAPACK_WRITE_TAG_ENTRY, root, registry, id, content),
+    deleteTagEntry: (root, registry, id) =>
+      ipcRenderer.invoke(IpcChannels.DATAPACK_DELETE_TAG_ENTRY, root, registry, id)
   },
   shaderpack: {
     getMeta: (root) => ipcRenderer.invoke(IpcChannels.SHADERPACK_GET_META, root),
@@ -546,10 +553,6 @@ const api: IpcApi = {
     importJar: (input) => ipcRenderer.invoke(IpcChannels.PROFILE_IMPORT_JAR, input),
     importJfr: (input) => ipcRenderer.invoke(IpcChannels.PROFILE_IMPORT_JFR, input),
     importSpark: (input) => ipcRenderer.invoke(IpcChannels.PROFILE_IMPORT_SPARK, input)
-  },
-  sandbox: {
-    run: (config) => ipcRenderer.invoke(IpcChannels.SANDBOX_RUN, config),
-    cancel: (runId) => ipcRenderer.invoke(IpcChannels.SANDBOX_CANCEL, runId)
   },
   launcher: {
     detect: () => ipcRenderer.invoke(IpcChannels.LAUNCHER_DETECT),

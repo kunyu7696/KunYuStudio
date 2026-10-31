@@ -22,6 +22,11 @@ export interface SandboxConfig {
   launchTimeoutMs?: number
   /** 等待进入世界超时（毫秒，默认 120000） */
   waitWorldTimeoutMs?: number
+  /**
+   * 跳过构建阶段直接启动已有产物（默认 false）。
+   * 仅改了数据资源且不想重新编译时使用，此时 build 阶段标记为 skipped。
+   */
+  skipBuild?: boolean
 }
 
 /** 单条探针结果 */

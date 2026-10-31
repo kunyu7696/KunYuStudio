@@ -218,25 +218,30 @@ export function createSandboxRunner(deps: SandboxDeps = {}): {
     // ---------------- build ----------------
     // 先注册 gradle 运行再发阶段事件，保证 running 期间 cancel 能杀到进程；
     // 启动器同步抛错（如缺 wrapper）也要落成失败报告而非让整个 run reject
-    let buildResult: GradleDone
-    try {
-      const buildRun = launchGradle({ root: config.projectPath, tasks: ['build'], javaHome })
-      stage('build', 'running', '正在构建（gradlew build）…')
-      buildResult = await buildRun.done
-    } catch (err) {
-      stage('build', 'failed', `无法启动构建：${errMsg(err)}`)
-      finalizeCollect()
-      return finish(report, state, startMs, now, sink, false)
+    if (config.skipBuild) {
+      // skipBuild：仅改了数据资源时不重编译，直接启动已有产物
+      stage('build', 'skipped', '已跳过构建（skipBuild）：直接启动已有产物')
+    } else {
+      let buildResult: GradleDone
+      try {
+        const buildRun = launchGradle({ root: config.projectPath, tasks: ['build'], javaHome })
+        stage('build', 'running', '正在构建（gradlew build）…')
+        buildResult = await buildRun.done
+      } catch (err) {
+        stage('build', 'failed', `无法启动构建：${errMsg(err)}`)
+        finalizeCollect()
+        return finish(report, state, startMs, now, sink, false)
+      }
+      if (state.canceled) {
+        return finish(report, state, startMs, now, sink, true)
+      }
+      if (buildResult.exitCode !== 0) {
+        stage('build', 'failed', `构建失败（退出码 ${buildResult.exitCode ?? '?'}）`)
+        finalizeCollect()
+        return finish(report, state, startMs, now, sink, false)
+      }
+      stage('build', 'done', '构建成功')
     }
-    if (state.canceled) {
-      return finish(report, state, startMs, now, sink, true)
-    }
-    if (buildResult.exitCode !== 0) {
-      stage('build', 'failed', `构建失败（退出码 ${buildResult.exitCode ?? '?'}）`)
-      finalizeCollect()
-      return finish(report, state, startMs, now, sink, false)
-    }
-    stage('build', 'done', '构建成功')
 
     // ---------------- launch ----------------
     const launchTimeoutMs = config.launchTimeoutMs ?? DEFAULT_LAUNCH_TIMEOUT_MS

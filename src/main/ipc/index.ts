@@ -19,7 +19,6 @@ import { registerObserverHandlers } from './handlers/observerHandlers'
 import { registerMarketHandlers } from './handlers/marketHandlers'
 import { registerModLibraryHandlers } from './handlers/modLibraryHandlers'
 import { registerProfileHandlers } from './handlers/profileHandlers'
-import { registerSandboxHandlers } from './handlers/sandboxHandlers'
 import { registerLauncherHandlers } from './handlers/launcherHandlers'
 import { registerEditorPackHandlers } from './handlers/editorPackHandlers'
 import { registerModpackHandlers } from './handlers/modpackHandlers'
@@ -85,7 +84,6 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   registerMarketHandlers(ctx)
   registerModLibraryHandlers(ctx)
   registerProfileHandlers(ctx)
-  registerSandboxHandlers()
   registerLauncherHandlers(ctx)
   registerEditorPackHandlers(ctx)
   registerModpackHandlers(ctx)

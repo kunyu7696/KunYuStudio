@@ -337,11 +337,7 @@ export const IpcChannels = {
   PROFILE_IMPORT_JAR: 'profile:import-jar',
   PROFILE_IMPORT_JFR: 'profile:import-jfr',
   PROFILE_IMPORT_SPARK: 'profile:import-spark',
-  // M10 游戏测试沙箱
-  SANDBOX_RUN: 'sandbox:run',
-  SANDBOX_CANCEL: 'sandbox:cancel',
-  SANDBOX_EVENT: 'sandbox:event',
-  // M11 启动器集成
+  // M11 启动器集成（整合包启动测试依赖：实例选择/批量导入/启动）
   LAUNCHER_DETECT: 'launcher:detect',
   LAUNCHER_LIST_INSTANCES: 'launcher:list-instances',
   LAUNCHER_IMPORT: 'launcher:import',
@@ -359,6 +355,10 @@ export const IpcChannels = {
   DATAPACK_READ_ENTRY: 'datapack:read-entry',
   DATAPACK_WRITE_ENTRY: 'datapack:write-entry',
   DATAPACK_DELETE_ENTRY: 'datapack:delete-entry',
+  DATAPACK_LIST_TAG_ENTRIES: 'datapack:list-tag-entries',
+  DATAPACK_READ_TAG_ENTRY: 'datapack:read-tag-entry',
+  DATAPACK_WRITE_TAG_ENTRY: 'datapack:write-tag-entry',
+  DATAPACK_DELETE_TAG_ENTRY: 'datapack:delete-tag-entry',
   // 光影包编辑器（P0）
   SHADERPACK_GET_META: 'shaderpack:get-meta',
   SHADERPACK_INIT: 'shaderpack:init',
@@ -1602,12 +1602,8 @@ export interface IpcApi {
       error?: string
     }>
   }
-  /** M10 游戏测试沙箱：事件订阅走通用 on(SANDBOX_EVENT) */
-  sandbox: {
-    run(config: import('./sandbox').SandboxConfig): Promise<import('./sandbox').SandboxReport>
-    cancel(runId?: string): Promise<boolean>
-  }
-  /** M11 启动器集成：检测/实例/导入/激活/启动；事件走通用 on(LAUNCHER_EVENT) */
+  /** M11 启动器集成：检测/实例/导入/激活/启动；事件走通用 on(LAUNCHER_EVENT)。
+   *  活动栏入口已下线，接口保留给「整合包组装」的启动测试使用。 */
   launcher: {
     /** 扫描本机常见路径，自动检测已安装启动器 */
     detect(): Promise<import('./launcher').DetectResult>
@@ -1617,7 +1613,7 @@ export interface IpcApi {
     import(input: import('./launcher').ImportInput): Promise<import('./launcher').ImportResult>
     /** 设置当前激活实例（用于版本切换） */
     setActive(instanceId: string): Promise<boolean>
-    /** 调用启动器启动指定实例（M11 仅启动；沙箱联动留 M10 增强） */
+    /** 调用启动器启动指定实例 */
     launch(instanceId: string): Promise<boolean>
     /** 手动添加启动器（autoDetected=false） */
     add(input: import('./launcher').AddLauncherInput): Promise<import('./launcher').LauncherInfo>
@@ -1656,6 +1652,19 @@ export interface IpcApi {
     ): Promise<import('../schemas/datapack.schema').DataPackEntry>
     /** 删除条目文件 */
     deleteEntry(root: string, category: string, id: string, mode: PackLayoutMode): Promise<boolean>
+    /** 扫描全部标签注册表（tags/<registry>）的条目 */
+    listTagEntries(root: string): Promise<import('../schemas/datapack.schema').DataPackTagEntry[]>
+    /** 读取指定注册表标签 JSON 原始文本 */
+    readTagEntry(root: string, registry: string, id: string): Promise<string>
+    /** 写入指定注册表标签 JSON（新建或覆盖） */
+    writeTagEntry(
+      root: string,
+      registry: string,
+      id: string,
+      content: string
+    ): Promise<import('../schemas/datapack.schema').DataPackTagEntry>
+    /** 删除指定注册表标签 JSON */
+    deleteTagEntry(root: string, registry: string, id: string): Promise<boolean>
   }
   /** 光影包编辑器（P0）：元数据、初始化与 shader 文件读写删 */
   shaderpack: {

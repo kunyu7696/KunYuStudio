@@ -7,6 +7,7 @@ import { describe, expect, test } from 'vitest'
 import {
   annotateToolDescription,
   clampGameTestTimeout,
+  clampSandboxTimeout,
   resolveVisibility,
   TOOL_BEHAVIOR_LABELS,
   TOOL_BEHAVIORS,
@@ -142,6 +143,25 @@ describe('clampGameTestTimeout', () => {
     expect(clampGameTestTimeout(1)).toBe(TOOL_TIMEOUTS.gameTestMin)
     expect(clampGameTestTimeout(0)).toBe(TOOL_TIMEOUTS.gameTestMin)
     expect(clampGameTestTimeout(999_999)).toBe(TOOL_TIMEOUTS.gameTestMax)
+  })
+})
+
+describe('clampSandboxTimeout', () => {
+  test('缺省取沙箱既有启动+等待世界上限之和（永不无限等待）', () => {
+    expect(clampSandboxTimeout()).toBe(TOOL_TIMEOUTS.sandboxRunDefault)
+    expect(clampSandboxTimeout(undefined)).toBe(420_000)
+  })
+
+  test('低于下限夹到下限，高于上限夹到上限', () => {
+    expect(clampSandboxTimeout(1)).toBe(TOOL_TIMEOUTS.sandboxRunMin)
+    expect(clampSandboxTimeout(999_999_999)).toBe(TOOL_TIMEOUTS.sandboxRunMax)
+    expect(clampSandboxTimeout(300_000)).toBe(300_000)
+  })
+
+  test('mc_run_test 归入 external-effect（构建 + 起进程 + 操控游戏）', () => {
+    expect(TOOL_BEHAVIORS['mc_run_test']).toBe('external-effect')
+    expect(TOOL_ROUTING['mc_run_test']).toContain('mc_test_scenario')
+    expect(TOOL_ROUTING['mc_run_test']).toContain('gradle_build')
   })
 })
 

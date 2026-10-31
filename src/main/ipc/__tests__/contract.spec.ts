@@ -95,7 +95,6 @@ const PUSH_CHANNELS: readonly string[] = [
   IpcChannels.AGENT_EVENT,
   IpcChannels.MONITOR_EVENT,
   IpcChannels.MODEL_EVENT,
-  IpcChannels.SANDBOX_EVENT,
   IpcChannels.WIN_MAXIMIZED_CHANGED,
   IpcChannels.UPDATE_STATE_CHANGED,
   IpcChannels.INTEGRATION_AUTH_REQUEST,

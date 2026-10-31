@@ -23,6 +23,11 @@ import { tmpdir } from 'node:os'
 vi.mock('electron', () => ({ default: join(tmpdir(), `kunyu-fake-electron-${process.pid}`) }))
 import { createToolRegistry, type ToolRegistryDeps } from '../toolRegistry'
 import type { GameTestReport } from '../../../../shared/types/agent'
+import type {
+  SandboxConfig,
+  SandboxReport,
+  SandboxStage
+} from '../../../../shared/types/sandbox'
 
 const CTX = { loader: 'fabric' as const, mcVersion: '1.20.1' }
 
@@ -471,5 +476,265 @@ describe('P0b 游戏控制 FC 工具', () => {
     }).executeTool('mc_launch', {}, CTX)
     expect(noProj.ok).toBe(false)
     expect(noProj.error).toContain('无打开项目')
+  })
+})
+
+/**
+ * mc_run_test：注入 fake sandboxRunner（真实编排由 sandboxService 单测覆盖），
+ * 这里只验证参数透传、阶段/探针整形与两条关键语义（环境未就绪、阶段可观测）。
+ */
+describe('mc_run_test 游戏测试沙箱工具', () => {
+  type SandboxPort = NonNullable<ToolRegistryDeps['sandboxRunner']>
+
+  const fullStages: SandboxReport['stages'] = {
+    build: { status: 'done', detail: '构建成功' },
+    launch: { status: 'done', detail: '客户端已启动' },
+    'wait-world': { status: 'done', detail: '已进入世界：(0, 64, 0) creative [kunyu-observer]' },
+    probes: { status: 'done', detail: '3/3 条探针通过（kunyu-observer HTTP）' },
+    collect: { status: 'done', detail: '日志发现 0 条问题' },
+    shutdown: { status: 'done', detail: '客户端已退出（码 0）' }
+  }
+
+  const reportOf = (overrides: Partial<SandboxReport> = {}): SandboxReport => ({
+    runId: 'run-1',
+    ok: true,
+    startedAt: '2026-11-01T00:00:00.000Z',
+    durationMs: 12_000,
+    stages: fullStages,
+    probes: [
+      { name: '世界与玩家状态（kunyu-observer）', ok: true, detail: '玩家 KunYu @ (0.0, 64.0, 0.0)，creative' },
+      { name: '注册表内容计数（kunyu-observer）', ok: true, detail: 'BLOCK 1024 项' },
+      { name: '世界与实体快照（kunyu-observer）', ok: true, detail: '维度 minecraft:overworld' }
+    ],
+    logFindings: [],
+    diagnosis: null,
+    screenshotPath: 'C:/Temp/kunyu-observer-sandbox-run-1.png',
+    exitCode: 0,
+    modsManifest: ['demo-1.0.0.jar'],
+    cancelled: false,
+    ...overrides
+  })
+
+  /** 用报告回放阶段/探针事件，与真实 runner 的 sink 行为一致 */
+  const runnerOf = (
+    report: SandboxReport,
+    configs: SandboxConfig[] = [],
+    cancels: string[] = []
+  ): SandboxPort =>
+    () => ({
+      run: async (config, sink) => {
+        configs.push(config)
+        for (const [stage, rec] of Object.entries(report.stages)) {
+          sink({
+            type: 'phase',
+            runId: report.runId,
+            stage: stage as SandboxStage,
+            status: rec!.status,
+            action: rec!.detail
+          })
+        }
+        for (const probe of report.probes) sink({ type: 'probe', runId: report.runId, probe })
+        sink({ type: 'report', runId: report.runId, report })
+        return report
+      },
+      cancel: (runId?: string) => {
+        cancels.push(runId ?? '')
+      }
+    })
+
+  const payloadOf = (data: unknown): Record<string, unknown> => data as Record<string, unknown>
+
+  test('需项目上下文才暴露；无项目时软失败', async () => {
+    expect(createToolRegistry({}).getToolDefinitions().map((d) => d.function.name)).not.toContain(
+      'mc_run_test'
+    )
+    const reg = createToolRegistry({ projectRoot: () => 'D:/proj' })
+    expect(reg.has('mc_run_test')).toBe(true)
+    expect(reg.getToolDefinitions().map((d) => d.function.name)).toContain('mc_run_test')
+
+    const noProj = await createToolRegistry({}).executeTool('mc_run_test', {}, CTX)
+    expect(noProj.ok).toBe(false)
+    // project 可见性规则在入库时门控：无项目直接不可用
+    expect(noProj.error).toContain('不可用')
+  })
+
+  test('通过时返回结构化 JSON：六阶段、逐条探针、产物绝对路径', async () => {
+    const report = reportOf()
+    const reg = createToolRegistry({
+      projectRoot: () => 'D:/proj',
+      sandboxRunner: runnerOf(report)
+    })
+    const r = await reg.executeTool('mc_run_test', {}, CTX)
+    expect(r.ok).toBe(true)
+    // text 即结构化 JSON（编排层只回填 ok:true 的 text）
+    expect(JSON.parse(r.text)).toMatchObject({ ok: true, status: 'passed', runId: 'run-1' })
+
+    const payload = payloadOf(r.data)
+    expect(payload['ok']).toBe(true)
+    expect(payload['status']).toBe('passed')
+    expect(payload['hint']).toBeNull()
+    const stages = payload['stages'] as Record<string, { status: string; detail: string }>
+    expect(Object.keys(stages)).toEqual(['build', 'launch', 'wait-world', 'probes', 'collect', 'shutdown'])
+    expect(stages['build']).toEqual({ status: 'success', detail: '构建成功' })
+    expect(stages['wait-world'].status).toBe('success')
+    const probes = payload['probes'] as Array<{ name: string; verdict: string; detail: string }>
+    expect(probes).toHaveLength(3)
+    expect(probes.every((p) => p.verdict === 'pass')).toBe(true)
+    expect(payload['crash']).toBeNull()
+    expect((payload['artifacts'] as Record<string, unknown>)['screenshot']).toBe(
+      'C:/Temp/kunyu-observer-sandbox-run-1.png'
+    )
+    expect(payload['timeoutMs']).toBe(420_000)
+  })
+
+  test('探针未挂载（wait-world skipped）→ 环境未就绪，ok 不为 false', async () => {
+    const report = reportOf({
+      ok: false,
+      probes: [],
+      stages: {
+        build: { status: 'done', detail: '构建成功' },
+        launch: { status: 'done', detail: '客户端已启动' },
+        'wait-world': {
+          status: 'skipped',
+          detail: 'kunyu-observer 离线：请确认客户端以 -javaagent 方式启动'
+        },
+        probes: { status: 'skipped', detail: '游戏观察通道离线，探针跳过' },
+        collect: { status: 'done', detail: '日志发现 0 条问题' },
+        shutdown: { status: 'done', detail: '客户端已退出（码 0）' }
+      }
+    })
+    const reg = createToolRegistry({
+      projectRoot: () => 'D:/proj',
+      sandboxRunner: runnerOf(report)
+    })
+    const r = await reg.executeTool('mc_run_test', {}, CTX)
+    expect(r.ok).toBe(true)
+    const payload = payloadOf(r.data)
+    expect(payload['status']).toBe('env-not-ready')
+    expect(payload['ok']).toBe(true)
+    expect(payload['hint']).toContain('-javaagent')
+    expect(payload['hint']).toContain('不是测试失败')
+    const stages = payload['stages'] as Record<string, { status: string }>
+    expect(stages['wait-world'].status).toBe('skipped')
+    expect(stages['probes'].status).toBe('skipped')
+  })
+
+  test('构建失败后连带 skipped 不算环境未就绪；给出构建修复 hint', async () => {
+    const report = reportOf({
+      ok: false,
+      probes: [],
+      stages: {
+        build: { status: 'failed', detail: '构建失败（退出码 1）' },
+        launch: { status: 'skipped', detail: '启动失败，后续阶段跳过' },
+        'wait-world': { status: 'skipped', detail: '启动失败，后续阶段跳过' },
+        probes: { status: 'skipped', detail: '启动失败，后续阶段跳过' },
+        collect: { status: 'skipped', detail: '未执行' },
+        shutdown: { status: 'skipped', detail: '未执行' }
+      }
+    })
+    const reg = createToolRegistry({
+      projectRoot: () => 'D:/proj',
+      sandboxRunner: runnerOf(report)
+    })
+    const r = await reg.executeTool('mc_run_test', {}, CTX)
+    const payload = payloadOf(r.data)
+    expect(payload['status']).toBe('failed')
+    expect(payload['ok']).toBe(false)
+    expect(payload['hint']).toContain('构建失败')
+    expect(payload['hint']).toContain('skipBuild=true')
+  })
+
+  test('探针失败 + 崩溃诊断：带 headline/suggestion，hint 指向根因', async () => {
+    const report = reportOf({
+      ok: false,
+      probes: [
+        { name: '世界与玩家状态（kunyu-observer）', ok: false, detail: 'observer 503：玩家尚未进入世界' },
+        { name: '注册表内容计数（kunyu-observer）', ok: true, detail: 'BLOCK 1024 项' }
+      ],
+      diagnosis: {
+        category: 'mixin',
+        headline: 'Mixin 注入失败',
+        cause: '@Inject 目标方法签名不匹配',
+        evidence: ['java.lang.NoSuchMethodError'],
+        suggestion: '核对目标方法签名后修正 @Inject 注解',
+        reportPath: 'run/crash-reports/crash-2026-11-01_10.00.00.txt'
+      }
+    })
+    const reg = createToolRegistry({
+      projectRoot: () => 'D:/proj',
+      sandboxRunner: runnerOf(report)
+    })
+    const r = await reg.executeTool('mc_run_test', {}, CTX)
+    const payload = payloadOf(r.data)
+    expect(payload['status']).toBe('failed')
+    const crash = payload['crash'] as Record<string, string>
+    expect(crash['headline']).toBe('Mixin 注入失败')
+    expect(crash['suggestion']).toContain('@Inject')
+    expect(payload['hint']).toContain('按崩溃根因修复')
+    // 相对 crash-report 路径补成绝对路径（项目根 + 报告文件名，平台分隔符随系统）
+    const crashReport = (payload['artifacts'] as Record<string, unknown>)['crashReport'] as string
+    expect(crashReport).toContain('crash-2026-11-01_10.00.00.txt')
+    expect(crashReport.startsWith('D:/proj') || crashReport.startsWith('D:\\proj')).toBe(true)
+    const probes = payload['probes'] as Array<{ name: string; verdict: string }>
+    expect(probes.some((p) => p.verdict === 'fail')).toBe(true)
+  })
+
+  test('skipBuild 透传到沙箱配置', async () => {
+    const configs: SandboxConfig[] = []
+    const report = reportOf({
+      stages: {
+        ...fullStages,
+        build: { status: 'skipped', detail: '已跳过构建（skipBuild）：直接启动已有产物' }
+      }
+    })
+    const reg = createToolRegistry({
+      projectRoot: () => 'D:/proj',
+      sandboxRunner: runnerOf(report, configs)
+    })
+    const r = await reg.executeTool('mc_run_test', { skipBuild: true }, CTX)
+    expect(configs[0]).toMatchObject({ projectPath: 'D:/proj', skipBuild: true })
+    const payload = payloadOf(r.data)
+    expect(payload['skipBuild']).toBe(true)
+    expect((payload['stages'] as Record<string, { status: string }>)['build'].status).toBe('skipped')
+  })
+
+  test('整体超时：取消运行并回报卡住的阶段（不只回错误字符串）', async () => {
+    vi.useFakeTimers()
+    try {
+      const cancels: string[] = []
+      const reg = createToolRegistry({
+        projectRoot: () => 'D:/proj',
+        sandboxRunner: () => ({
+          run: (config, sink) => {
+            void config
+            sink({
+              type: 'phase',
+              runId: 'run-2',
+              stage: 'build',
+              status: 'running',
+              action: '正在构建（gradlew build）…'
+            })
+            // 永不结束，只能靠整体超时收口
+            return new Promise<SandboxReport>(() => {})
+          },
+          cancel: (runId?: string) => {
+            cancels.push(runId ?? '')
+          }
+        })
+      })
+      const pending = reg.executeTool('mc_run_test', { timeoutMs: 60_000 }, CTX)
+      await vi.advanceTimersByTimeAsync(60_000)
+      const r = await pending
+      expect(r.ok).toBe(true)
+      expect(cancels).toEqual(['run-2'])
+      const payload = payloadOf(r.data)
+      expect(payload['status']).toBe('timeout')
+      expect(payload['ok']).toBe(false)
+      expect(payload['hint']).toContain('超时')
+      expect(payload['hint']).toContain('build')
+      expect((payload['stages'] as Record<string, { status: string }>)['build'].status).toBe('process')
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

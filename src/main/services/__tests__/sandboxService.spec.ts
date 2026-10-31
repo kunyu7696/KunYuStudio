@@ -432,7 +432,33 @@ describe('sandboxService', () => {
     expect(runGradle).toHaveBeenCalledTimes(1)
   })
 
-  it('场景8：优雅退出成功 —— observerShutdown 后客户端自行退出，不再进程树强杀', async () => {
+  it('场景8：skipBuild 跳过构建 —— build 标记 skipped，仍直接启动客户端', async () => {
+    const gradle = makeGradle(0, (c) => queueMicrotask(() => c.sendStarted()))
+    const observer = makeObserver()
+    const clock = makeClock()
+    const runner = createSandboxRunner({
+      runGradle: gradle.runGradle,
+      cancelGradle: gradle.cancelGradle,
+      sleep: clock.sleep,
+      now: clock.now,
+      readProjectFile: makeReader({}),
+      listRunMods: () => [],
+      listCrashReports: () => [],
+      ...observer
+    })
+
+    const report = await runner.run(baseConfig({ skipBuild: true }), vi.fn())
+
+    expect(report.ok).toBe(true)
+    expect(report.stages.build?.status).toBe('skipped')
+    expect(report.stages.build?.detail).toContain('skipBuild')
+    expect(report.stages.launch?.status).toBe('done')
+    // 只启动 runClient，不跑 build
+    expect(gradle.runGradle).toHaveBeenCalledTimes(1)
+    expect(gradle.runGradle.mock.calls[0]?.[0]).toMatchObject({ tasks: ['runClient'] })
+  })
+
+  it('场景9：优雅退出成功 —— observerShutdown 后客户端自行退出，不再进程树强杀', async () => {
     let clientCtl: ClientCtl | null = null
     const gradle = makeGradle(0, (c) => {
       clientCtl = c

@@ -82,7 +82,16 @@ export const TOOL_TIMEOUTS = {
   /** run_command：最小超时 */
   runCommandMin: 5_000,
   /** run_command：最大超时 */
-  runCommandMax: 600_000
+  runCommandMax: 600_000,
+  /**
+   * mc_run_test：整体超时默认值＝沙箱既有 launch(300000)+wait-world(120000) 上限之和，
+   * 覆盖启动+等待世界两段窗口（构建段另受 Gradle 自身超时约束）。
+   */
+  sandboxRunDefault: 420_000,
+  /** mc_run_test：最小整体超时 */
+  sandboxRunMin: 60_000,
+  /** mc_run_test：最大整体超时 */
+  sandboxRunMax: 1_800_000
 } as const
 
 /** run_game_test 超时参数夹取到目录声明的上下限内。 */
@@ -95,6 +104,12 @@ export function clampGameTestTimeout(ms?: number): number {
 export function clampRunCommandTimeout(ms?: number): number {
   const value = ms ?? TOOL_TIMEOUTS.runCommandDefault
   return Math.min(TOOL_TIMEOUTS.runCommandMax, Math.max(TOOL_TIMEOUTS.runCommandMin, value))
+}
+
+/** mc_run_test 整体超时参数夹取：缺省取沙箱既有超时之和，永不无限等待。 */
+export function clampSandboxTimeout(ms?: number): number {
+  const value = ms ?? TOOL_TIMEOUTS.sandboxRunDefault
+  return Math.min(TOOL_TIMEOUTS.sandboxRunMax, Math.max(TOOL_TIMEOUTS.sandboxRunMin, value))
 }
 
 // ---------------------------------------------------------------------------
@@ -194,6 +209,8 @@ export const TOOL_BEHAVIORS: Record<string, ToolBehavior> = {
   mc_input: 'external-effect',
   mc_ensure_test_world: 'external-effect',
   mc_cleanup_test_world: 'external-effect',
+  // 构建 + 起客户端 + 操控运行中游戏，按最高级标注
+  mc_run_test: 'external-effect',
   run_game_test: 'external-effect',
   mc_launch: 'external-effect',
   // —— 调度与进度（schedulingTools / todoTools）
@@ -302,6 +319,7 @@ export const TOOL_ROUTING: Record<string, string> = {
   mc_input: '能用指令完成的操作→mc_command（更可靠）',
   mc_ensure_test_world: '测试收尾清理→mc_cleanup_test_world',
   mc_cleanup_test_world: '布置测试前置→mc_ensure_test_world',
+  mc_run_test: '只验证某一步交互/断言→mc_test_scenario；只构建不出客户端→gradle_build；只起客户端不测→mc_launch',
   run_game_test: '交互式/探索性验证（需起客户端）→mc_test_scenario / mc_launch',
   mc_launch: '构建验证（不起客户端）→gradle_build；无头测试→run_game_test',
   gradle_build: '无头 GameTest→run_game_test',

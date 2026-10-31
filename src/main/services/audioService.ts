@@ -142,6 +142,8 @@ export async function ensureFfmpeg(
       const expected = await fetchSha256Sidecar(url)
       await httpDownload(url, zipPath, {
         onProgress,
+        // ~80MB 压缩包，无 size 提示，显式开启多线程分段探测
+        multithread: true,
         ...(expected ? { expected: { sha256: expected } } : {})
       })
       rmSync(dest, { recursive: true, force: true })

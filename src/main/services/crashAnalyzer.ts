@@ -28,7 +28,7 @@ export const DIAGNOSIS_RULES: DiagnosisRule[] = [
     id: 'jdk-version',
     headline: 'JDK 版本不匹配',
     test: /UnsupportedClassVersionError|class file version/i,
-    suggestion: '当前 JDK 与目标 Minecraft 要求不一致：1.20.1 需 JDK 17，1.21+ 需 JDK 21。请在「运行和调试」的 JDK 环境中切换到推荐版本。'
+    suggestion: '当前 JDK 与目标 Minecraft 要求不一致：1.20.1 需 JDK 17，1.21+ 需 JDK 21。请在「设置 → 运行时」的 JDK 环境中切换到推荐版本。'
   },
   {
     id: 'missing-dependency',

@@ -5,12 +5,10 @@ import {
   Document,
   Files,
   FolderOpened,
-  GoldMedal,
   Goods,
   Grid,
   Headset,
   Menu,
-  Monitor,
   Picture,
   Reading,
   Search,
@@ -19,8 +17,7 @@ import {
   Star,
   Sunny,
   Tickets,
-  TrendCharts,
-  VideoPlay
+  TrendCharts
 } from '@element-plus/icons-vue'
 import { moduleRegistry } from './registry'
 
@@ -47,7 +44,7 @@ export function registerBuiltinModules(): void {
     name: '数据包编辑器',
     icon: Collection,
     description: '无代码创建与编辑数据包：配方、战利品表、进度、标签、函数等',
-    projectTypes: ['mod', 'datapack'],
+    projectTypes: ['datapack'],
     requireProject: true,
     loader: () => import('./datapack/DataPackView.vue'),
     sidebarLoader: () => import('./datapack/DataPackTree.vue')
@@ -70,7 +67,7 @@ export function registerBuiltinModules(): void {
     name: '资源包编辑器',
     icon: Box,
     description: '组织贴图与模型，配置音效、语言、字体，打包导出标准资源包',
-    projectTypes: ['mod', 'resourcepack'],
+    projectTypes: ['resourcepack'],
     requireProject: true,
     loader: () => import('./resourcepack/ResourcePackView.vue'),
     sidebarLoader: () => import('./resourcepack/ResourcePackTree.vue')
@@ -97,16 +94,7 @@ export function registerBuiltinModules(): void {
     loader: () => import('./modeler/ModelerWorkbench.vue')
   })
 
-  // 附魔编辑器：独立轻量模块（语义 schema 驱动，不进 unified 三端模型）
-  moduleRegistry.register({
-    id: 'enchant',
-    name: '附魔编辑器',
-    icon: GoldMedal,
-    description: '创建与编辑自定义附魔：Fabric/Forge 出 Java 注册类，NeoForge 1.21 出数据 JSON',
-    projectTypes: ['mod'],
-    requireProject: true,
-    loader: () => import('./enchant/EnchantView.vue')
-  })
+  // 附魔编辑器已并入「工坊」（unified 第 6 内容类型 enchantment），不再独立注册
 
   // 资产库（原项目画廊）：AI 产出的贴图候选全部存档，零额度复用（不必重跑 AI 烧额度）；
   // 同时接替原「KunYu 社区」的跨项目聚合与 .kyshare.json 分享包导入/导出
@@ -120,23 +108,19 @@ export function registerBuiltinModules(): void {
     loader: () => import('./gallery/GalleryView.vue')
   })
 
-  // 版本控制同时是产物管理入口：不绑定具体项目，有无项目均可打开
+  // 版本控制同时是产物管理入口：跟随项目显示（无项目时无内容可看）
   moduleRegistry.register({
     id: 'vcs',
     name: '版本与产物',
     icon: Connection,
     description: 'Git 提交、分支管理与构建产物管理',
+    requireProject: true,
     loader: () => import('./views/VcsView.vue')
   })
 
-  moduleRegistry.register({
-    id: 'debug',
-    name: '运行和调试',
-    icon: VideoPlay,
-    description: '启动游戏、断点调试',
-    requireProject: true,
-    loader: () => import('./views/DebugView.vue')
-  })
+  // 「游戏测试沙箱」不再作为活动栏模块：能力已下沉为 AI Agent 工具 mc_run_test
+  // （构建 → 启动 → 等世界 → 跑探针 → 收集 → 关服，见 gameControlTools.ts），
+  // 手动兜底走顶栏「构建并运行」与命令面板。
 
   // 模组与市场：主页活动栏可先逛市场（无需打开项目）；已打开项目时只保留在整合包项目里
   // ——普通模组/数据包等项目的依赖管理走各自的编辑器与依赖链路，不需要这个入口
@@ -213,15 +197,6 @@ export function registerBuiltinModules(): void {
     loader: () => import('./kubejs/KubejsView.vue')
   })
 
-  moduleRegistry.register({
-    id: 'launcher',
-    name: '启动器集成',
-    icon: Monitor,
-    description: '检测本机启动器、一键导入构建产物、快速启动游戏',
-    requireProject: true,
-    loader: () => import('./views/LauncherView.vue')
-  })
-
   // 原「全流程 AI 制作」已改造为应用级「灵感台」模式（顶栏双模式切换，见 ui store appMode），
   // 不再作为活动栏模块注册；AI 极速规划管线（agent:plan）由灵感台视图直接复用
 
@@ -230,6 +205,7 @@ export function registerBuiltinModules(): void {
     name: '性能画像',
     icon: TrendCharts,
     description: '模组五维性能评分排行榜、冲突与建议、JFR / Spark 采样归因',
+    projectTypes: ['mod', 'modpack'],
     requireProject: true,
     loader: () => import('./performance/PerformanceView.vue')
   })
@@ -261,6 +237,7 @@ export function registerBuiltinModules(): void {
     name: '插件库与商城',
     icon: Grid,
     description: '管理已安装插件，浏览下载第三方扩展',
+    homeOnly: true,
     loader: () => import('./views/PluginsView.vue')
   })
 
@@ -270,6 +247,7 @@ export function registerBuiltinModules(): void {
     name: 'DSH 插件',
     icon: Star,
     description: '安装 DeepSeek Harness 社区插件，工具能力直接进入 AI 循环',
+    homeOnly: true,
     loader: () => import('./views/DshView.vue')
   })
 
