@@ -41,6 +41,12 @@ jobs:
 
       - run: npm ci
 
+      # electron 44 起无 postinstall：npm ci 后无 path.txt，首次 require('electron')
+      # 惰性 spawnSync 下载 ~100MB 二进制并冻结事件循环，同步单测会被 vitest 按墙钟
+      # 判超时（ci.yml 已垫桩，发版前这道门禁必须同样先垫，否则带病发布拦不住真问题）。
+      - name: 预置 electron 二进制桩
+        run: node scripts/stub-electron-binary.cjs
+
       # 发版前过完整质量门禁：tag 是人工切的，这里挡住带病发布
       # （只需在 Windows 跑一遍；跨平台单测由 ci.yml 的三系统矩阵覆盖）
       - name: 质量门禁（typecheck + lint + 单测）
