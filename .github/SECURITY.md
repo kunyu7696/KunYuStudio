@@ -11,7 +11,7 @@
 优先用 GitHub 的私密报告通道：
 
 1. 打开仓库 **Security → Advisories → Report a vulnerability**
-   （直达：https://github.com/kunyu7696/KunYuStudio-Minecraft/security/advisories/new ）
+   （直达：https://github.com/kunyu7696/KunYuStudio/security/advisories/new ）
 2. 若该入口不可用，可开一个**不含细节**的 issue 说明「需要私密渠道」，我会提供联系方式
 
 报告里请尽量包含：影响版本、平台、复现步骤、影响面（能否读文件 / 执行命令 /

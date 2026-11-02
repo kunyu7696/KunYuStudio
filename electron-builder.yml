@@ -169,7 +169,7 @@ linux:
       arch:
         - x64
 
-# 发布通道：GitHub Releases（kunyu7696/KunYuStudio-Minecraft，公开仓库）。
+# 发布通道：GitHub Releases（kunyu7696/KunYuStudio，公开仓库）。
 # electron-updater 消费 latest.yml / app-update.yml 做自动更新（updaterService.ts），
 # 国内镜像兜底走 releases/latest/download 稳定路径（见 updaterService.buildMirrorFeed）。
 # 无代码签名证书：SmartScreen 会拦截首装，但 Windows 自动更新不强制签名。
@@ -178,6 +178,6 @@ linux:
 publish:
   provider: github
   owner: kunyu7696
-  repo: KunYuStudio-Minecraft
+  repo: KunYuStudio
   # 草稿发布：CI 传包后人工确认再公开，避免半成品 Release 被客户端检出
   releaseType: draft

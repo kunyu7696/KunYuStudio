@@ -1,7 +1,7 @@
 /**
  * 应用自更新状态（updaterService → 渲染层）。
  *
- * 通道与策略：GitHub Releases 主源（kunyu7696/KunYuStudio-Minecraft），直连失败/下载停滞时
+ * 通道与策略：GitHub Releases 主源（kunyu7696/KunYuStudio），直连失败/下载停滞时
  * 按 settings.general.updateMirrorPrefix（ghproxy 风格前缀）+ releases/latest/download
  * 稳定路径兜底重试一次；下载需用户确认（electron-updater autoDownload=false）。
  */
@@ -49,4 +49,4 @@ export interface UpdateState {
 }
 
 /** 默认 Release 页（设置页「浏览器打开」兜底入口） */
-export const UPDATE_RELEASE_PAGE = 'https://github.com/kunyu7696/KunYuStudio-Minecraft/releases'
+export const UPDATE_RELEASE_PAGE = 'https://github.com/kunyu7696/KunYuStudio/releases'

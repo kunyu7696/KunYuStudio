@@ -10,15 +10,15 @@
   <p><sub>An AI-assisted desktop toolkit for Minecraft mod &amp; modpack development — visual editors, sandbox testing, one-click export.</sub></p>
 
   <p>
-    <a href="https://github.com/kunyu7696/KunYuStudio-Minecraft/releases/latest"><img src="https://img.shields.io/github/v/release/kunyu7696/KunYuStudio-Minecraft?display_name=tag&label=release&color=e7653f" alt="release" /></a>
+    <a href="https://github.com/kunyu7696/KunYuStudio/releases/latest"><img src="https://img.shields.io/github/v/release/kunyu7696/KunYuStudio?display_name=tag&label=release&color=e7653f" alt="release" /></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-e7653f" alt="license" /></a>
-    <a href="https://github.com/kunyu7696/KunYuStudio-Minecraft/actions/workflows/ci.yml"><img src="https://github.com/kunyu7696/KunYuStudio-Minecraft/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+    <a href="https://github.com/kunyu7696/KunYuStudio/actions/workflows/ci.yml"><img src="https://github.com/kunyu7696/KunYuStudio/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
     <img src="https://img.shields.io/badge/platform-Windows%20%C2%B7%20macOS%20%C2%B7%20Linux-2d8a56" alt="platform" />
     <a href="https://afdian.com/a/KunYuStudio"><img src="https://img.shields.io/badge/%E7%88%B1%E5%8F%91%E7%94%B5-%E8%B5%9E%E5%8A%A9%E6%94%AF%E6%8C%81-946ce6" alt="爱发电" /></a>
   </p>
 
   <p>
-    <a href="https://github.com/kunyu7696/KunYuStudio-Minecraft/releases/latest"><strong>下载最新版</strong></a> ·
+    <a href="https://github.com/kunyu7696/KunYuStudio/releases/latest"><strong>下载最新版</strong></a> ·
     <a href="#功能一览">功能一览</a> ·
     <a href="#快速开始">快速开始</a> ·
     <a href="#文档导航">文档</a> ·
@@ -34,7 +34,7 @@
 
 ## 下载与安装
 
-到 [Releases](https://github.com/kunyu7696/KunYuStudio-Minecraft/releases) 页下载对应平台的安装包：
+到 [Releases](https://github.com/kunyu7696/KunYuStudio/releases) 页下载对应平台的安装包：
 
 | 平台 | 文件 |
 | --- | --- |
