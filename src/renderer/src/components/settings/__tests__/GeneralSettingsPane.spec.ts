@@ -116,7 +116,7 @@ describe('应用更新', () => {
       phase: 'error',
       currentVersion: '0.1.2',
       error: 'net::ERR_CONNECTION_TIMED_OUT',
-      releasePageUrl: 'https://github.com/kunyu7696/KunYuStudio/releases'
+      releasePageUrl: 'https://github.com/kunyu7696/KunYuStudio-Minecraft/releases'
     })
     await flushPromises()
     const row = w.find('[data-setting-id="general-update-error"]')

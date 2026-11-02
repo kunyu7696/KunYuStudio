@@ -1,6 +1,6 @@
 /**
  * updaterService 纯函数单测：feed 构造。
- * 主源固定 GitHub kunyu7696/KunYuStudio；镜像前缀按 ghproxy 风格拼到
+ * 主源固定 GitHub kunyu7696/KunYuStudio-Minecraft；镜像前缀按 ghproxy 风格拼到
  * releases/latest/download 稳定路径前（generic provider 的 `${url}/latest.yml` 恰好命中）。
  */
 import { describe, expect, it, vi } from 'vitest'
@@ -27,7 +27,7 @@ vi.mock('../settingsService', () => ({
 import { buildGithubFeed, buildMirrorFeed, getUpdateState } from '../updaterService'
 
 describe('buildGithubFeed', () => {
-  it('主源固定为 kunyu7696/KunYuStudio', () => {
+  it('主源固定为 kunyu7696/KunYuStudio-Minecraft', () => {
     expect(buildGithubFeed()).toEqual({
       provider: 'github',
       owner: 'kunyu7696',
@@ -40,14 +40,14 @@ describe('buildMirrorFeed', () => {
   it('ghproxy 风格前缀拼接到 releases/latest/download 稳定路径', () => {
     expect(buildMirrorFeed('https://ghproxy.net')).toEqual({
       provider: 'generic',
-      url: 'https://ghproxy.net/https://github.com/kunyu7696/KunYuStudio/releases/latest/download'
+      url: 'https://ghproxy.net/https://github.com/kunyu7696/KunYuStudio-Minecraft/releases/latest/download'
     })
   })
 
   it('前缀末尾斜杠归一，避免双斜杠', () => {
     expect(buildMirrorFeed('https://ghproxy.net/')).toEqual({
       provider: 'generic',
-      url: 'https://ghproxy.net/https://github.com/kunyu7696/KunYuStudio/releases/latest/download'
+      url: 'https://ghproxy.net/https://github.com/kunyu7696/KunYuStudio-Minecraft/releases/latest/download'
     })
   })
 

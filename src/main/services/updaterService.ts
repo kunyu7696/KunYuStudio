@@ -1,7 +1,7 @@
 /**
  * 应用自更新服务（electron-updater 封装）。
  *
- * 链路：GitHub Releases 主源（kunyu7696/KunYuStudio，公开仓库免 Token）
+ * 链路：GitHub Releases 主源（kunyu7696/KunYuStudio-Minecraft，公开仓库免 Token）
  * → 直连失败/下载停滞 → 镜像兜底（settings.general.updateMirrorPrefix，
  * ghproxy 风格前缀 + releases/latest/download 稳定路径，目录式布局正好匹配
  * electron-updater generic provider 的 `${url}/latest.yml` 拉取方式）。
@@ -61,7 +61,7 @@ export function buildMirrorFeed(
   if (!trimmed) return null
   return {
     provider: 'generic',
-    url: `${trimmed}/https://github.com/kunyu7696/KunYuStudio/releases/latest/download`
+    url: `${trimmed}/https://github.com/kunyu7696/KunYuStudio-Minecraft/releases/latest/download`
   }
 }
 
