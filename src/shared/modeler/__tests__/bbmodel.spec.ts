@@ -608,3 +608,29 @@ describe('mesh 互操作（B4-2）', () => {
     expect(doc.root).toContain('m0')
   })
 })
+
+describe('贴图内嵌键名（Blockbench 官方 source / 旧方言 origin）', () => {
+  it('source 键：像素正常导入', () => {
+    const src = fullBbmodel()
+    src.textures = [{ uuid: 'tex-src', name: 'src.png', source: PNG, width: 32, height: 32 }]
+    const { doc } = bbmodelToDocument(src, { now: 1 })
+    expect(Object.values(doc.textures)[0]!.data).toBe(PNG)
+  })
+
+  it('source 优先于 origin（两者同时存在时取官方键）', () => {
+    const src = fullBbmodel()
+    src.textures = [
+      { uuid: 'tex-both', name: 'both.png', source: PNG, origin: 'data:image/png;base64,STALE' }
+    ]
+    const { doc } = bbmodelToDocument(src, { now: 1 })
+    expect(Object.values(doc.textures)[0]!.data).toBe(PNG)
+  })
+
+  it('导出写 source、不写 origin（Blockbench 可直接读取）', () => {
+    const before = exportDoc()
+    const { output } = documentToBbmodel(before)
+    const tex = output.textures![0]!
+    expect(tex.source).toBe(Object.values(before.textures)[0]!.data)
+    expect(tex.origin).toBeUndefined()
+  })
+})

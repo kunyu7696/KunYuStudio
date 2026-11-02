@@ -369,13 +369,20 @@ export function resolveBbmodelLinkedTextures(
     if (!isRecord(raw)) continue
     const p = typeof raw.path === 'string' ? raw.path.trim() : ''
     if (!p) continue
-    if (typeof raw.origin === 'string' && raw.origin.startsWith('data:')) continue
+    /* 内嵌判定：source 是 Blockbench 官方键名，origin 为早期方言（两者都认，避免重复解引用） */
+    const embedded =
+      typeof raw.source === 'string' && raw.source.startsWith('data:')
+        ? raw.source
+        : typeof raw.origin === 'string' && raw.origin.startsWith('data:')
+          ? raw.origin
+          : ''
+    if (embedded.startsWith('data:')) continue
     touched = true
     const label = typeof raw.name === 'string' && raw.name ? raw.name : p
     try {
       const buf = readFileSync(resolve(bbmodelDir, p))
       const raster = decodePng(buf) // 顺带校验确实是 PNG
-      raw.origin = `data:image/png;base64,${buf.toString('base64')}`
+      raw.source = `data:image/png;base64,${buf.toString('base64')}`
       if (!(typeof raw.width === 'number' && raw.width >= 1)) raw.width = raster.width
       if (!(typeof raw.height === 'number' && raw.height >= 1)) raw.height = raster.height
     } catch {
@@ -383,7 +390,7 @@ export function resolveBbmodelLinkedTextures(
         typeof raw.width === 'number' ? raw.width : NaN,
         typeof raw.height === 'number' ? raw.height : NaN
       )
-      raw.origin = blank.dataUrl
+      raw.source = blank.dataUrl
       raw.width = blank.width
       raw.height = blank.height
       warnings.push(`贴图「${label}」引用的外部文件「${p}」读取失败，已用空白贴图替代`)

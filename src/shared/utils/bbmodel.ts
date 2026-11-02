@@ -23,7 +23,9 @@ const FACES: CubeFaceName[] = ['north', 'south', 'east', 'west', 'up', 'down']
 export interface BbmodelTexture {
   path?: string
   name?: string
-  /** data:image/png;base64,...（Blockbench 内嵌贴图） */
+  /** data:image/png;base64,...（Blockbench 内嵌贴图，官方键名） */
+  source?: string
+  /** data:image/png;base64,...（早期方言，兼容旧文件） */
   origin?: string
   id?: string
   visible?: boolean
@@ -102,8 +104,14 @@ export function bbmodelToAsset(doc: BbmodelDoc, id: string): BbmodelConversion {
   const resolution = doc.resolution ?? { width: 16, height: 16 }
   const textureSize: 16 | 32 = resolution.width >= 32 || resolution.height >= 32 ? 32 : 16
   const textures = Array.isArray(doc.textures) ? doc.textures : []
-  const embeddedTextures = textures
-    .map((t) => (typeof t.origin === 'string' && t.origin.startsWith('data:') ? t.origin : ''))
+  const embeddedTextures = textures.map((t) =>
+    /* Blockbench 官方键是 source；origin 为早期方言（兼容旧文件） */
+    typeof t.source === 'string' && t.source.startsWith('data:')
+      ? t.source
+      : typeof t.origin === 'string' && t.origin.startsWith('data:')
+        ? t.origin
+        : ''
+  )
   // 贴图下标 → 变量名：0 → all，其余 → layerN
   const variableOf = (texIndex: number): string => (texIndex === 0 ? 'all' : `layer${texIndex}`)
   const usedVariables = new Set<string>()

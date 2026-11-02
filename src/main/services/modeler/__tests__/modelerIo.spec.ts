@@ -91,7 +91,7 @@ describe('safeTextureRelPath', () => {
 })
 
 describe('resolveBbmodelLinkedTextures', () => {
-  it('外链贴图按 .bbmodel 目录解引用：origin 填入 data URL，缺失尺寸补齐', () => {
+  it('外链贴图按 .bbmodel 目录解引用：source 填入 data URL（Blockbench 键名），缺失尺寸补齐', () => {
     const dir = makeTmpDir()
     const png = pngOf(24, 8)
     writeFileSync(join(dir, 'linked.png'), png)
@@ -101,19 +101,21 @@ describe('resolveBbmodelLinkedTextures', () => {
     const { content, warnings } = resolveBbmodelLinkedTextures(bbmodel, dir)
     expect(warnings).toEqual([])
     const tex = (JSON.parse(content) as { textures: Array<Record<string, unknown>> }).textures[0]!
-    expect(tex.origin).toBe(`data:image/png;base64,${png.toString('base64')}`)
+    expect(tex.source).toBe(`data:image/png;base64,${png.toString('base64')}`)
     expect(tex.width).toBe(24)
     expect(tex.height).toBe(8)
   })
 
-  it('已内嵌 origin 的条目不读盘、原样返回（content 字符串不变）', () => {
+  it('已内嵌的条目不读盘、原样返回（content 字符串不变）：source 与旧方言 origin 都识别', () => {
     const dir = makeTmpDir()
-    const bbmodel = JSON.stringify({
-      textures: [{ uuid: 't1', name: 'a.png', path: 'missing.png', origin: 'data:image/png;base64,AAAA' }]
-    })
-    const { content, warnings } = resolveBbmodelLinkedTextures(bbmodel, dir)
-    expect(content).toBe(bbmodel)
-    expect(warnings).toEqual([])
+    for (const key of ['source', 'origin'] as const) {
+      const bbmodel = JSON.stringify({
+        textures: [{ uuid: 't1', name: 'a.png', path: 'missing.png', [key]: 'data:image/png;base64,AAAA' }]
+      })
+      const { content, warnings } = resolveBbmodelLinkedTextures(bbmodel, dir)
+      expect(content).toBe(bbmodel)
+      expect(warnings).toEqual([])
+    }
   })
 
   it('外链读不到：替换为合法空白 PNG 并记告警（像素链保持可用）', () => {
@@ -125,8 +127,8 @@ describe('resolveBbmodelLinkedTextures', () => {
     expect(warnings).toHaveLength(1)
     expect(warnings[0]).toContain('textures/gone.png')
     const tex = (JSON.parse(content) as { textures: Array<Record<string, unknown>> }).textures[0]!
-    expect(typeof tex.origin).toBe('string')
-    expect((tex.origin as string).startsWith('data:image/png;base64,')).toBe(true)
+    expect(typeof tex.source).toBe('string')
+    expect((tex.source as string).startsWith('data:image/png;base64,')).toBe(true)
     expect(tex.width).toBe(32)
     expect(tex.height).toBe(16)
   })

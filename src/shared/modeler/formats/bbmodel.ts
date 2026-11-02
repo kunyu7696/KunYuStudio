@@ -108,7 +108,9 @@ export interface BbmodelTextureJson {
   id?: string
   path?: string
   name?: string
-  /** data:image/png;base64,...（内嵌贴图） */
+  /** data:image/png;base64,...（内嵌贴图；Blockbench 官方键名，导出写这个） */
+  source?: string
+  /** data:image/png;base64,...（本编解码早期写法；仅为兼容旧文件读取，导出不再写） */
   origin?: string
   width?: number
   height?: number
@@ -316,7 +318,14 @@ export function bbmodelToDocument(
       usedIds
     )
     const name = typeof t.name === 'string' && t.name ? t.name.replace(/\.png$/i, '') : `贴图 ${i + 1}`
-    const embedded = typeof t.origin === 'string' && t.origin.startsWith('data:')
+    // 内嵌贴图数据：Blockbench 官方键名是 source；origin 是本编解码早期方言（兼容旧文件）
+    const embeddedSrc =
+      typeof t.source === 'string' && t.source.startsWith('data:')
+        ? t.source
+        : typeof t.origin === 'string' && t.origin.startsWith('data:')
+          ? t.origin
+          : ''
+    const embedded = embeddedSrc !== ''
     // 独立 PNG 引用（path）保留为 file 元数据（POSIX 规范化），导出写回往返不丢；
     // 未内嵌的外链贴图由主进程导入前预解引用，走到这里仍无 data 说明读盘失败
     const file =
@@ -333,7 +342,7 @@ export function bbmodelToDocument(
       name,
       width: num(t.width, resW) || resW,
       height: num(t.height, resH) || resH,
-      data: embedded ? (t.origin as string) : '',
+      data: embeddedSrc,
       ...(file ? { file } : {}),
       uvSize: [resW, resH],
       visible: t.visible !== false
@@ -724,7 +733,8 @@ export function documentToBbmodel(doc: ModelDocument): FormatExportResult<Bbmode
       // 独立 PNG 引用随导出写回（主进程据此把 PNG 物化到导出目录，随格式导出落地）
       path: tex.file ?? '',
       name: `${tex.name}.png`,
-      origin: tex.data,
+      // 内嵌贴图用 Blockbench 官方键名 source（origin 是早期方言，仅读不写）
+      source: tex.data,
       width: tex.width,
       height: tex.height,
       visible: tex.visible
