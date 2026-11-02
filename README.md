@@ -1,7 +1,7 @@
 <div align="center">
   <img src="resources/build/icon.png" width="128" alt="KunYu Studio" />
 
-  <h1>KunYu Studio · 坤舆工作台</h1>
+  <h1>KunYu Studio</h1>
 
   <p><strong>从一个想法，到可以进游戏的 Minecraft 模组与整合包</strong></p>
 
