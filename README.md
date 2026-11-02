@@ -1,9 +1,47 @@
-# KunYu Studio
+<div align="center">
+  <img src="resources/build/icon.png" width="128" alt="KunYu Studio" />
 
-> 原名称 KunYuEcosystem
+  <h1>KunYu Studio · 坤舆工作台</h1>
 
-Minecraft 模组与整合包的可视化开发工作台：把「写模组」从手写 Java/JSON 变成
-「AI 生成 → 沙盒验证 → 一键导出」的闭环。桌面应用（Electron），Windows 优先。
+  <p><strong>从一个想法，到可以进游戏的 Minecraft 模组与整合包</strong></p>
+
+  <p>AI 辅助开发 · 可视化编辑 · 真机沙盒验证 · 一键导出发布</p>
+
+  <p>
+    <a href="https://github.com/kunyu7696/KunYuStudio/releases/latest"><img src="https://img.shields.io/github/v/release/kunyu7696/KunYuStudio?display_name=tag&label=release&color=e7653f" alt="release" /></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-e7653f" alt="license" /></a>
+    <a href="https://github.com/kunyu7696/KunYuStudio/actions/workflows/ci.yml"><img src="https://github.com/kunyu7696/KunYuStudio/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+    <img src="https://img.shields.io/badge/platform-Windows%20%C2%B7%20macOS%20%C2%B7%20Linux-2d8a56" alt="platform" />
+    <a href="https://afdian.com/a/KunYuStudio"><img src="https://img.shields.io/badge/%E7%88%B1%E5%8F%91%E7%94%B5-%E8%B5%9E%E5%8A%A9%E6%94%AF%E6%8C%81-946ce6" alt="爱发电" /></a>
+  </p>
+
+  <p>
+    <a href="https://github.com/kunyu7696/KunYuStudio/releases/latest"><strong>下载最新版</strong></a> ·
+    <a href="#功能一览">功能一览</a> ·
+    <a href="#快速开始">快速开始</a> ·
+    <a href="#文档导航">文档</a> ·
+    <a href="#支持开发">爱发电</a>
+  </p>
+</div>
+
+---
+
+**KunYu Studio**（原 KunYuEcosystem）是 Minecraft 模组与整合包的可视化开发工作台：
+把「写模组」从手写 Java/JSON 变成「AI 生成 → 沙盒验证 → 一键导出」的闭环。
+桌面应用（Electron），Windows 优先，macOS / Linux 同步发行。
+
+## 下载与安装
+
+到 [Releases](https://github.com/kunyu7696/KunYuStudio/releases) 页下载对应平台的安装包：
+
+| 平台 | 文件 |
+| --- | --- |
+| Windows | `KunYu-Studio-<版本>-setup.exe`（NSIS 安装包） |
+| macOS | `KunYu-Studio-<版本>-mac-x64.dmg` / `-mac-arm64.dmg` |
+| Linux | `KunYu-Studio-<版本>-linux-x86_64.AppImage` |
+
+安装后无需配置 JDK 或游戏本体——首次使用在「设置 → 运行环境」一键准备，
+应用按版本矩阵自动检测/下载所需运行时。
 
 ## 功能一览
 
@@ -144,6 +182,18 @@ TEMP 并重定向），无需手动处理；如仍失败请查看 `scripts/run-e
 `default-src 'self'; script-src 'self'`（无 `unsafe-eval`），`style-src` 放行
 `'unsafe-inline'` 供 Element Plus 内联样式，`connect-src` 放行 `ws:` 与
 `127.0.0.1/localhost` 供 Vite HMR、observer 探针与本机 MCP 桥接。
+
+## 支持开发
+
+KunYu Studio 是独立开发的开源项目。如果它对你有帮助，欢迎来爱发电请作者喝杯咖啡：
+
+<div align="center">
+
+**[⚡ afdian.com/a/KunYuStudio](https://afdian.com/a/KunYuStudio)**
+
+</div>
+
+也可以点仓库页右上角的 **❤ Sponsor** 按钮直达。赞助全凭自愿，全部功能对所有人开放。
 
 ## 许可
 
