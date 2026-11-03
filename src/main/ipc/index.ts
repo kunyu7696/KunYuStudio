@@ -36,6 +36,7 @@ import { registerAudioHandlers } from './handlers/audioHandlers'
 import { registerFtbQuestHandlers } from './handlers/ftbQuestHandlers'
 import { registerPatchouliHandlers } from './handlers/patchouliHandlers'
 import { registerKubejsHandlers } from './handlers/kubejsHandlers'
+import { registerFancyMenuHandlers } from './handlers/fancyMenuHandlers'
 
 /**
  * 注册所有主进程 IPC 处理器。
@@ -101,4 +102,5 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   registerFtbQuestHandlers()
   registerPatchouliHandlers()
   registerKubejsHandlers()
+  registerFancyMenuHandlers()
 }

@@ -197,6 +197,17 @@ export function registerBuiltinModules(): void {
     loader: () => import('./kubejs/KubejsView.vue')
   })
 
+  // FancyMenu 开始菜单自定义：Fabric config/fancymenu/layout.json / Forge config/fancymenu_forge/layout.json
+  moduleRegistry.register({
+    id: 'fancymenu',
+    name: '开始菜单',
+    icon: Menu,
+    description: '可视化拖拽编辑 FancyMenu 开始菜单：button/image/text/rect 四种元素，九种锚点定位，保存即落盘',
+    projectTypes: ['modpack'],
+    requireProject: true,
+    loader: () => import('./fancymenu/FancyMenuView.vue')
+  })
+
   // 原「全流程 AI 制作」已改造为应用级「灵感台」模式（顶栏双模式切换，见 ui store appMode），
   // 不再作为活动栏模块注册；AI 极速规划管线（agent:plan）由灵感台视图直接复用
 

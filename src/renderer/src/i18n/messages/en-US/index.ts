@@ -1181,6 +1181,65 @@ const enUS: Messages = {
     questDuplicate: 'Quest ID {id} already exists',
     chapterSaved: 'Chapter {id} saved'
   },
+  fancymenu: {
+    title: 'Start Menu',
+    subtitle:
+      'Drag & drop FancyMenu layouts: button/image/text/rect elements with 9 anchor points. Save writes config/fancymenu/layout.json (Fabric) or config/fancymenu_forge/layout.json (Forge).',
+    add: 'Add element',
+    remove: 'Delete',
+    duplicate: 'Duplicate',
+    reload: 'Reload',
+    save: 'Save',
+    saved: 'Saved to {path}',
+    unsaved: 'Unsaved',
+    noLayout: 'No layout.json found (will be created on save)',
+    readError: 'Read failed: {error}',
+    saveError: 'Save failed: {error}',
+    elementList: 'Elements',
+    emptyListHint: 'Click "Add element" above to start',
+    properties: 'Properties',
+    noSelection: 'Select an element to edit',
+    confirmTitle: 'Confirm delete',
+    confirmDelete: 'Delete element "{name}"? This cannot be undone.',
+    confirm: 'OK',
+    cancel: 'Cancel',
+    unnamed: 'Unnamed',
+    rectLabel: 'Rect',
+    newButton: 'New button',
+    newText: 'New text',
+    newImage: 'New image',
+    newRect: 'New rect',
+    anchors: {
+      top_left: 'Top-left',
+      top_center: 'Top-center',
+      top_right: 'Top-right',
+      middle_left: 'Middle-left',
+      center: 'Center',
+      middle_right: 'Middle-right',
+      bottom_left: 'Bottom-left',
+      bottom_center: 'Bottom-center',
+      bottom_right: 'Bottom-right'
+    },
+    actions: {
+      command: 'MC command',
+      url: 'External URL'
+    },
+    fields: {
+      name: 'Name',
+      type: 'Type',
+      anchor: 'Anchor',
+      pos: 'Offset (x,y)',
+      size: 'Size',
+      z: 'Z-index',
+      text: 'Text',
+      color: 'Color',
+      hoverColor: 'Hover color',
+      action: 'Click action',
+      actionValue: 'Command body (no /) or URL',
+      url: 'Texture path',
+      size_px: 'Font size (px)'
+    }
+  },
   kubejs: {
     title: 'KubeJS scripts',
     subtitle:

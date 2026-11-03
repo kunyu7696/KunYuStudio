@@ -132,6 +132,11 @@ const api: IpcApi = {
     applyTemplate: (root, templateId) =>
       ipcRenderer.invoke(IpcChannels.KUBEJS_APPLY_TEMPLATE, root, templateId)
   },
+  fancymenu: {
+    read: (root, loader) => ipcRenderer.invoke(IpcChannels.FANCYMENU_READ, root, loader),
+    save: (root, elements, loader) =>
+      ipcRenderer.invoke(IpcChannels.FANCYMENU_SAVE, root, elements, loader)
+  },
   content: {
     list: (root) => ipcRenderer.invoke(IpcChannels.CONTENT_LIST, root),
     load: (root, kind, id) => ipcRenderer.invoke(IpcChannels.CONTENT_LOAD, root, kind, id),

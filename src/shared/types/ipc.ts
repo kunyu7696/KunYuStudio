@@ -233,6 +233,9 @@ export const IpcChannels = {
   KUBEJS_TEMPLATES: 'kubejs:templates',
   /** 应用模板落盘为新脚本（目标已存在则拒绝） */
   KUBEJS_APPLY_TEMPLATE: 'kubejs:apply-template',
+  // FancyMenu 开始菜单自定义：Fabric config/fancymenu/layout.json / Forge config/fancymenu_forge/layout.json
+  FANCYMENU_READ: 'fancymenu:read',
+  FANCYMENU_SAVE: 'fancymenu:save',
   // AI 助手（M6）：渲染进程不直接访问 AI 端点，一律经主进程代理
   AI_LIST_MODELS: 'ai:list-models',
   AI_TEST: 'ai:test',
@@ -1260,6 +1263,15 @@ export interface IpcApi {
     templates(): Promise<import('./kubejs').KubejsTemplate[]>
     /** 应用模板落盘为新脚本（目标已存在则拒绝） */
     applyTemplate(root: string, templateId: string): Promise<import('./kubejs').KubejsScriptFile>
+  }
+  fancymenu: {
+    /** 读取开始菜单布局（自动探测 Fabric/Forge 路径） */
+    read(root: string, loader?: string): Promise<import('./fancymenu').FancyMenuReadResult | { filePath: null; error: string }>
+    /** 保存元素数组；返回写入的绝对路径 */
+    save(root: string, elements: import('./fancymenu').FmElement[], loader?: string): Promise<
+      | { ok: true; filePath: string }
+      | { ok: false; error: string }
+    >
   }
   settings: {
     /** 读取全量应用设置（已与默认值合并） */

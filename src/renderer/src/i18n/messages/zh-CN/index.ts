@@ -1142,6 +1142,65 @@ const zhCN = {
     questDuplicate: '任务 id {id} 已存在',
     chapterSaved: '章节 {id} 已保存'
   },
+  fancymenu: {
+    title: '开始菜单',
+    subtitle:
+      '可视化拖拽编辑 FancyMenu 开始菜单：button/image/text/rect 四种元素，九种锚点定位。保存即落盘到 config/fancymenu/layout.json（Fabric）或 config/fancymenu_forge/layout.json（Forge）。',
+    add: '新增元素',
+    remove: '删除',
+    duplicate: '复制',
+    reload: '读取布局',
+    save: '保存',
+    saved: '已保存到 {path}',
+    unsaved: '未保存',
+    noLayout: '未找到 layout.json（保存时自动创建）',
+    readError: '读取失败：{error}',
+    saveError: '保存失败：{error}',
+    elementList: '元素',
+    emptyListHint: '点击上方"新增元素"开始吧',
+    properties: '属性',
+    noSelection: '选中一个元素查看属性',
+    confirmTitle: '确认删除',
+    confirmDelete: '删除元素 "{name}"？此操作不可撤销。',
+    confirm: '确定',
+    cancel: '取消',
+    unnamed: '未命名',
+    rectLabel: '色块',
+    newButton: '新按钮',
+    newText: '新文字',
+    newImage: '新贴图',
+    newRect: '新色块',
+    anchors: {
+      top_left: '左上',
+      top_center: '上中',
+      top_right: '右上',
+      middle_left: '左中',
+      center: '正中',
+      middle_right: '右中',
+      bottom_left: '左下',
+      bottom_center: '下中',
+      bottom_right: '右下'
+    },
+    actions: {
+      command: 'MC 命令',
+      url: '外部链接'
+    },
+    fields: {
+      name: '名称',
+      type: '类型',
+      anchor: '锚点',
+      pos: '相对偏移 (x,y)',
+      size: '尺寸',
+      z: '层级',
+      text: '文字',
+      color: '颜色',
+      hoverColor: '悬停色',
+      action: '点击行为',
+      actionValue: '命令体（不带 /）或 URL',
+      url: '贴图路径',
+      size_px: '字号 (px)'
+    }
+  },
   kubejs: {
     title: 'KubeJS 脚本',
     subtitle:
