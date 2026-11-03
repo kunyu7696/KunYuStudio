@@ -2,8 +2,8 @@
  * FTB 任务书（FTB Quests）共享类型。
  *
  * 对应项目内 config/ftbquests/quests/chapters/<章节id>.snbt（SNBT：无引号键 NBT 文本）。
- * 第一版编辑器覆盖「列表 + 表单 + 依赖展示」：任务类型固定 item（提交物品），
- * 奖励固定 item 类型；坐标/拖拽连线画布不在本版范围。
+ * SNBT 里每个 quest 有 x / y 整数坐标，FTB Quests 在 MC 内用这些坐标布置画布节点；
+ * 本工具完整透传这些字段，支持拖拽连线画布（FtbQuestCanvas）实时编辑。
  */
 
 /** 单个任务（item 提交类型） */
@@ -14,13 +14,21 @@ export interface FtbQuest {
   title: string
   /** 任务描述行（可空） */
   description: string[]
-  /** 前置任务 id 列表（展示用；保存时回写） */
+  /** 前置任务 id 列表（画布连线 + 保存时回写） */
   dependencies: string[]
   /** 提交物品 id（如 minecraft:oak_log） */
   item: string
   /** 奖励（可空） */
   reward?: { item: string; count: number }
+  /** 画布 X 坐标（FTB Quests SNBT 里是整数像素；画布组件用） */
+  x?: number
+  /** 画布 Y 坐标 */
+  y?: number
 }
+
+/** 画布节点尺寸常量（与 FtbQuestCanvas.vue 对齐） */
+export const FTB_QUEST_NODE_W = 180
+export const FTB_QUEST_NODE_H = 88
 
 /** 章节（一个 .snbt 文件） */
 export interface FtbQuestChapter {

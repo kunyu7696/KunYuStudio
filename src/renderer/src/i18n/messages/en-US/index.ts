@@ -1149,6 +1149,8 @@ const enUS: Messages = {
     colDeps: 'Prerequisites',
     none: 'None',
     colActions: 'Actions',
+    tabList: 'Quest list',
+    tabCanvas: 'Link canvas',
     unsaved: 'Unsaved changes',
     saveChapter: 'Save chapter',
     placeholder: 'Select a chapter on the left to start editing, or create a new one.',

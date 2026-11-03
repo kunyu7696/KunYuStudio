@@ -1110,6 +1110,8 @@ const zhCN = {
     colDeps: '前置依赖',
     none: '无',
     colActions: '操作',
+    tabList: '任务列表',
+    tabCanvas: '连线画布',
     unsaved: '有未保存修改',
     saveChapter: '保存章节',
     placeholder: '从左侧选择一个章节开始编辑，或新建章节。',

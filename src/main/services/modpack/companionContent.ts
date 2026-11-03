@@ -43,6 +43,9 @@ export interface FtbQuestInput {
     item?: string
     /** 奖励物品 id 与数量 */
     reward?: { item: string; count?: number }
+    /** 画布坐标（整数；FTB Quests 在 MC 内用这些坐标布置节点） */
+    x?: number
+    y?: number
   }>
 }
 
@@ -65,6 +68,8 @@ export function buildFtbQuestChapter(input: FtbQuestInput): string {
     lines.push('\t\t{')
     lines.push(`\t\t\tid: ${snbtStr(q.id)}`)
     lines.push(`\t\t\ttitle: ${snbtStr(q.title)}`)
+    lines.push(`\t\t\tx: ${q.x ?? 0}`)
+    lines.push(`\t\t\ty: ${q.y ?? 0}`)
     if (q.description && q.description.length > 0) {
       lines.push('\t\t\tdescription: [')
       for (const d of q.description) lines.push(`\t\t\t\t${snbtStr(d)}`)

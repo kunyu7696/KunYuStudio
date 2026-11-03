@@ -164,14 +164,16 @@ function asNumber(v: SnbtValue | undefined, fallback: number): number {
   return fallback
 }
 
-/** 从任务复合中提取 item 任务与 item 奖励（其他类型忽略，取不到物品 id 回退空串） */
+/** 从任务复合中提取 item 任务与 item 奖励 + x/y 坐标 */
 function questFromCompound(raw: SnbtCompound): FtbQuest {
   const quest: FtbQuest = {
     id: asString(raw.id) ?? '',
     title: asString(raw.title) ?? '',
     description: asStringList(raw.description),
     dependencies: asStringList(raw.dependencies),
-    item: 'minecraft:stone'
+    item: 'minecraft:stone',
+    x: asNumber(raw.x, 0),
+    y: asNumber(raw.y, 0)
   }
   if (Array.isArray(raw.tasks)) {
     for (const t of raw.tasks) {
@@ -275,7 +277,9 @@ export function saveChapter(root: string, chapter: FtbQuestChapter, prevId?: str
       description: q.description,
       dependencies: q.dependencies,
       item: q.item,
-      reward: q.reward
+      reward: q.reward,
+      x: q.x ?? 0,
+      y: q.y ?? 0
     }))
   })
   writeFileSync(path, content)

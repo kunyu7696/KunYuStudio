@@ -1,7 +1,8 @@
 <!--
   活动栏「FTB 任务书」：config/ftbquests/quests/chapters/*.snbt 章节编辑器
-  - 左栏章节列表（新建/删除/选择），右栏章节表单 + 任务表格
-  - 任务类型固定 item（提交物品），奖励 item 可选；依赖以标签展示（拖拽连线画布不在本版）
+  - 左栏章节列表（新建/删除/选择），右栏章节表单 + tab 切换（列表 / 画布）
+  - 画布：FtbQuestCanvas.vue 拖拽节点 + 贝塞尔连线；依赖与坐标直接写入 chapter.quests
+  - 列表：任务表格 + 编辑对话框；新建任务自动按网格铺坐标
   - 保存经主进程重写为规范 SNBT（与生成器 buildFtbQuestChapter 互逆）
 -->
 <template>
@@ -87,7 +88,9 @@
             {{ t('ftbquest.newQuest') }}
           </el-button>
         </div>
-        <el-table :data="chapter.quests" size="small" max-height="320">
+        <el-tabs v-model="questsTab" class="fq-quests-tabs">
+          <el-tab-pane :label="t('ftbquest.tabList')" name="list">
+            <el-table :data="chapter.quests" size="small" max-height="320">
           <el-table-column prop="id" :label="t('ftbquest.colQuestId')" min-width="110" />
           <el-table-column prop="title" :label="t('ftbquest.colQuestTitle')" min-width="110" />
           <el-table-column prop="item" :label="t('ftbquest.colItem')" min-width="150" />
@@ -120,6 +123,13 @@
             </template>
           </el-table-column>
         </el-table>
+          </el-tab-pane>
+          <el-tab-pane :label="t('ftbquest.tabCanvas')" name="canvas">
+            <div class="fq-canvas-wrap">
+              <FtbQuestCanvas :quests="chapter.quests" @dirty="dirty = true" />
+            </div>
+          </el-tab-pane>
+        </el-tabs>
 
         <div class="fq-save-bar">
           <span v-if="dirty" class="fq-dirty">{{ t('ftbquest.unsaved') }}</span>
@@ -239,6 +249,8 @@ import type {
   FtbQuestChapter,
   FtbQuestChapterSummary
 } from '../../../../shared/types/ftbquest'
+import { FTB_QUEST_NODE_W, FTB_QUEST_NODE_H } from '../../../../shared/types/ftbquest'
+import FtbQuestCanvas from './FtbQuestCanvas.vue'
 import { useProjectStore } from '../../stores/project'
 import { t } from '../../i18n'
 
@@ -253,6 +265,7 @@ const chapterDiskId = ref('')
 const loadingList = ref(false)
 const saving = ref(false)
 const dirty = ref(false)
+const questsTab = ref('list')
 
 const chapterDialog = reactive({ visible: false, id: '', title: '', icon: 'minecraft:book' })
 const questDialog = reactive({
@@ -395,6 +408,16 @@ function applyQuestDialog(): void {
     ElMessage.warning(t('ftbquest.questDuplicate', { id }))
     return
   }
+  // 新建任务给默认画布坐标（网格铺）
+  let x = quest.x ?? 0
+  let y = quest.y ?? 0
+  if (questDialog.index < 0) {
+    const existing = chapter.value.quests.length
+    const col = existing % 4
+    const row = Math.floor(existing / 4)
+    x = 60 + col * 260
+    y = 60 + row * 160
+  }
   const quest: FtbQuest = {
     id,
     title: questDialog.title.trim(),
@@ -404,6 +427,8 @@ function applyQuestDialog(): void {
       .filter((s) => s.length > 0),
     dependencies: questDialog.dependencies,
     item: questDialog.item.trim() || 'minecraft:stone',
+    x,
+    y,
     ...(questDialog.hasReward
       ? { reward: { item: questDialog.rewardItem.trim() || 'minecraft:bread', count: questDialog.rewardCount } }
       : {})
@@ -538,5 +563,15 @@ onMounted(reloadChapters)
 
 .fq-dim {
   color: var(--el-text-color-secondary);
+}
+
+.fq-quests-tabs {
+  margin-top: 4px;
+}
+
+.fq-canvas-wrap {
+  height: 420px;
+  border-radius: 6px;
+  overflow: hidden;
 }
 </style>
