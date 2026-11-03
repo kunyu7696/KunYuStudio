@@ -137,6 +137,11 @@ const api: IpcApi = {
     save: (root, elements, loader) =>
       ipcRenderer.invoke(IpcChannels.FANCYMENU_SAVE, root, elements, loader)
   },
+  taczdeath: {
+    read: (root) => ipcRenderer.invoke(IpcChannels.TACZDEATH_READ, root),
+    save: (root, global, worlds) =>
+      ipcRenderer.invoke(IpcChannels.TACZDEATH_SAVE, root, global, worlds)
+  },
   content: {
     list: (root) => ipcRenderer.invoke(IpcChannels.CONTENT_LIST, root),
     load: (root, kind, id) => ipcRenderer.invoke(IpcChannels.CONTENT_LOAD, root, kind, id),

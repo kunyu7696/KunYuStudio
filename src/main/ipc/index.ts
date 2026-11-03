@@ -37,6 +37,7 @@ import { registerFtbQuestHandlers } from './handlers/ftbQuestHandlers'
 import { registerPatchouliHandlers } from './handlers/patchouliHandlers'
 import { registerKubejsHandlers } from './handlers/kubejsHandlers'
 import { registerFancyMenuHandlers } from './handlers/fancyMenuHandlers'
+import { registerTaczDeathHandlers } from './handlers/taczDeathHandlers'
 
 /**
  * 注册所有主进程 IPC 处理器。
@@ -103,4 +104,5 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   registerPatchouliHandlers()
   registerKubejsHandlers()
   registerFancyMenuHandlers()
+  registerTaczDeathHandlers()
 }

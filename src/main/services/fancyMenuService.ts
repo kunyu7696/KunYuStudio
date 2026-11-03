@@ -20,8 +20,8 @@ import type {
   FmElementBase
 } from '../../shared/types/fancymenu'
 
-/** 四种 P1 元素类型白名单 */
-const SUPPORTED_TYPES = new Set(['button', 'image', 'text', 'rect'])
+/** P1+P2 支持的元素类型白名单 */
+const SUPPORTED_TYPES = new Set(['button', 'image', 'text', 'rect', 'slides', 'particles'])
 
 /** 按 loader 类型返回候选路径（先 Forge 专用，再 Fabric） */
 function candidatePaths(root: string): string[] {
@@ -110,6 +110,44 @@ function parseElement(raw: Record<string, unknown>): FmElement | null {
         type: 'rect',
         color: pick<string>(raw, 'color', '#FFFFFF')
       }
+    case 'slides': {
+      const rawSlides = Array.isArray(raw.slides) ? raw.slides : []
+      const slides = rawSlides
+        .filter((s) => isRecord(s))
+        .map((s) => {
+          const rec = s as Record<string, unknown>
+          return {
+            type: (rec.type === 'local' ? 'local' : 'image') as 'image' | 'local',
+            path: pick<string>(rec, 'path', '')
+          }
+        })
+      const fitRaw = pick<string>(raw, 'fitType', 'stretch')
+      return {
+        ...base,
+        type: 'slides',
+        slides,
+        duration: pick<number>(raw, 'duration', 5000),
+        fadeTime: pick<number>(raw, 'fadeTime', 1000),
+        fitType: (fitRaw === 'crop' || fitRaw === 'fill' ? fitRaw : 'stretch') as
+          | 'stretch'
+          | 'crop'
+          | 'fill'
+      }
+    }
+    case 'particles':
+      return {
+        ...base,
+        type: 'particles',
+        particleId: pick<string>(raw, 'particleId', 'minecraft:flame'),
+        amount: pick<number>(raw, 'amount', 20),
+        originX: pick<number>(raw, 'originX', 0.5),
+        originY: pick<number>(raw, 'originY', 0.5),
+        spreadX: pick<number>(raw, 'spreadX', 1),
+        spreadY: pick<number>(raw, 'spreadY', 1),
+        speedX: pick<number>(raw, 'speedX', 0.1),
+        speedY: pick<number>(raw, 'speedY', 0.1),
+        size: pick<number | undefined>(raw, 'size', undefined)
+      }
     default:
       return null
   }
@@ -146,6 +184,27 @@ function serializeElement(el: FmElement): Record<string, unknown> {
       break
     case 'rect':
       Object.assign(base, { color: el.color })
+      break
+    case 'slides':
+      Object.assign(base, {
+        slides: el.slides.map((s) => ({ type: s.type, path: s.path })),
+        duration: el.duration,
+        fadeTime: el.fadeTime,
+        fitType: el.fitType
+      })
+      break
+    case 'particles':
+      Object.assign(base, {
+        particleId: el.particleId,
+        amount: el.amount,
+        originX: el.originX,
+        originY: el.originY,
+        spreadX: el.spreadX,
+        spreadY: el.spreadY,
+        speedX: el.speedX,
+        speedY: el.speedY,
+        size: el.size
+      })
       break
   }
   // 清理 undefined 字段（JSON 序列化会自动过滤，但显式清理更干净）

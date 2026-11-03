@@ -1,4 +1,5 @@
 import {
+  Aim,
   Box,
   Collection,
   Connection,
@@ -206,6 +207,18 @@ export function registerBuiltinModules(): void {
     projectTypes: ['modpack'],
     requireProject: true,
     loader: () => import('./fancymenu/FancyMenuView.vue')
+  })
+
+  // TaCZ 死亡消息：config/taczdeathmessage/global_config.json + world_config.json
+  moduleRegistry.register({
+    id: 'taczdeath',
+    name: 'TaCZ 死亡消息',
+    icon: Aim,
+    description:
+      '可视化编辑 TaCZ 枪械击杀提示：全局默认 + 按维度覆盖，支持 {killer}/{victim}/{gun} 占位符与 & 颜色码实时预览',
+    projectTypes: ['modpack'],
+    requireProject: true,
+    loader: () => import('./taczdeath/TaczDeathView.vue')
   })
 
   // 原「全流程 AI 制作」已改造为应用级「灵感台」模式（顶栏双模式切换，见 ui store appMode），

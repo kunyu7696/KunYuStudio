@@ -73,6 +73,43 @@
             >
               {{ el.text }}
             </div>
+            <!-- slides 轮播背景 -->
+            <div
+              v-else-if="el.type === 'slides'"
+              class="fm-el fm-el-slides"
+              :class="{ 'fm-el-active': activeId === el.id }"
+              :style="elStyle(el)"
+              @mousedown.stop="onElementMouseDown($event, el)"
+            >
+              <div class="fm-slides-current">
+                <span class="fm-slides-badge">轮播 {{ slideIndex(el) + 1 }}/{{ el.slides.length || 1 }}</span>
+                <span class="fm-slides-path">{{ currentSlidePath(el) || '未配置图片' }}</span>
+              </div>
+              <div class="fm-slides-dots">
+                <span
+                  v-for="(_, i) in el.slides"
+                  :key="i"
+                  class="fm-slides-dot"
+                  :class="{ on: i === slideIndex(el) }"
+                />
+              </div>
+            </div>
+            <!-- particles 粒子动效 -->
+            <div
+              v-else-if="el.type === 'particles'"
+              class="fm-el fm-el-particles"
+              :class="{ 'fm-el-active': activeId === el.id }"
+              :style="elStyle(el)"
+              @mousedown.stop="onElementMouseDown($event, el)"
+            >
+              <span class="fm-particles-badge">{{ el.particleId }} ×{{ el.amount }}</span>
+              <span
+                v-for="n in Math.min(el.amount, 12)"
+                :key="n"
+                class="fm-particle"
+                :style="particleDotStyle(el, n)"
+              />
+            </div>
           </template>
 
           <!-- 选中元素的调试点（显示 9 个锚点参考点 + 元素边界） -->
@@ -119,8 +156,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
-import type { FmAnchor, FmElement } from '../../../../shared/types/fancymenu'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import type {
+  FmAnchor,
+  FmElement,
+  FmParticles,
+  FmSlides
+} from '../../../../shared/types/fancymenu'
 
 const props = defineProps<{
   elements: FmElement[]
@@ -205,6 +247,51 @@ const sorted = computed(() =>
 const activeEl = computed(() =>
   props.elements.find((e) => e.id === props.activeId) ?? null
 )
+
+// ---- 轮播预览时钟（每 500ms 推进一格） ----
+const tick = ref(0)
+let tickTimer: number | undefined
+onMounted(() => {
+  tickTimer = window.setInterval(() => {
+    tick.value++
+  }, 500)
+})
+onBeforeUnmount(() => {
+  if (tickTimer !== undefined) window.clearInterval(tickTimer)
+})
+
+/** 当前展示第几张（按 duration 换算成 tick 步数） */
+function slideIndex(el: FmSlides): number {
+  const n = el.slides.length
+  if (!n) return 0
+  const step = Math.max(1, Math.round(el.duration / 500))
+  return Math.floor(tick.value / step) % n
+}
+
+function currentSlidePath(el: FmSlides): string {
+  return el.slides[slideIndex(el)]?.path ?? ''
+}
+
+/** 粒子示意点位（确定性伪随机，保证每次渲染一致） */
+function particleDotStyle(el: FmParticles, n: number): Record<string, string> {
+  const rand = (seed: number): number => {
+    const x = Math.sin(seed * 12.9898) * 43758.5453
+    return x - Math.floor(x)
+  }
+  const cx = el.originX * 100
+  const cy = el.originY * 100
+  const dx = (rand(n) - 0.5) * el.spreadX * 30
+  const dy = (rand(n + 7) - 0.5) * el.spreadY * 30
+  const size = 3 + Math.round(rand(n + 13) * (el.size ?? 1) * 3)
+  return {
+    left: `${(cx + dx).toFixed(2)}%`,
+    top: `${(cy + dy).toFixed(2)}%`,
+    width: `${size}px`,
+    height: `${size}px`,
+    animationDelay: `${(rand(n + 19) * 2).toFixed(2)}s`,
+    animationDuration: `${(1.2 + rand(n + 23) * 0.8).toFixed(2)}s`
+  }
+}
 
 // ---- DOM refs ----
 const frameEl = ref<HTMLDivElement | null>(null)
@@ -364,6 +451,87 @@ function onStageClickEmpty(): void {
   text-shadow: 0 1px 1px rgba(0,0,0,0.6);
 }
 .fm-el-button:hover { border-color: #7a808e; }
+
+/* slides 轮播背景 */
+.fm-el-slides {
+  border: 1px dashed rgba(122, 199, 255, 0.35);
+  background: linear-gradient(135deg, #20283a 0%, #161b26 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+}
+.fm-slides-current {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 0 6px;
+  text-align: center;
+  overflow: hidden;
+}
+.fm-slides-badge {
+  font-size: 10px;
+  color: #7ac7ff;
+  font-family: 'Consolas', monospace;
+  background: rgba(122, 199, 255, 0.12);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+.fm-slides-path {
+  font-size: 10px;
+  color: #9aa1ae;
+  font-family: 'Consolas', monospace;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fm-slides-dots {
+  display: flex;
+  gap: 4px;
+}
+.fm-slides-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  transition: background 0.2s;
+}
+.fm-slides-dot.on { background: #7ac7ff; }
+
+/* particles 粒子动效 */
+.fm-el-particles {
+  border: 1px dashed rgba(255, 176, 122, 0.35);
+  background: rgba(255, 176, 122, 0.03);
+  overflow: hidden;
+}
+.fm-particles-badge {
+  position: absolute;
+  left: 4px;
+  bottom: 3px;
+  font-size: 9px;
+  color: #ffb07a;
+  font-family: 'Consolas', monospace;
+  z-index: 2;
+  pointer-events: none;
+}
+.fm-particle {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffcf9a 0%, rgba(255, 176, 122, 0.2) 75%);
+  transform: translate(-50%, -50%);
+  animation-name: fm-particle-float;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+  pointer-events: none;
+}
+@keyframes fm-particle-float {
+  0%, 100% { opacity: 0.25; transform: translate(-50%, -50%) scale(0.85); }
+  50% { opacity: 0.95; transform: translate(-50%, -80%) scale(1.1); }
+}
 
 .fm-el-bounds {
   position: absolute;

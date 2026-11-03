@@ -81,7 +81,7 @@ describe('fancyMenuService', () => {
       writeFileSync(
         fabricPath,
         JSON.stringify({
-          elements: [BUTTON, TEXT, { type: 'slides', id: 'bg_slides' }], // slides 是不支持类型
+          elements: [BUTTON, TEXT, { type: 'unknown_element', id: 'unknown_1' }], // 未知类型
           meta: { version: '2.0.0' }
         })
       )
@@ -89,7 +89,7 @@ describe('fancyMenuService', () => {
       const res = readFancyMenu(root, 'fabric')
       expect('elements' in res).toBe(true)
       expect(res.filePath).toBe(fabricPath)
-      // 只解析 button / image / text / rect，slides 被过滤掉
+      // 未知类型被过滤掉
       expect(res.elements).toHaveLength(2)
       expect(res.elements[0].type).toBe('button')
       expect(res.elements[1].type).toBe('text')
@@ -204,6 +204,170 @@ describe('fancyMenuService', () => {
       const result = writeFancyMenu(root, [TEXT])
       expect(result.ok).toBe(true)
       expect(existsSync(result.filePath)).toBe(true)
+    })
+  })
+
+  describe('P2 元素：slides / particles', () => {
+    it('slides 元素解析：图片列表 + duration + fitType', () => {
+      const root = tmpRoot()
+      const fabricPath = join(root, 'config', 'fancymenu', 'layout.json')
+      mkdirSync(join(root, 'config', 'fancymenu'), { recursive: true })
+      writeFileSync(
+        fabricPath,
+        JSON.stringify({
+          elements: [
+            {
+              id: 'bg_slides',
+              type: 'slides',
+              name: 'Slideshow',
+              anchor: 'top_left',
+              x: 0,
+              y: 0,
+              width: 1280,
+              height: 720,
+              z: -20,
+              slides: [
+                { type: 'image', path: 'minecraft:textures/gui/title/background/panorama_0.png' },
+                { type: 'local', path: 'slides/custom.png' }
+              ],
+              duration: 6000,
+              fadeTime: 500,
+              fitType: 'crop'
+            }
+          ]
+        })
+      )
+
+      const res = readFancyMenu(root)
+      expect('elements' in res && res.elements).toHaveLength(1)
+      const el = res.elements[0]
+      expect(el.type).toBe('slides')
+      if (el.type !== 'slides') return
+      expect(el.slides).toHaveLength(2)
+      expect(el.slides[0]).toEqual({
+        type: 'image',
+        path: 'minecraft:textures/gui/title/background/panorama_0.png'
+      })
+      expect(el.slides[1].type).toBe('local')
+      expect(el.duration).toBe(6000)
+      expect(el.fadeTime).toBe(500)
+      expect(el.fitType).toBe('crop')
+    })
+
+    it('slides 缺字段时用默认值补齐（duration=5000, fadeTime=1000, fitType=stretch）', () => {
+      const root = tmpRoot()
+      const fabricPath = join(root, 'config', 'fancymenu', 'layout.json')
+      mkdirSync(join(root, 'config', 'fancymenu'), { recursive: true })
+      writeFileSync(
+        fabricPath,
+        JSON.stringify({
+          elements: [
+            { id: 'bg', type: 'slides', anchor: 'top_left', x: 0, y: 0, width: 1, height: 1 }
+          ]
+        })
+      )
+      const res = readFancyMenu(root)
+      const el = res.elements[0]
+      if (el.type !== 'slides') throw new Error('not slides')
+      expect(el.slides).toEqual([])
+      expect(el.duration).toBe(5000)
+      expect(el.fadeTime).toBe(1000)
+      expect(el.fitType).toBe('stretch')
+    })
+
+    it('particles 元素解析 + 默认值补齐', () => {
+      const root = tmpRoot()
+      const fabricPath = join(root, 'config', 'fancymenu', 'layout.json')
+      mkdirSync(join(root, 'config', 'fancymenu'), { recursive: true })
+      writeFileSync(
+        fabricPath,
+        JSON.stringify({
+          elements: [
+            {
+              id: 'fx',
+              type: 'particles',
+              anchor: 'center',
+              x: 100,
+              y: 100,
+              width: 400,
+              height: 300,
+              particleId: 'minecraft:end_rod',
+              amount: 35,
+              originX: 0.3,
+              originY: 0.7
+            }
+          ]
+        })
+      )
+      const res = readFancyMenu(root)
+      const el = res.elements[0]
+      if (el.type !== 'particles') throw new Error('not particles')
+      expect(el.particleId).toBe('minecraft:end_rod')
+      expect(el.amount).toBe(35)
+      expect(el.originX).toBe(0.3)
+      expect(el.originY).toBe(0.7)
+      // 未给出的字段用默认值
+      expect(el.spreadX).toBe(1)
+      expect(el.speedX).toBe(0.1)
+      expect(el.size).toBeUndefined()
+    })
+
+    it('slides + particles 序列化往返一致', () => {
+      const root = tmpRoot()
+      const elements = [
+        {
+          id: 'bg',
+          type: 'slides' as const,
+          name: 'bg',
+          anchor: 'top_left' as const,
+          x: 0,
+          y: 0,
+          width: 1280,
+          height: 720,
+          z: -10,
+          slides: [{ type: 'image' as const, path: 'a.png' }],
+          duration: 4000,
+          fadeTime: 800,
+          fitType: 'fill' as const
+        },
+        {
+          id: 'fx',
+          type: 'particles' as const,
+          name: 'fx',
+          anchor: 'center' as const,
+          x: 0,
+          y: 0,
+          width: 200,
+          height: 200,
+          z: 3,
+          particleId: 'minecraft:flame',
+          amount: 12,
+          originX: 0.5,
+          originY: 0.5,
+          spreadX: 0.5,
+          spreadY: 0.5,
+          speedX: 0.05,
+          speedY: 0.05,
+          size: 1.5
+        }
+      ]
+      const saveRes = writeFancyMenu(root, elements)
+      expect(saveRes.ok).toBe(true)
+      const res = readFancyMenu(root)
+      expect(res.elements).toHaveLength(2)
+      expect(res.elements[0]).toMatchObject({
+        type: 'slides',
+        duration: 4000,
+        fadeTime: 800,
+        fitType: 'fill',
+        slides: [{ type: 'image', path: 'a.png' }]
+      })
+      expect(res.elements[1]).toMatchObject({
+        type: 'particles',
+        particleId: 'minecraft:flame',
+        amount: 12,
+        size: 1.5
+      })
     })
   })
 

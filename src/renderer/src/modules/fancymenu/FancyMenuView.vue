@@ -177,6 +177,154 @@
           >
             <el-input-number v-model="(activeEl as any).size" :min="8" :max="72" controls-position="right" />
           </el-form-item>
+
+          <!-- slides 轮播字段 -->
+          <template v-if="activeEl.type === 'slides'">
+            <el-form-item :label="t('fancymenu.fields.slideList')">
+              <div class="fm-slide-list">
+                <div
+                  v-for="(s, i) in (activeEl as FmSlides).slides"
+                  :key="i"
+                  class="fm-slide-row"
+                >
+                  <el-select v-model="(activeEl as FmSlides).slides[i].type" class="fm-slide-type">
+                    <el-option value="image" :label="t('fancymenu.slideTypes.image')" />
+                    <el-option value="local" :label="t('fancymenu.slideTypes.local')" />
+                  </el-select>
+                  <el-input
+                    v-model="(activeEl as FmSlides).slides[i].path"
+                    class="fm-slide-path"
+                    placeholder="textures/... 或本地路径"
+                  />
+                  <el-button
+                    size="small"
+                    text
+                    type="danger"
+                    :disabled="(activeEl as FmSlides).slides.length <= 1"
+                    @click="removeSlideItem(activeEl as FmSlides, i)"
+                  >−</el-button>
+                </div>
+                <el-button size="small" plain @click="addSlideItem(activeEl as FmSlides)">
+                  {{ t('fancymenu.addSlide') }}
+                </el-button>
+              </div>
+            </el-form-item>
+
+            <el-form-item :label="t('fancymenu.fields.duration')">
+              <el-input-number
+                v-model="(activeEl as FmSlides).duration"
+                :min="500"
+                :step="500"
+                controls-position="right"
+              />
+            </el-form-item>
+
+            <el-form-item :label="t('fancymenu.fields.fadeTime')">
+              <el-input-number
+                v-model="(activeEl as FmSlides).fadeTime"
+                :min="0"
+                :step="100"
+                controls-position="right"
+              />
+            </el-form-item>
+
+            <el-form-item :label="t('fancymenu.fields.fitType')">
+              <el-select v-model="(activeEl as FmSlides).fitType">
+                <el-option value="stretch" :label="t('fancymenu.fitTypes.stretch')" />
+                <el-option value="crop" :label="t('fancymenu.fitTypes.crop')" />
+                <el-option value="fill" :label="t('fancymenu.fitTypes.fill')" />
+              </el-select>
+            </el-form-item>
+          </template>
+
+          <!-- particles 粒子字段 -->
+          <template v-if="activeEl.type === 'particles'">
+            <el-form-item :label="t('fancymenu.fields.particleId')">
+              <el-input
+                v-model="(activeEl as FmParticles).particleId"
+                placeholder="minecraft:flame"
+              />
+            </el-form-item>
+
+            <el-form-item :label="t('fancymenu.fields.amount')">
+              <el-input-number
+                v-model="(activeEl as FmParticles).amount"
+                :min="1"
+                :max="200"
+                controls-position="right"
+              />
+            </el-form-item>
+
+            <el-form-item :label="t('fancymenu.fields.origin')">
+              <div class="fm-pos-row">
+                <el-input-number
+                  v-model="(activeEl as FmParticles).originX"
+                  :min="0"
+                  :max="1"
+                  :step="0.05"
+                  :precision="2"
+                  controls-position="right"
+                />
+                <span class="fm-pos-sep">,</span>
+                <el-input-number
+                  v-model="(activeEl as FmParticles).originY"
+                  :min="0"
+                  :max="1"
+                  :step="0.05"
+                  :precision="2"
+                  controls-position="right"
+                />
+              </div>
+            </el-form-item>
+
+            <el-form-item :label="t('fancymenu.fields.spread')">
+              <div class="fm-pos-row">
+                <el-input-number
+                  v-model="(activeEl as FmParticles).spreadX"
+                  :min="0"
+                  :step="0.1"
+                  :precision="2"
+                  controls-position="right"
+                />
+                <span class="fm-pos-sep">,</span>
+                <el-input-number
+                  v-model="(activeEl as FmParticles).spreadY"
+                  :min="0"
+                  :step="0.1"
+                  :precision="2"
+                  controls-position="right"
+                />
+              </div>
+            </el-form-item>
+
+            <el-form-item :label="t('fancymenu.fields.speed')">
+              <div class="fm-pos-row">
+                <el-input-number
+                  v-model="(activeEl as FmParticles).speedX"
+                  :step="0.05"
+                  :precision="2"
+                  controls-position="right"
+                />
+                <span class="fm-pos-sep">,</span>
+                <el-input-number
+                  v-model="(activeEl as FmParticles).speedY"
+                  :step="0.05"
+                  :precision="2"
+                  controls-position="right"
+                />
+              </div>
+            </el-form-item>
+
+            <el-form-item :label="t('fancymenu.fields.particleSize')">
+              <el-input-number
+                v-model="(activeEl as FmParticles).size"
+                :min="0.1"
+                :step="0.1"
+                :precision="1"
+                controls-position="right"
+              />
+            </el-form-item>
+          </template>
         </el-form>
       </aside>
     </div>
@@ -187,7 +335,16 @@
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import FancyMenuCanvas from './FancyMenuCanvas.vue'
-import type { FmAnchor, FmButton, FmElement, FmImage, FmRect, FmText } from '../../../../shared/types/fancymenu'
+import type {
+  FmAnchor,
+  FmButton,
+  FmElement,
+  FmImage,
+  FmParticles,
+  FmRect,
+  FmSlides,
+  FmText
+} from '../../../../shared/types/fancymenu'
 import { useProjectStore } from '../../stores/project'
 import { t } from '../../i18n'
 
@@ -273,15 +430,21 @@ function placeholderName(el: FmElement): string {
     case 'text': return el.text
     case 'image': return el.url.slice(el.url.lastIndexOf('/') + 1) || t('fancymenu.unnamed')
     case 'rect': return t('fancymenu.rectLabel')
+    case 'slides': return t('fancymenu.slidesLabel', { n: el.slides.length })
+    case 'particles': return el.particleId || t('fancymenu.particlesLabel')
   }
 }
 
-function elTypeTagColor(type: FmElement['type']): '' | 'success' | 'warning' | 'danger' {
+function elTypeTagColor(
+  type: FmElement['type']
+): '' | 'success' | 'warning' | 'danger' | 'info' {
   switch (type) {
     case 'button': return ''
     case 'image': return 'success'
     case 'text': return 'warning'
     case 'rect': return 'danger'
+    case 'slides': return 'info'
+    case 'particles': return 'info'
   }
 }
 
@@ -291,9 +454,9 @@ function makeId(prefix = 'fm'): string {
 
 function onAddElement(): void {
   const prevMaxZ = elements.value.reduce((m, e) => Math.max(m, e.z ?? 0), -1)
-  const idx = elements.value.length % 4
-  const xOffsets = [200, 500, 800, 320]
-  const yOffsets = [200, 400, 260, 520]
+  const idx = elements.value.length % 6
+  const xOffsets = [200, 500, 800, 320, 120, 700]
+  const yOffsets = [200, 400, 260, 520, 470, 520]
 
   let el: FmElement
   switch (idx) {
@@ -340,7 +503,7 @@ function onAddElement(): void {
         url: ''
       } as FmImage
       break
-    default: // rect
+    case 3: // rect
       el = {
         id: makeId('bg'),
         type: 'rect',
@@ -353,6 +516,48 @@ function onAddElement(): void {
         z: prevMaxZ + 1,
         color: '#2a2f38'
       } as FmRect
+      break
+    case 4: // slides
+      el = {
+        id: makeId('slides'),
+        type: 'slides',
+        name: t('fancymenu.newSlides'),
+        anchor: 'top_left',
+        x: 0,
+        y: 0,
+        width: 724,
+        height: 407,
+        z: prevMaxZ + 1,
+        slides: [
+          { type: 'image', path: 'minecraft:textures/gui/title/background/panorama_0.png' },
+          { type: 'image', path: 'minecraft:textures/gui/title/background/panorama_1.png' }
+        ],
+        duration: 5000,
+        fadeTime: 1000,
+        fitType: 'stretch'
+      } as FmSlides
+      break
+    default: // particles
+      el = {
+        id: makeId('particles'),
+        type: 'particles',
+        name: t('fancymenu.newParticles'),
+        anchor: 'center',
+        x: xOffsets[idx],
+        y: yOffsets[idx],
+        width: 320,
+        height: 200,
+        z: prevMaxZ + 1,
+        particleId: 'minecraft:flame',
+        amount: 20,
+        originX: 0.5,
+        originY: 0.5,
+        spreadX: 1,
+        spreadY: 1,
+        speedX: 0.1,
+        speedY: 0.1,
+        size: 1
+      } as FmParticles
   }
   elements.value.push(el)
   activeId.value = el.id
@@ -389,6 +594,18 @@ function onDuplicateActive(): void {
 /** 确保 action 对象存在（从无到有时先建空壳） */
 function ensureAction(el: FmButton): void {
   if (!el.action) el.action = { type: 'command', value: '' }
+  dirty.value = true
+}
+
+/** 轮播图增删 */
+function addSlideItem(el: FmSlides): void {
+  el.slides.push({ type: 'image', path: '' })
+  dirty.value = true
+}
+
+function removeSlideItem(el: FmSlides, index: number): void {
+  if (el.slides.length <= 1) return
+  el.slides.splice(index, 1)
   dirty.value = true
 }
 
@@ -485,6 +702,8 @@ onMounted(onRead)
 .fm-el-badge.type-image  { background: rgba(74, 199, 135, 0.2); color: #4ac787; }
 .fm-el-badge.type-text   { background: rgba(212, 156, 74, 0.2); color: #d49c4a; }
 .fm-el-badge.type-rect   { background: rgba(220, 86, 86, 0.2); color: #dc5656; }
+.fm-el-badge.type-slides { background: rgba(122, 199, 255, 0.2); color: #7ac7ff; }
+.fm-el-badge.type-particles { background: rgba(255, 176, 122, 0.2); color: #ffb07a; }
 .fm-el-badge--z { background: rgba(255,255,255,0.06); color: #7a808e; margin-left: auto; }
 
 .fm-el-label {
@@ -527,4 +746,20 @@ onMounted(onRead)
 .fm-action-row { display: flex; gap: 4px; width: 100%; }
 .fm-action-row .el-select { width: 110px; flex-shrink: 0; }
 .fm-action-row .el-input { flex: 1; }
+
+/* 轮播图列表 */
+.fm-slide-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+.fm-slide-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  width: 100%;
+}
+.fm-slide-type { width: 70px; flex-shrink: 0; }
+.fm-slide-path { flex: 1; min-width: 0; }
 </style>

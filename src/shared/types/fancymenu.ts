@@ -88,7 +88,46 @@ export interface FmRect extends FmElementBase {
   color: string
 }
 
-export type FmElement = FmButton | FmImage | FmText | FmRect
+/** 轮播背景里的一张图 */
+export interface FmSlideItem {
+  /** image → 资源包内路径；local → 整合包 config 下相对文件 */
+  type: 'image' | 'local'
+  path: string
+}
+
+/** 轮播背景（slides）：多张图按 duration 依次切换 */
+export interface FmSlides extends FmElementBase {
+  type: 'slides'
+  slides: FmSlideItem[]
+  /** 每张停留时长（毫秒） */
+  duration: number
+  /** 切换淡入淡出时长（毫秒） */
+  fadeTime: number
+  /** 填充方式：stretch 拉伸 / crop 裁剪 / fill 填满 */
+  fitType?: 'stretch' | 'crop' | 'fill'
+}
+
+/** 粒子动效背景（particles）：在元素区域内按参数喷射粒子 */
+export interface FmParticles extends FmElementBase {
+  type: 'particles'
+  /** 粒子注册名，如 'minecraft:flame' */
+  particleId: string
+  /** 同时存在粒子数量 */
+  amount: number
+  /** 发射原点相对元素区域的百分比坐标 0~1 */
+  originX: number
+  originY: number
+  /** 扩散范围 */
+  spreadX: number
+  spreadY: number
+  /** 初速度 */
+  speedX: number
+  speedY: number
+  /** 粒子基础尺寸 */
+  size?: number
+}
+
+export type FmElement = FmButton | FmImage | FmText | FmRect | FmSlides | FmParticles
 
 /** 整份菜单（layout.json 映射） */
 export interface FancyMenuLayout {

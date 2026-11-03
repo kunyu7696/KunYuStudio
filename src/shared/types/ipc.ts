@@ -236,6 +236,9 @@ export const IpcChannels = {
   // FancyMenu 开始菜单自定义：Fabric config/fancymenu/layout.json / Forge config/fancymenu_forge/layout.json
   FANCYMENU_READ: 'fancymenu:read',
   FANCYMENU_SAVE: 'fancymenu:save',
+  // TaCZ 死亡消息：config/taczdeathmessage/global_config.json + world_config.json
+  TACZDEATH_READ: 'taczdeath:read',
+  TACZDEATH_SAVE: 'taczdeath:save',
   // AI 助手（M6）：渲染进程不直接访问 AI 端点，一律经主进程代理
   AI_LIST_MODELS: 'ai:list-models',
   AI_TEST: 'ai:test',
@@ -1270,6 +1273,19 @@ export interface IpcApi {
     /** 保存元素数组；返回写入的绝对路径 */
     save(root: string, elements: import('./fancymenu').FmElement[], loader?: string): Promise<
       | { ok: true; filePath: string }
+      | { ok: false; error: string }
+    >
+  }
+  taczdeath: {
+    /** 读取 global_config.json + world_config.json；缺失时回退默认值 */
+    read(root: string): Promise<import('./taczdeath').TaczDeathReadResult>
+    /** 保存两份配置；保留旧文件里的未知字段 */
+    save(
+      root: string,
+      global: import('./taczdeath').TaczGlobalConfig,
+      worlds: import('./taczdeath').TaczWorldsFile
+    ): Promise<
+      | { ok: true; globalPath: string; worldPath: string }
       | { ok: false; error: string }
     >
   }
