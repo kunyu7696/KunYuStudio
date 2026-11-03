@@ -56,14 +56,18 @@ const SAMPLE: FtbQuestChapter = {
       description: ['用拳头砍一棵树', '含"引号"与\\反斜杠'],
       dependencies: [],
       item: 'minecraft:oak_log',
-      reward: { item: 'minecraft:bread', count: 4 }
+      reward: { item: 'minecraft:bread', count: 4 },
+      x: 60,
+      y: 60
     },
     {
       id: 'make_pickaxe',
       title: '做镐',
       description: [],
       dependencies: ['chop_tree'],
-      item: 'minecraft:wooden_pickaxe'
+      item: 'minecraft:wooden_pickaxe',
+      x: 320,
+      y: 60
     }
   ]
 }
