@@ -184,15 +184,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { useI18n } from 'vue-i18n'
 import FancyMenuCanvas from './FancyMenuCanvas.vue'
 import type { FmAnchor, FmButton, FmElement, FmImage, FmRect, FmText } from '../../../../shared/types/fancymenu'
+import { useProjectStore } from '../../stores/project'
+import { t } from '../../i18n'
 
-const props = defineProps<{ projectRoot: string; loader?: string }>()
-
-const { t } = useI18n()
+const projectStore = useProjectStore()
+const root = computed(() => projectStore.currentProject?.path ?? '')
+const loader = computed<string | undefined>(() =>
+  projectStore.currentProject?.loader ?? undefined
+)
 
 // ---- 状态 ----
 const elements = ref<FmElement[]>([])
@@ -234,7 +237,8 @@ defineExpose({
 
 // ---- 读 ----
 async function onRead(): Promise<void> {
-  const res = await window.api.fancymenu.read(props.projectRoot, props.loader)
+  if (!root.value) return
+  const res = await window.api.fancymenu.read(root.value, loader.value)
   if ('error' in res) {
     ElMessage.error(t('fancymenu.readError', { error: res.error }))
     return
@@ -247,7 +251,11 @@ async function onRead(): Promise<void> {
 
 // ---- 存 ----
 async function onSave(): Promise<{ ok: boolean; filePath?: string; error?: string }> {
-  const res = await window.api.fancymenu.save(props.projectRoot, elements.value, props.loader)
+  if (!root.value) {
+    ElMessage.warning(t('fancymenu.noLayout'))
+    return { ok: false, error: 'no project' }
+  }
+  const res = await window.api.fancymenu.save(root.value, elements.value, loader.value)
   if ('error' in res) {
     ElMessage.error(t('fancymenu.saveError', { error: res.error }))
     return { ok: false, error: res.error }
@@ -383,6 +391,8 @@ function ensureAction(el: FmButton): void {
   if (!el.action) el.action = { type: 'command', value: '' }
   dirty.value = true
 }
+
+onMounted(onRead)
 </script>
 
 <style scoped>
