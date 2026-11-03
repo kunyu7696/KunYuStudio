@@ -1269,7 +1269,7 @@ export interface IpcApi {
   }
   fancymenu: {
     /** 读取开始菜单布局（自动探测 Fabric/Forge 路径） */
-    read(root: string, loader?: string): Promise<import('./fancymenu').FancyMenuReadResult | { filePath: null; error: string }>
+    read(root: string, loader?: string): Promise<import('./fancymenu').FancyMenuReadResult | { filePath: string; error: string }>
     /** 保存元素数组；返回写入的绝对路径 */
     save(root: string, elements: import('./fancymenu').FmElement[], loader?: string): Promise<
       | { ok: true; filePath: string }

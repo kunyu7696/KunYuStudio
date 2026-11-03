@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import { mkdtempSync, rmSync, writeFileSync, existsSync, mkdirSync } from 'node:fs'
-import { join, sep } from 'node:path'
+import { join } from 'node:path'
 import { emptyLayout, readFancyMenu, writeFancyMenu } from '../fancyMenuService'
-import type { FmButton, FmImage, FmRect, FmText } from '../../../shared/types/fancymenu'
+import type { FancyMenuReadResult } from '../../../shared/types/fancymenu'
+import type { FmButton, FmElement, FmImage, FmRect, FmText } from '../../../shared/types/fancymenu'
 
 const TMP_DIRS: string[] = []
 
@@ -16,6 +17,24 @@ afterEach(() => {
   for (const d of TMP_DIRS) if (existsSync(d)) rmSync(d, { recursive: true, force: true })
   TMP_DIRS.length = 0
 })
+
+/** 读取并断言成功（失败时直接抛错，收窄联合类型） */
+function readOk(root: string, loader?: string): FancyMenuReadResult {
+  const res = readFancyMenu(root, loader)
+  if ('error' in res) throw new Error(`读取失败: ${res.error}`)
+  return res
+}
+
+/** 写入并断言成功（收窄 ok 联合类型） */
+function writeOk(
+  root: string,
+  elements: FmElement[],
+  loader?: string
+): { ok: true; filePath: string } {
+  const res = writeFancyMenu(root, elements, loader)
+  if (!res.ok) throw new Error(`写入失败: ${res.error}`)
+  return res
+}
 
 const BUTTON: FmButton = {
   id: 'btn_play',
@@ -86,8 +105,7 @@ describe('fancyMenuService', () => {
         })
       )
 
-      const res = readFancyMenu(root, 'fabric')
-      expect('elements' in res).toBe(true)
+      const res = readOk(root, 'fabric')
       expect(res.filePath).toBe(fabricPath)
       // 未知类型被过滤掉
       expect(res.elements).toHaveLength(2)
@@ -106,7 +124,7 @@ describe('fancyMenuService', () => {
       writeFileSync(forgePath, JSON.stringify({ elements: [BUTTON] }))
       writeFileSync(fabricPath, JSON.stringify({ elements: [TEXT] }))
 
-      const res = readFancyMenu(root, 'forge')
+      const res = readOk(root, 'forge')
       expect(res.filePath).toBe(forgePath)
       expect(res.elements).toHaveLength(1)
       expect(res.elements[0].id).toBe('btn_play')
@@ -114,8 +132,7 @@ describe('fancyMenuService', () => {
 
     it('两边都没有时返回空数组 + 推测路径（不写磁盘）', () => {
       const root = tmpRoot()
-      const res = readFancyMenu(root)
-      expect('elements' in res).toBe(true)
+      const res = readOk(root)
       expect(res.elements).toEqual([])
       // 默认按 Fabric 路径
       expect(res.filePath).toBe(join(root, 'config', 'fancymenu', 'layout.json'))
@@ -147,29 +164,31 @@ describe('fancyMenuService', () => {
           ]
         })
       )
-      const res = readFancyMenu(root)
-      expect('elements' in res && res.elements[0]?.action?.type).toBe('command') // 未知 action type 回退到 command
+      const res = readOk(root)
+      const el = res.elements[0]
+      expect(el.type).toBe('button')
+      if (el.type === 'button') {
+        expect(el.action?.type).toBe('command') // 未知 action type 回退到 command
+      }
     })
   })
 
   describe('writeFancyMenu', () => {
     it('写入 Fabric 路径（默认 loader）', () => {
       const root = tmpRoot()
-      const result = writeFancyMenu(root, [BUTTON, TEXT, IMAGE, RECT])
-      expect(result.ok).toBe(true)
+      const result = writeOk(root, [BUTTON, TEXT, IMAGE, RECT])
       const expectedPath = join(root, 'config', 'fancymenu', 'layout.json')
       expect(result.filePath).toBe(expectedPath)
       expect(existsSync(expectedPath)).toBe(true)
 
-      const res = readFancyMenu(root)
+      const res = readOk(root)
       expect(res.elements).toHaveLength(4)
       expect(res.elements[0].id).toBe('btn_play')
     })
 
     it('Forge loader → 写 config/fancymenu_forge/layout.json', () => {
       const root = tmpRoot()
-      const result = writeFancyMenu(root, [BUTTON], 'forge')
-      expect(result.ok).toBe(true)
+      const result = writeOk(root, [BUTTON], 'forge')
       const expectedPath = join(root, 'config', 'fancymenu_forge', 'layout.json')
       expect(result.filePath).toBe(expectedPath)
       expect(existsSync(expectedPath)).toBe(true)
@@ -187,10 +206,9 @@ describe('fancyMenuService', () => {
         })
       )
 
-      const saveRes = writeFancyMenu(root, [BUTTON, TEXT])
-      expect(saveRes.ok).toBe(true)
+      writeOk(root, [BUTTON, TEXT])
 
-      const res = readFancyMenu(root)
+      const res = readOk(root)
       expect((res.raw as Record<string, unknown>).meta).toEqual({
         version: '2.0.0',
         customFlag: true
@@ -201,8 +219,7 @@ describe('fancyMenuService', () => {
     it('Fabric 路径不存在时自动创建目录', () => {
       const root = tmpRoot()
       // 整个 config 都不存在
-      const result = writeFancyMenu(root, [TEXT])
-      expect(result.ok).toBe(true)
+      const result = writeOk(root, [TEXT])
       expect(existsSync(result.filePath)).toBe(true)
     })
   })
@@ -238,8 +255,8 @@ describe('fancyMenuService', () => {
         })
       )
 
-      const res = readFancyMenu(root)
-      expect('elements' in res && res.elements).toHaveLength(1)
+      const res = readOk(root)
+      expect(res.elements).toHaveLength(1)
       const el = res.elements[0]
       expect(el.type).toBe('slides')
       if (el.type !== 'slides') return
@@ -266,7 +283,7 @@ describe('fancyMenuService', () => {
           ]
         })
       )
-      const res = readFancyMenu(root)
+      const res = readOk(root)
       const el = res.elements[0]
       if (el.type !== 'slides') throw new Error('not slides')
       expect(el.slides).toEqual([])
@@ -299,7 +316,7 @@ describe('fancyMenuService', () => {
           ]
         })
       )
-      const res = readFancyMenu(root)
+      const res = readOk(root)
       const el = res.elements[0]
       if (el.type !== 'particles') throw new Error('not particles')
       expect(el.particleId).toBe('minecraft:end_rod')
@@ -314,7 +331,7 @@ describe('fancyMenuService', () => {
 
     it('slides + particles 序列化往返一致', () => {
       const root = tmpRoot()
-      const elements = [
+      const elements: FmElement[] = [
         {
           id: 'bg',
           type: 'slides' as const,
@@ -351,9 +368,8 @@ describe('fancyMenuService', () => {
           size: 1.5
         }
       ]
-      const saveRes = writeFancyMenu(root, elements)
-      expect(saveRes.ok).toBe(true)
-      const res = readFancyMenu(root)
+      writeOk(root, elements)
+      const res = readOk(root)
       expect(res.elements).toHaveLength(2)
       expect(res.elements[0]).toMatchObject({
         type: 'slides',

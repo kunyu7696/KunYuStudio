@@ -220,7 +220,7 @@ function serializeElement(el: FmElement): Record<string, unknown> {
 export function readFancyMenu(
   root: string,
   loader?: string
-): FancyMenuReadResult | { filePath: null; error: string } {
+): FancyMenuReadResult | { filePath: string; error: string } {
   const path = detectPath(root) ?? defaultPath(root, loader)
   if (!existsSync(path)) {
     return { filePath: path, raw: {}, elements: [] }

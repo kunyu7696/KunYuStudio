@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron'
-import { readFancyMenu, writeFancyMenu } from '../services/fancyMenuService'
-import { IpcChannels } from '../shared/types/ipc'
+import { readFancyMenu, writeFancyMenu } from '../../services/fancyMenuService'
+import { IpcChannels } from '../../../shared/types/ipc'
 
 export function registerFancyMenuHandlers(): void {
   ipcMain.handle(IpcChannels.FANCYMENU_READ, (_evt, root: string, loader?: string) => {
