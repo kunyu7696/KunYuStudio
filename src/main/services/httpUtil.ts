@@ -139,7 +139,10 @@ export async function httpGetText(
       }
     })
     const { text, truncated } = await readBody(res, opts?.maxBytes)
-    return truncated ? { status: res.statusCode, text, truncated } : { status: res.statusCode, text }
+    // truncated 字段仅在使用 maxBytes 时出现：未截断为 false，截断为 true；不限长时不携带
+    return opts?.maxBytes !== undefined
+      ? { status: res.statusCode, text, truncated }
+      : { status: res.statusCode, text }
   } catch (err) {
     const e = err as Error & { code?: string; cause?: { code?: string } }
     const code = e.code ?? e.cause?.code ?? ''
