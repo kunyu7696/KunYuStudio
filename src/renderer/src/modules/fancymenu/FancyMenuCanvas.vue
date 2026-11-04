@@ -185,7 +185,7 @@ const resKey = ref<'16x9' | '16x10' | '4x3' | 'full'>('16x9')
 const screenW = computed(() => RES_MAP[resKey.value].w)
 const screenH = computed(() => RES_MAP[resKey.value].h)
 
-function onResChange(v: string | number | boolean): void {
+function onResChange(v: string | number | boolean | undefined): void {
   if (typeof v === 'string') resKey.value = v as typeof resKey.value
 }
 
@@ -194,7 +194,7 @@ const scale = ref(0.75) // 默认 75%，大多数分辨率能完整显示
 const MIN_SCALE = 0.1
 const MAX_SCALE = 3.0
 
-function onScaleChange(v: string | number | boolean): void {
+function onScaleChange(v: string | number | boolean | undefined): void {
   const n = typeof v === 'string' ? parseFloat(v) : (typeof v === 'number' ? v : 1)
   scale.value = Math.min(MAX_SCALE, Math.max(MIN_SCALE, n))
 }
@@ -294,8 +294,6 @@ function particleDotStyle(el: FmParticles, n: number): Record<string, string> {
 }
 
 // ---- DOM refs ----
-const frameEl = ref<HTMLDivElement | null>(null)
-const zoomEl = ref<HTMLDivElement | null>(null)
 const stageEl = ref<HTMLDivElement | null>(null)
 
 // ---- 拖拽 ----

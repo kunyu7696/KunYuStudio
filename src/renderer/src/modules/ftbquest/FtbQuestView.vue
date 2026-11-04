@@ -249,7 +249,6 @@ import type {
   FtbQuestChapter,
   FtbQuestChapterSummary
 } from '../../../../shared/types/ftbquest'
-import { FTB_QUEST_NODE_W, FTB_QUEST_NODE_H } from '../../../../shared/types/ftbquest'
 import FtbQuestCanvas from './FtbQuestCanvas.vue'
 import { useProjectStore } from '../../stores/project'
 import { t } from '../../i18n'
@@ -408,10 +407,11 @@ function applyQuestDialog(): void {
     ElMessage.warning(t('ftbquest.questDuplicate', { id }))
     return
   }
-  // 新建任务给默认画布坐标（网格铺）
-  let x = quest.x ?? 0
-  let y = quest.y ?? 0
-  if (questDialog.index < 0) {
+  // 编辑保留原坐标；新建给默认画布坐标（网格铺）
+  const prev = questDialog.index >= 0 ? chapter.value.quests[questDialog.index] : undefined
+  let x = prev?.x ?? 0
+  let y = prev?.y ?? 0
+  if (!prev) {
     const existing = chapter.value.quests.length
     const col = existing % 4
     const row = Math.floor(existing / 4)

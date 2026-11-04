@@ -104,22 +104,22 @@
 
           <el-form-item :label="t('fancymenu.fields.pos')">
             <div class="fm-pos-row">
-              <el-input-number v-model="activeEl.x" step="1" controls-position="right" />
+              <el-input-number v-model="activeEl.x" :step="1" controls-position="right" />
               <span class="fm-pos-sep">,</span>
-              <el-input-number v-model="activeEl.y" step="1" controls-position="right" />
+              <el-input-number v-model="activeEl.y" :step="1" controls-position="right" />
             </div>
           </el-form-item>
 
           <el-form-item :label="t('fancymenu.fields.size')">
             <div class="fm-pos-row">
-              <el-input-number v-model="activeEl.width" min="1" step="1" controls-position="right" />
+              <el-input-number v-model="activeEl.width" :min="1" :step="1" controls-position="right" />
               <span class="fm-pos-sep">×</span>
-              <el-input-number v-model="activeEl.height" min="1" step="1" controls-position="right" />
+              <el-input-number v-model="activeEl.height" :min="1" :step="1" controls-position="right" />
             </div>
           </el-form-item>
 
           <el-form-item :label="t('fancymenu.fields.z')">
-            <el-input-number v-model="activeEl.z" step="1" controls-position="right" />
+            <el-input-number v-model="activeEl.z" :step="1" controls-position="right" />
           </el-form-item>
 
           <!-- 类型特有字段 -->
@@ -187,12 +187,12 @@
                   :key="i"
                   class="fm-slide-row"
                 >
-                  <el-select v-model="(activeEl as FmSlides).slides[i].type" class="fm-slide-type">
+                  <el-select v-model="s.type" class="fm-slide-type">
                     <el-option value="image" :label="t('fancymenu.slideTypes.image')" />
                     <el-option value="local" :label="t('fancymenu.slideTypes.local')" />
                   </el-select>
                   <el-input
-                    v-model="(activeEl as FmSlides).slides[i].path"
+                    v-model="s.path"
                     class="fm-slide-path"
                     placeholder="textures/... 或本地路径"
                   />
@@ -437,9 +437,9 @@ function placeholderName(el: FmElement): string {
 
 function elTypeTagColor(
   type: FmElement['type']
-): '' | 'success' | 'warning' | 'danger' | 'info' {
+): 'primary' | 'success' | 'warning' | 'danger' | 'info' {
   switch (type) {
-    case 'button': return ''
+    case 'button': return 'primary'
     case 'image': return 'success'
     case 'text': return 'warning'
     case 'rect': return 'danger'
