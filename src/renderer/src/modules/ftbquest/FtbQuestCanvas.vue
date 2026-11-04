@@ -8,10 +8,13 @@
   <div
     ref="canvasEl"
     class="fq-canvas"
+    :class="{ 'fq-panning': panning.active }"
+    @mousedown="onCanvasMouseDown"
     @mousemove="onGlobalMouseMove"
     @mouseup="onGlobalMouseUp"
-    @mouseleave="onGlobalMouseUp"
+    @mouseleave="onCanvasMouseLeave"
   >
+    <div class="fq-canvas-surface" :style="{ width: `${VIRTUAL_W}px`, height: `${VIRTUAL_H}px` }">
     <!-- 背景网格 -->
     <svg class="fq-canvas-grid" :viewBox="`0 0 ${VIRTUAL_W} ${VIRTUAL_H}`">
       <defs>
@@ -84,7 +87,9 @@
       </div>
     </div>
 
-    <!-- 空状态 -->
+    </div>
+
+    <!-- 空状态（放在 2400×1600 画布面之外，居中于可视区而非画布中心） -->
     <div v-if="quests.length === 0" class="fq-canvas-empty">
       <p>{{ t('ftbquest.canvasEmpty') }}</p>
     </div>
@@ -92,7 +97,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { onBeforeUnmount, computed, reactive, ref, watch } from 'vue'
 import type { FtbQuest } from '../../../../shared/types/ftbquest'
 import { FTB_QUEST_NODE_W, FTB_QUEST_NODE_H } from '../../../../shared/types/ftbquest'
 import { t } from '../../i18n'
@@ -115,6 +120,8 @@ const ANCHOR_OFFSET = ANCHOR_R + 2 // 锚点圆心离节点边缘的距离
 // 画布 DOM 引用
 const canvasEl = ref<HTMLDivElement | null>(null)
 
+onBeforeUnmount(stopPan)
+
 // ---- 拖拽状态 ----
 const dragging = reactive({
   /** 正在拖的 quest id（节点 body 拖拽） */
@@ -122,6 +129,14 @@ const dragging = reactive({
   /** 鼠标按下时相对节点左上角的偏移 */
   offsetX: 0,
   offsetY: 0
+})
+// ---- 平移状态（按住左键拖动空白区域平移画布） ----
+const panning = reactive({
+  active: false,
+  startX: 0,
+  startY: 0,
+  scrollLeft: 0,
+  scrollTop: 0
 })
 // ---- 连线状态 ----
 const linking = reactive({
@@ -221,21 +236,64 @@ const pendingLink = computed(() => {
 
 // ---- 事件：节点拖拽 ----
 
+/** 鼠标位置 → 画布内容坐标（含滚动偏移） */
+function contentPoint(e: MouseEvent): { x: number; y: number } {
+  const rect = canvasEl.value!.getBoundingClientRect()
+  return {
+    x: e.clientX - rect.left + canvasEl.value!.scrollLeft,
+    y: e.clientY - rect.top + canvasEl.value!.scrollTop
+  }
+}
+
+/** 画布空白处按住左键 → 开始平移（拖节点/锚点/连线上不触发） */
+function onCanvasMouseDown(e: MouseEvent): void {
+  if (e.button !== 0 || !canvasEl.value) return
+  const target = e.target as Element | null
+  if (target?.closest('.fq-line, .fq-line-del')) return
+  panning.active = true
+  panning.startX = e.clientX
+  panning.startY = e.clientY
+  panning.scrollLeft = canvasEl.value.scrollLeft
+  panning.scrollTop = canvasEl.value.scrollTop
+  // 监听 window 而不是画布：鼠标拖出画布边界后仍继续平移
+  window.addEventListener('mousemove', onWindowPanMove)
+  window.addEventListener('mouseup', stopPan)
+  e.preventDefault()
+}
+
+function onWindowPanMove(e: MouseEvent): void {
+  if (!panning.active || !canvasEl.value) return
+  canvasEl.value.scrollLeft = panning.scrollLeft - (e.clientX - panning.startX)
+  canvasEl.value.scrollTop = panning.scrollTop - (e.clientY - panning.startY)
+}
+
+function stopPan(): void {
+  panning.active = false
+  window.removeEventListener('mousemove', onWindowPanMove)
+  window.removeEventListener('mouseup', stopPan)
+}
+
+/** 鼠标离开画布：平移中不中止（由 window 监听接管），其余交互照常收尾 */
+function onCanvasMouseLeave(e: MouseEvent): void {
+  if (panning.active) return
+  onGlobalMouseUp(e)
+}
+
 function onNodeMouseDown(e: MouseEvent, q: FtbQuest): void {
   if (e.button !== 0) return
-  const rect = canvasEl.value!.getBoundingClientRect()
+  const p = contentPoint(e)
   dragging.questId = q.id
-  dragging.offsetX = e.clientX - rect.left - (q.x ?? 0)
-  dragging.offsetY = e.clientY - rect.top - (q.y ?? 0)
+  dragging.offsetX = p.x - (q.x ?? 0)
+  dragging.offsetY = p.y - (q.y ?? 0)
   activeId.value = q.id
 }
 
 function onAnchorOutMouseDown(e: MouseEvent, q: FtbQuest): void {
   if (e.button !== 0) return
-  const rect = canvasEl.value!.getBoundingClientRect()
+  const p = contentPoint(e)
   linking.fromId = q.id
-  linking.mouseX = e.clientX - rect.left
-  linking.mouseY = e.clientY - rect.top
+  linking.mouseX = p.x
+  linking.mouseY = p.y
 }
 
 function onNodeEnter(q: FtbQuest): void {
@@ -249,21 +307,23 @@ function onNodeLeave(): void {
 
 function onGlobalMouseMove(e: MouseEvent): void {
   if (!canvasEl.value) return
-  const rect = canvasEl.value.getBoundingClientRect()
   if (dragging.questId) {
     const q = props.quests.find((x) => x.id === dragging.questId)
     if (q) {
-      q.x = Math.max(0, Math.round(e.clientX - rect.left - dragging.offsetX))
-      q.y = Math.max(0, Math.round(e.clientY - rect.top - dragging.offsetY))
+      const p = contentPoint(e)
+      q.x = Math.max(0, Math.round(p.x - dragging.offsetX))
+      q.y = Math.max(0, Math.round(p.y - dragging.offsetY))
     }
   } else if (linking.fromId) {
-    linking.mouseX = e.clientX - rect.left
-    linking.mouseY = e.clientY - rect.top
+    const p = contentPoint(e)
+    linking.mouseX = p.x
+    linking.mouseY = p.y
   }
 }
 
 function onGlobalMouseUp(e: MouseEvent): void {
   if (!canvasEl.value) return
+  stopPan()
   const movedQuest = dragging.questId
   const linkingFrom = linking.fromId
   dragging.questId = ''
@@ -275,9 +335,9 @@ function onGlobalMouseUp(e: MouseEvent): void {
   }
   if (linkingFrom) {
     // 看松手点是否落在某个节点上 → 建立依赖
-    const rect = canvasEl.value.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
+    const p = contentPoint(e)
+    const x = p.x
+    const y = p.y
     for (const q of props.quests) {
       const qx = q.x ?? 0
       const qy = q.y ?? 0
@@ -315,6 +375,22 @@ function onDeleteLink(from: string, to: string): void {
   background: #141519;
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: grab;
+}
+
+.fq-canvas.fq-panning {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.fq-canvas.fq-panning .fq-node,
+.fq-canvas.fq-panning .fq-anchor,
+.fq-canvas.fq-panning .fq-line {
+  cursor: grabbing;
+}
+
+.fq-canvas-surface {
+  position: relative;
 }
 
 .fq-canvas-grid {

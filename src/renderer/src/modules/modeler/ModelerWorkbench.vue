@@ -655,14 +655,8 @@ function onOpenBoundObject(): void {
   ui.setActiveModule('unified')
 }
 
-/** 文档根变化：刷新文档列表；项目关闭时收起当前文档 */
-watch(
-  () => project.currentProject?.path,
-  async () => {
-    await store.refreshList()
-    store.close()
-  }
-)
+// 项目切换的隔离由 modeler store 内部统一处理（resetForProject + 重新加载文档列表），
+// 这里只负责首次挂载时拉取列表
 onMounted(() => {
   void store.refreshList()
   window.addEventListener('keydown', onGlobalKeydown)

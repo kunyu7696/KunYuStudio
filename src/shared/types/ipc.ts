@@ -236,6 +236,8 @@ export const IpcChannels = {
   // FancyMenu 开始菜单自定义：Fabric config/fancymenu/layout.json / Forge config/fancymenu_forge/layout.json
   FANCYMENU_READ: 'fancymenu:read',
   FANCYMENU_SAVE: 'fancymenu:save',
+  /** 把本机图片复制进 config/fancymenu/assets，返回相对路径（供背景/slides 引用） */
+  FANCYMENU_IMPORT_ASSET: 'fancymenu:import-asset',
   // TaCZ 死亡消息：config/taczdeathmessage/global_config.json + world_config.json
   TACZDEATH_READ: 'taczdeath:read',
   TACZDEATH_SAVE: 'taczdeath:save',
@@ -1273,6 +1275,11 @@ export interface IpcApi {
     /** 保存元素数组；返回写入的绝对路径 */
     save(root: string, elements: import('./fancymenu').FmElement[], loader?: string): Promise<
       | { ok: true; filePath: string }
+      | { ok: false; error: string }
+    >
+    /** 导入本机图片到 config/fancymenu/assets，返回相对 assets 所在目录的路径（如 assets/bg.png） */
+    importAsset(root: string, srcFile: string, loader?: string): Promise<
+      | { ok: true; relPath: string }
       | { ok: false; error: string }
     >
   }

@@ -1968,6 +1968,42 @@ export const useModelerStore = defineStore('modeler', () => {
     }
   }
 
+  /**
+   * 项目隔离：整体丢弃上一个项目的全部编辑态（多标签会话、当前文档、选择、撤销栈、贴图烘焙缓存）。
+   * sessions / openDocIds 只在单项目内有效——不同项目可能出现相同 doc id（如 block__xxx），
+   * 不清理就会把上一个项目的模型「串」到新项目里。
+   */
+  function resetForProject(): void {
+    clearAutosaveTimer()
+    sessions.clear()
+    openDocIds.value = []
+    docIds.value = []
+    doc.value = null
+    selection.value = []
+    activeTextureId.value = null
+    activeLayerId.value = null
+    editMode.value = 'object'
+    vertexSelection.value = []
+    faceSelection.value = []
+    edgeSelection.value = []
+    knifeAnchor.value = null
+    weightTarget.value = null
+    lastEditDocId = ''
+    stack = new CommandStack()
+    latestPatch.value = null
+    recoveredDirty.value = false
+    savedRevision.value = null
+    clearBakeCache()
+    bumpRev()
+  }
+
+  // 项目切换或关闭：先清空旧项目编辑态，再按新项目根目录加载文档列表（模型工坊未挂载时也生效）
+  watch(root, async (next, prev) => {
+    if (next === prev) return
+    resetForProject()
+    await refreshList()
+  })
+
   return {
     docIds,
     openDocIds,

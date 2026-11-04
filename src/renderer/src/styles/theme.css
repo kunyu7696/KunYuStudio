@@ -51,6 +51,24 @@
   --ky-sidebar-min: 180px;
   --ky-sidebar-max: 400px;
   --ky-statusbar-h: 26px;
+
+  /* Minecraft 16 色（预览文本用；浅色主题下换加深版保证可读） */
+  --ky-mc-0: #000000;
+  --ky-mc-1: #0000aa;
+  --ky-mc-2: #00aa00;
+  --ky-mc-3: #00aaaa;
+  --ky-mc-4: #aa0000;
+  --ky-mc-5: #aa00aa;
+  --ky-mc-6: #ffaa00;
+  --ky-mc-7: #aaaaaa;
+  --ky-mc-8: #555555;
+  --ky-mc-9: #5555ff;
+  --ky-mc-a: #55ff55;
+  --ky-mc-b: #55ffff;
+  --ky-mc-c: #ff5555;
+  --ky-mc-d: #ff55ff;
+  --ky-mc-e: #ffff55;
+  --ky-mc-f: #ffffff;
 }
 
 /* 浅色主题：经典浅白 */
@@ -67,6 +85,24 @@ html.light {
 
   --ky-border: rgba(0, 0, 0, 0.09);
   --ky-border-strong: rgba(0, 0, 0, 0.18);
+
+  /* MC 16 色加深版：白底上可读（避免 #55ff55 这类亮色发白） */
+  --ky-mc-0: #000000;
+  --ky-mc-1: #0000a0;
+  --ky-mc-2: #007a00;
+  --ky-mc-3: #007070;
+  --ky-mc-4: #a00000;
+  --ky-mc-5: #8a0080;
+  --ky-mc-6: #8a5a00;
+  --ky-mc-7: #5f6368;
+  --ky-mc-8: #44484d;
+  --ky-mc-9: #2b2bd5;
+  --ky-mc-a: #1a7a1a;
+  --ky-mc-b: #00706f;
+  --ky-mc-c: #c02a2a;
+  --ky-mc-d: #a800a8;
+  --ky-mc-e: #7a6b00;
+  --ky-mc-f: #1f2329;
 }
 
 /* Element Plus 变量桥接：让组件库使用 KunYu 令牌（随 --ky-* 联动两主题）。

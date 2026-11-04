@@ -122,10 +122,14 @@ interface MrProject {
   license?: { id?: string; name?: string; url?: string } | null
   icon_url: string | null
   downloads: number
-  updated: string
+  /** 详情 API 返回 ISO 时间；搜索 hit 使用 date_modified */
+  updated?: string
+  date_modified?: string
   categories: string[]
-  loaders: string[]
-  game_versions: string[]
+  loaders?: string[]
+  game_versions?: string[]
+  /** 搜索 API 独有：game_versions 字段缺失，改由 versions 提供 MC 版本列表 */
+  versions?: string[]
   url?: string
   /** 搜索结果 hit 独有：作者 id / 总关注数等 */
   author_id?: string
@@ -232,9 +236,17 @@ function cfRelationType(t: number): MarketDependency['relationType'] {
   return 'optional'
 }
 
+/** Modrinth 把加载器列为 category，用于搜索命中缺 loaders 字段时兜底 */
+const MR_LOADER_CATEGORIES = new Set(['fabric', 'forge', 'neoforge', 'quilt'])
+
 function adaptMrSummary(p: MrProject, projectType: MarketProjectType): MarketModSummary {
   // 搜索 API 的 hit 用 project_id，详情 API 返回 id——统一兼容
   const id = p.project_id ?? p.id ?? ''
+  // 搜索 hit 不带 loaders / game_versions（加载器混在 categories、版本在 versions），缺省时做兜底
+  const loaders = p.loaders?.length
+    ? p.loaders
+    : (p.categories ?? []).filter((c) => MR_LOADER_CATEGORIES.has(c.toLowerCase()))
+  const gameVersions = p.game_versions?.length ? p.game_versions : (p.versions ?? [])
   return {
     id,
     platform: 'modrinth',
@@ -245,9 +257,9 @@ function adaptMrSummary(p: MrProject, projectType: MarketProjectType): MarketMod
     authors: [],
     iconUrl: p.icon_url,
     downloads: p.downloads ?? 0,
-    updatedAt: p.updated,
-    loaders: p.loaders ?? [],
-    gameVersions: p.game_versions ?? [],
+    updatedAt: p.updated ?? p.date_modified ?? '',
+    loaders,
+    gameVersions,
     categories: p.categories ?? [],
     url: p.url ?? `https://modrinth.com/${PROJECT_TYPE_META[projectType].mrUrlSegment}/${p.slug}`
   }
@@ -509,7 +521,7 @@ export async function findProjectBySlug(
       id: data.id ?? data.project_id ?? '',
       slug: data.slug,
       name: data.title,
-      updatedAt: data.updated
+      updatedAt: data.updated ?? data.date_modified ?? ''
     }
   } catch (err) {
     if (err instanceof HttpUtilError && err.status === 404) return null
@@ -557,7 +569,7 @@ export async function searchProjectCandidates(
     id: p.project_id ?? p.id ?? '',
     slug: p.slug,
     name: p.title,
-    updatedAt: p.updated
+    updatedAt: p.updated ?? p.date_modified ?? ''
   }))
 }
 

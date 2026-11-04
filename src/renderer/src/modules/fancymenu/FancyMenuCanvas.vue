@@ -11,18 +11,24 @@
     <div
       ref="frameEl"
       class="fm-stage-frame"
+      :class="{ 'is-fit': autoFit }"
       @wheel.prevent="onFrameWheel"
     >
-      <!-- 真正应用 transform 的缩放层 -->
+      <!-- 缩放外层：布局尺寸 = 缩放后的视觉尺寸，避免溢出占位把画布裁掉 -->
       <div
         ref="zoomEl"
         class="fm-stage-zoom"
-        :style="{ transform: `scale(${scale})`, transformOrigin: 'center center' }"
+        :style="{ width: screenW * scale + 'px', height: screenH * scale + 'px' }"
       >
         <div
           ref="stageEl"
           class="fm-stage"
-          :style="{ width: screenW + 'px', height: screenH + 'px' }"
+          :style="{
+            width: screenW + 'px',
+            height: screenH + 'px',
+            transform: `scale(${scale})`,
+            transformOrigin: 'top left'
+          }"
           @mousemove="onStageMouseMove"
           @mouseup="onStageMouseUp"
           @mouseleave="onStageMouseUp"
@@ -49,7 +55,8 @@
               :style="elStyle(el)"
               @mousedown.stop="onElementMouseDown($event, el)"
             >
-              <div class="fm-image-placeholder">
+              <img v-if="resolveImage(el.url)" class="fm-el-img" :src="resolveImage(el.url)" alt="" />
+              <div v-else class="fm-image-placeholder">
                 <span>{{ el.url || '未设贴图' }}</span>
               </div>
             </div>
@@ -81,7 +88,14 @@
               :style="elStyle(el)"
               @mousedown.stop="onElementMouseDown($event, el)"
             >
-              <div class="fm-slides-current">
+              <img
+                v-if="slideSrc(el)"
+                class="fm-slides-img"
+                :style="{ objectFit: slideFit(el.fitType) }"
+                :src="slideSrc(el)"
+                alt=""
+              />
+              <div v-else class="fm-slides-current">
                 <span class="fm-slides-badge">{{ t('fancymenu.slidesBadge', { n: slideIndex(el) + 1, total: el.slides.length || 1 }) }}</span>
                 <span class="fm-slides-path">{{ currentSlidePath(el) || t('fancymenu.noSlideImage') }}</span>
               </div>
@@ -142,7 +156,7 @@
       <span class="fm-zoom-sep" />
 
       <span class="fm-res-label">{{ t('fancymenu.canvasZoom') }}</span>
-      <el-radio-group :model-value="scale" size="small" @update:model-value="onScaleChange">
+      <el-radio-group :model-value="scaleStr" size="small" @update:model-value="onScaleChange">
         <el-radio-button value="0.25">25%</el-radio-button>
         <el-radio-button value="0.5">50%</el-radio-button>
         <el-radio-button value="0.75">75%</el-radio-button>
@@ -150,13 +164,19 @@
         <el-radio-button value="1.5">150%</el-radio-button>
         <el-radio-button value="2">200%</el-radio-button>
       </el-radio-group>
+      <el-button
+        size="small"
+        text
+        :type="autoFit ? 'primary' : 'default'"
+        @click="onFit"
+      >{{ t('fancymenu.fitWindow') }}</el-button>
       <span class="fm-zoom-tip">{{ t('fancymenu.canvasZoomTip') }}</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import type {
   FmAnchor,
   FmElement,
@@ -168,6 +188,8 @@ import { t } from '../../i18n'
 const props = defineProps<{
   elements: FmElement[]
   activeId?: string
+  /** config/fancymenu 绝对目录，用于解析 local 图片做真实预览 */
+  assetRoot?: string
 }>()
 
 const emit = defineEmits<{
@@ -191,21 +213,57 @@ function onResChange(v: string | number | boolean | undefined): void {
 }
 
 // ---- 缩放 ----
-const scale = ref(0.75) // 默认 75%，大多数分辨率能完整显示
+/** 手动缩放值（autoFit 关闭时生效） */
+const manualScale = ref(0.75)
+/** 是否自动适应画布容器（默认开启，避免元素被容器裁掉） */
+const autoFit = ref(true)
+/** 由容器尺寸算出的适配比例 */
+const fitScale = ref(1)
 const MIN_SCALE = 0.1
 const MAX_SCALE = 3.0
 
+/** 实际生效缩放：自动适配优先，手动选择后改为手动值 */
+const scale = computed(() => (autoFit.value ? fitScale.value : manualScale.value))
+/** 屏幕缩放按钮的匹配值（两位小数字符串） */
+const scaleStr = computed(() => String(Math.round(scale.value * 100) / 100))
+
+const frameEl = ref<HTMLDivElement | null>(null)
+let fitObserver: ResizeObserver | undefined
+
+/** 按容器内容区宽高算适配比例（扣除 padding 与滚动条，尽量铺满） */
+function updateFit(): void {
+  const el = frameEl.value
+  if (!el) return
+  const cs = getComputedStyle(el)
+  const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight)
+  const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom)
+  // clientWidth/Height 已排除滚动条，再扣 padding 即是可用内容区
+  const aw = el.clientWidth - padX - 8
+  const ah = el.clientHeight - padY - 8
+  if (aw <= 0 || ah <= 0) return
+  const w = aw / screenW.value
+  const h = ah / screenH.value
+  fitScale.value = Math.min(MAX_SCALE, Math.max(MIN_SCALE, Math.min(w, h)))
+}
+
+function onFit(): void {
+  autoFit.value = true
+  updateFit()
+}
+
 function onScaleChange(v: string | number | boolean | undefined): void {
   const n = typeof v === 'string' ? parseFloat(v) : (typeof v === 'number' ? v : 1)
-  scale.value = Math.min(MAX_SCALE, Math.max(MIN_SCALE, n))
+  manualScale.value = Math.min(MAX_SCALE, Math.max(MIN_SCALE, n))
+  autoFit.value = false
 }
 
 function onFrameWheel(e: WheelEvent): void {
   if (e.ctrlKey || e.metaKey) {
-    // Ctrl + 滚轮 → 缩放
+    // Ctrl + 滚轮 → 缩放（同时退出自动适配）
     const dir = e.deltaY < 0 ? 1 : -1
     const step = 0.05
-    scale.value = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale.value + dir * step))
+    manualScale.value = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale.value + dir * step))
+    autoFit.value = false
   }
   // 非 Ctrl 滚轮让 frame 自己滚动（overflow: auto 自带）
 }
@@ -252,13 +310,98 @@ const activeEl = computed(() =>
 // ---- 轮播预览时钟（每 500ms 推进一格） ----
 const tick = ref(0)
 let tickTimer: number | undefined
+
+// ---- 本地图片预览（slides/image 引用的 config/fancymenu 下资源） ----
+/** 绝对路径 → dataURL 缓存 */
+const localImages = reactive<Record<string, string>>({})
+const loadingImages = new Set<string>()
+
+/** 相对 config/fancymenu 的路径 → 绝对路径 */
+function relToAbs(rel: string): string {
+  const base = props.assetRoot
+  if (!base || !rel) return ''
+  const clean = rel.replace(/^local:/, '').replace(/\\/g, '/').replace(/^\/+/, '')
+  if (!clean) return ''
+  return `${base.replace(/\\/g, '/')}/${clean}`
+}
+
+/** 读取本地图片并缓存 dataURL；读失败也记空值，避免反复重试 */
+async function ensureLocalImage(abs: string): Promise<void> {
+  if (!abs || localImages[abs] !== undefined || loadingImages.has(abs)) return
+  loadingImages.add(abs)
+  try {
+    const bin = await window.api.fs.readBinary(abs)
+    localImages[abs] = `data:${bin.mime};base64,${bin.dataBase64}`
+  } catch {
+    localImages[abs] = ''
+  } finally {
+    loadingImages.delete(abs)
+  }
+}
+
+/** image 元素：资源包路径（含命名空间）不预览；local: 前缀或普通相对路径走本地预览 */
+function resolveImage(url: string): string {
+  if (!url) return ''
+  const isResourcePath = /^[a-z0-9_.-]+:/i.test(url) && !url.startsWith('local:')
+  if (isResourcePath) return ''
+  const abs = relToAbs(url)
+  return abs ? localImages[abs] ?? '' : ''
+}
+
+/** slides 当前帧的图片 dataURL */
+function slideSrc(el: FmSlides): string {
+  const item = el.slides[slideIndex(el)]
+  const abs = item ? relToAbs(item.path) : ''
+  return abs ? localImages[abs] ?? '' : ''
+}
+
+/** fitType → object-fit：stretch 拉伸 / crop 裁剪铺满 / fill 完整显示 */
+function slideFit(fit?: FmSlides['fitType']): 'fill' | 'cover' | 'contain' {
+  if (fit === 'crop') return 'cover'
+  if (fit === 'fill') return 'contain'
+  return 'fill'
+}
+
+/** 所有被引用的本地路径（只在路径变化时重算，拖拽坐标不触发） */
+const localPaths = computed(() => {
+  const list: string[] = []
+  for (const el of props.elements) {
+    if (el.type === 'image') list.push(el.url)
+    else if (el.type === 'slides') for (const s of el.slides) list.push(s.path)
+  }
+  return list.filter((p) => !!relToAbs(p)).join('\n')
+})
+
+function scanLocalImages(): void {
+  for (const rel of localPaths.value.split('\n')) {
+    const abs = relToAbs(rel)
+    if (abs) void ensureLocalImage(abs)
+  }
+}
+
+watch([localPaths, tick], scanLocalImages, { immediate: true })
+
 onMounted(() => {
   tickTimer = window.setInterval(() => {
     tick.value++
   }, 500)
+  updateFit()
+  if (frameEl.value) {
+    fitObserver = new ResizeObserver(() => updateFit())
+    fitObserver.observe(frameEl.value)
+  }
 })
 onBeforeUnmount(() => {
   if (tickTimer !== undefined) window.clearInterval(tickTimer)
+  fitObserver?.disconnect()
+})
+
+// 分辨率切换后重新计算适配比例
+watch([screenW, screenH], () => updateFit())
+
+/** 暴露当前屏幕尺寸，供模板按实际分辨率生成全屏元素 */
+defineExpose({
+  getScreenSize: (): { w: number; h: number } => ({ w: screenW.value, h: screenH.value })
 })
 
 /** 当前展示第几张（按 duration 换算成 tick 步数） */
@@ -350,29 +493,37 @@ function onStageClickEmpty(): void {
   flex-direction: column;
   gap: 10px;
   height: 100%;
+  width: 100%;
+  min-width: 0;
 }
 
 .fm-stage-frame {
   flex: 1;
   min-height: 0;
   overflow: auto;
-  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border: 1px dashed var(--ky-border-strong, rgba(255, 255, 255, 0.15));
   border-radius: 6px;
-  background: #0c0d10;
-  padding: 24px;
+  background: var(--ky-code-bg, #0c0d10);
+  padding: 16px;
   display: flex;
-  justify-content: center;
+  /* 自动适配时纵横都居中；手动放大可能溢出，此时退回左上起点保证可滚动 */
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+.fm-stage-frame.is-fit {
   align-items: center;
 }
 
 .fm-stage-zoom {
   flex-shrink: 0;
-  will-change: transform; /* 提示 GPU 加速缩放层 */
+  margin: auto; /* 空间足够时居中；超出时自动退化为可滚动，不会裁掉左上角 */
 }
 
 .fm-stage {
   position: relative;
   flex-shrink: 0;
+  transform-origin: top left;
+  will-change: transform;
   border-radius: 4px;
   overflow: hidden;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08) inset, 0 12px 40px rgba(0, 0, 0, 0.5);
@@ -400,7 +551,7 @@ function onStageClickEmpty(): void {
 .fm-el:active { cursor: grabbing; }
 
 .fm-el-active {
-  box-shadow: 0 0 0 2px #4a9eff, 0 0 12px rgba(74, 158, 255, 0.35);
+  box-shadow: 0 0 0 2px var(--ky-accent), 0 0 12px color-mix(in srgb, var(--ky-accent) 35%, transparent);
 }
 
 .fm-el-rect {
@@ -462,6 +613,21 @@ function onStageClickEmpty(): void {
   gap: 6px;
   overflow: hidden;
 }
+.fm-slides-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+.fm-el-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
 .fm-slides-current {
   display: flex;
   flex-direction: column;
@@ -489,8 +655,13 @@ function onStageClickEmpty(): void {
   white-space: nowrap;
 }
 .fm-slides-dots {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  transform: translateX(-50%);
   display: flex;
   gap: 4px;
+  z-index: 2;
 }
 .fm-slides-dot {
   width: 5px;
@@ -534,7 +705,7 @@ function onStageClickEmpty(): void {
 
 .fm-el-bounds {
   position: absolute;
-  border: 1px solid #4a9eff;
+  border: 1px solid var(--ky-accent);
   box-sizing: border-box;
   pointer-events: none;
 }
@@ -544,11 +715,11 @@ function onStageClickEmpty(): void {
   align-items: center;
   gap: 10px;
   font-size: 12px;
-  color: #8b919a;
+  color: var(--ky-text-dim);
   flex-wrap: wrap;
 }
-.fm-res-label { color: #6b7280; }
-.fm-res-dim { color: #4a9eff; font-family: 'Consolas', monospace; }
-.fm-zoom-sep { width: 1px; height: 16px; background: rgba(255,255,255,0.1); margin: 0 2px; }
-.fm-zoom-tip { color: #5a6270; font-size: 11px; }
+.fm-res-label { color: var(--ky-text-dim); }
+.fm-res-dim { color: var(--ky-accent); font-family: 'Consolas', monospace; }
+.fm-zoom-sep { width: 1px; height: 16px; background: var(--ky-border); margin: 0 2px; }
+.fm-zoom-tip { color: var(--ky-text-dim); font-size: 11px; opacity: 0.8; }
 </style>

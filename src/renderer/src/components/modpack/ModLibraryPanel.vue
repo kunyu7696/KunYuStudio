@@ -140,6 +140,10 @@
       </div>
 
       <div class="ml-list">
+        <div v-if="searching && !searchResults.length" class="ml-search-status">{{ t('modlib.searching') }}</div>
+        <div v-if="searchError" class="ml-search-error">
+          {{ t('modlib.searchPartialFailed', { error: searchError }) }}
+        </div>
         <div v-for="m in searchResults" :key="`${m.platform}-${m.id}`" class="ml-market-item">
           <button type="button" class="ml-market-main" @click="toggleDetail(m)">
             <img v-if="m.iconUrl" :src="m.iconUrl" class="ml-market-icon" referrerpolicy="no-referrer" />
@@ -190,7 +194,7 @@
           </div>
         </div>
 
-        <div v-if="!searchResults.length && !searching" class="ml-empty">
+        <div v-if="!searchResults.length && !searching && !searchError" class="ml-empty">
           <p>{{ t('modlib.searchHint') }}</p>
           <p class="ml-empty-hint">{{ t('modlib.searchHintSub') }}</p>
         </div>
@@ -341,41 +345,41 @@ function displayMcVersions(e: ModLibraryEntry): string[] {
 const searchQuery = ref('')
 const searching = ref(false)
 const searchResults = ref<MarketModSummary[]>([])
+const searchError = ref('')
 const expandedId = ref<string | null>(null)
 const loadingDetail = ref(false)
 const detailFiles = ref<MarketModFile[]>([])
 const downloadingId = ref<string | null>(null)
 
 async function onSearch(): Promise<void> {
-  if (!searchQuery.value.trim()) return
+  const q = searchQuery.value.trim()
+  if (!q) return
   searching.value = true
+  searchError.value = ''
   expandedId.value = null
   detailFiles.value = []
+  searchResults.value = []
+  const base = {
+    query: q,
+    projectType: 'mod' as const,
+    loader: loaderFilter.value || undefined,
+    gameVersion: mcFilter.value || undefined,
+    pageSize: 20
+  }
+  const failed: string[] = []
+  // 两平台各自独立：谁先返回先展示，单平台失败不丢弃另一平台结果
+  const run = async (platform: ModPlatform, label: string): Promise<void> => {
+    try {
+      const res = await window.api.market.search({ ...base, platform })
+      searchResults.value = [...searchResults.value, ...res.items]
+    } catch (err) {
+      failed.push(`${label}：${(err as Error).message}`)
+    }
+  }
   try {
-    // Modrinth 免 Key 先查；结果为空时再试 CurseForge（MCIM 镜像）
-    const [mr, cf] = await Promise.all([
-      window.api.market.search({
-        platform: 'modrinth',
-        query: searchQuery.value,
-        projectType: 'mod',
-        loader: loaderFilter.value || undefined,
-        gameVersion: mcFilter.value || undefined,
-        pageSize: 20
-      }),
-      window.api.market.search({
-        platform: 'curseforge',
-        query: searchQuery.value,
-        projectType: 'mod',
-        loader: loaderFilter.value || undefined,
-        gameVersion: mcFilter.value || undefined,
-        pageSize: 20
-      })
-    ])
-    searchResults.value = [...mr.items, ...cf.items]
-  } catch (err) {
-    ElMessage.error(t('modlib.searchFailed', { error: (err as Error).message }))
-    searchResults.value = []
+    await Promise.all([run('modrinth', 'Modrinth'), run('curseforge', 'CurseForge')])
   } finally {
+    if (failed.length) searchError.value = failed.join('；')
     searching.value = false
   }
 }
@@ -742,6 +746,20 @@ function onLibraryChanged(): void {
 .ml-market-item {
   display: flex;
   flex-direction: column;
+}
+
+.ml-search-status {
+  font-size: 11px;
+  color: var(--ky-text-dim);
+  text-align: center;
+  padding: 10px 0;
+}
+
+.ml-search-error {
+  font-size: 10.5px;
+  color: var(--ky-red, #f87171);
+  line-height: 1.45;
+  word-break: break-word;
 }
 
 .ml-market-main {

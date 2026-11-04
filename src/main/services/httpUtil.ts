@@ -9,9 +9,46 @@ import { createHash } from 'node:crypto'
 import { createReadStream, createWriteStream } from 'node:fs'
 import { mkdir, open, stat, unlink } from 'node:fs/promises'
 import { dirname } from 'node:path'
-import { PassThrough } from 'node:stream'
+import { PassThrough, type Readable, type Transform } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
+import { createBrotliDecompress, createGunzip, createInflate } from 'node:zlib'
 import { getSection } from './settingsService'
+
+/** 声明支持的压缩算法：undici.request 默认不发 Accept-Encoding，大响应（如市场搜索 300KB）走明文会被镜像/CDN 严重拖慢 */
+const ACCEPT_ENCODING = 'gzip, deflate, br'
+
+/** 按响应 content-encoding 选择解压流；identity/未知编码返回 null（按原文读取） */
+function bodyDecompressor(contentEncoding: unknown): Transform | null {
+  const enc = String(contentEncoding ?? '').toLowerCase()
+  if (!enc || enc === 'identity') return null
+  if (enc.includes('br')) return createBrotliDecompress()
+  if (enc.includes('gzip')) return createGunzip()
+  if (enc.includes('deflate')) return createInflate()
+  return null
+}
+
+/** 读取响应体（自动解压）；maxBytes > 0 时超限截断并置 truncated */
+async function readBody(
+  res: Awaited<ReturnType<typeof request>>,
+  maxBytes?: number
+): Promise<{ text: string; truncated?: boolean }> {
+  const dec = bodyDecompressor(res.headers['content-encoding'])
+  const body = (dec ? res.body.pipe(dec) : res.body) as Readable
+  const limit = maxBytes !== undefined && maxBytes > 0 ? maxBytes : 0
+  const chunks: Buffer[] = []
+  let received = 0
+  let truncated = false
+  for await (const chunk of body as AsyncIterable<Buffer>) {
+    if (limit > 0 && received + chunk.length > limit) {
+      chunks.push(chunk.subarray(0, limit - received))
+      truncated = true
+      break
+    }
+    chunks.push(chunk)
+    received += chunk.length
+  }
+  return { text: Buffer.concat(chunks).toString('utf-8'), truncated }
+}
 
 export class HttpUtilError extends Error {
   readonly code: 'timeout' | 'network' | 'http'
@@ -95,27 +132,14 @@ export async function httpGetText(
       method: 'GET',
       dispatcher: opts?.dispatcher ?? (await resolveGetDispatcher(url)),
       signal: opts?.signal ?? AbortSignal.timeout(opts?.timeoutMs ?? networkTimeoutMs()),
-      headers: { 'User-Agent': 'KunYu-Studio/0.1 (version-monitor)', ...(opts?.headers ?? {}) }
-    })
-    const maxBytes = opts?.maxBytes
-    if (maxBytes === undefined || maxBytes <= 0) {
-      const text = await res.body.text()
-      return { status: res.statusCode, text }
-    }
-    // 限量流式读取：累计超限即停止消费（for-await break 自动销毁底层流）
-    const chunks: Buffer[] = []
-    let received = 0
-    let truncated = false
-    for await (const chunk of res.body as AsyncIterable<Buffer>) {
-      received += chunk.length
-      if (received > maxBytes) {
-        chunks.push(chunk.subarray(0, chunk.length - (received - maxBytes)))
-        truncated = true
-        break
+      headers: {
+        'User-Agent': 'KunYu-Studio/0.1 (version-monitor)',
+        'Accept-Encoding': ACCEPT_ENCODING,
+        ...(opts?.headers ?? {})
       }
-      chunks.push(chunk)
-    }
-    return { status: res.statusCode, text: Buffer.concat(chunks).toString('utf-8'), truncated }
+    })
+    const { text, truncated } = await readBody(res, opts?.maxBytes)
+    return truncated ? { status: res.statusCode, text, truncated } : { status: res.statusCode, text }
   } catch (err) {
     const e = err as Error & { code?: string; cause?: { code?: string } }
     const code = e.code ?? e.cause?.code ?? ''
@@ -140,9 +164,18 @@ export async function httpGetJson<T>(
     method: 'GET',
     dispatcher: opts?.dispatcher ?? (await resolveGetDispatcher(url)),
     signal: opts?.signal ?? AbortSignal.timeout(opts?.timeoutMs ?? networkTimeoutMs()),
-    headers: { Accept: 'application/json', ...(opts?.headers ?? {}) }
+    headers: {
+      Accept: 'application/json',
+      'Accept-Encoding': ACCEPT_ENCODING,
+      ...(opts?.headers ?? {})
+    }
   })
-  const text = await res.body.text()
+  let text: string
+  try {
+    text = (await readBody(res)).text
+  } catch (err) {
+    throw new HttpUtilError('network', `响应读取失败：${(err as Error).message}（${url}）`)
+  }
   if (res.statusCode >= 400) {
     throw new HttpUtilError('http', `HTTP ${res.statusCode}：${url}`, res.statusCode)
   }

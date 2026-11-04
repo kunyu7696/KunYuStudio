@@ -1522,7 +1522,7 @@ onBeforeUnmount(() => {
   border: 1px solid var(--ky-border);
   border-radius: 5px;
   padding: 8px 10px;
-  background: var(--ky-surface);
+  background: var(--ky-bg-panel);
   display: flex;
   flex-direction: column;
   gap: 6px;

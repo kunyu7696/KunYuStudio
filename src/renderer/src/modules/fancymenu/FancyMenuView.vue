@@ -15,6 +15,19 @@
         <el-button size="small" :disabled="!activeId" @click="onDuplicateActive">
           {{ t('fancymenu.duplicate') }}
         </el-button>
+        <el-dropdown trigger="click" @command="onTemplateCommand">
+          <el-button size="small" plain>{{ t('fancymenu.template') }} ▾</el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="vanilla">
+                {{ t('fancymenu.templateVanilla') }}
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+        <el-button size="small" plain @click="onSetBackground">
+          {{ t('fancymenu.setBackground') }}
+        </el-button>
       </div>
       <div class="fm-toolbar-center">
         <el-button size="small" plain @click="onRead">{{ t('fancymenu.reload') }}</el-button>
@@ -62,8 +75,10 @@
       <!-- 中：画布 -->
       <main class="fm-canvas-host">
         <FancyMenuCanvas
+          ref="canvasRef"
           :elements="elements"
           :active-id="activeId"
+          :asset-root="assetRoot"
           @select="activeId = $event"
           @dirty="dirty = true"
         />
@@ -172,7 +187,16 @@
             v-if="activeEl.type === 'image'"
             :label="t('fancymenu.fields.url')"
           >
-            <el-input v-model="(activeEl as { url: string }).url" placeholder="minecraft:textures/..." />
+            <div class="fm-slide-row">
+              <el-input
+                v-model="(activeEl as { url: string }).url"
+                class="fm-slide-path"
+                placeholder="minecraft:textures/..."
+              />
+              <el-button size="small" plain @click="onPickImageElement(activeEl as FmImage)">
+                {{ t('fancymenu.pickImage') }}
+              </el-button>
+            </div>
           </el-form-item>
 
           <el-form-item
@@ -211,6 +235,12 @@
                 <el-button size="small" plain @click="addSlideItem(activeEl as FmSlides)">
                   {{ t('fancymenu.addSlide') }}
                 </el-button>
+                <el-button
+                  size="small"
+                  type="primary"
+                  plain
+                  @click="onAddLocalSlide(activeEl as FmSlides)"
+                >{{ t('fancymenu.pickImage') }}</el-button>
               </div>
             </el-form-item>
 
@@ -339,6 +369,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import FancyMenuCanvas from './FancyMenuCanvas.vue'
+import { buildVanillaMainMenu } from './menuPresets'
 import type {
   FmAnchor,
   FmButton,
@@ -363,10 +394,19 @@ const elements = ref<FmElement[]>([])
 const activeId = ref<string>('')
 const filePath = ref<string | null>(null)
 const dirty = ref(false)
+const canvasRef = ref<{ getScreenSize: () => { w: number; h: number } } | null>(null)
 
 const activeEl = computed<FmElement | null>(() =>
   elements.value.find((e) => e.id === activeId.value) ?? null
 )
+
+/** layout.json 所在目录（config/fancymenu 或 config/fancymenu_forge），用于解析本地图片预览 */
+const assetRoot = computed(() => {
+  const p = filePath.value
+  if (!p) return ''
+  const i = Math.max(p.lastIndexOf('/'), p.lastIndexOf('\\'))
+  return i > 0 ? p.slice(0, i) : ''
+})
 
 const sortedByZ = computed(() =>
   [...elements.value].sort((a, b) => (a.z ?? 0) - (b.z ?? 0))
@@ -568,6 +608,49 @@ function onAddElement(): void {
   dirty.value = true
 }
 
+/** 模板：按当前画布分辨率生成完整原版主菜单，替换现有元素 */
+async function onTemplateCommand(cmd: string): Promise<void> {
+  if (cmd !== 'vanilla') return
+  if (elements.value.length > 0) {
+    try {
+      await ElMessageBox.confirm(
+        t('fancymenu.templateReplace', { n: elements.value.length }),
+        t('fancymenu.confirmTitle'),
+        {
+          confirmButtonText: t('fancymenu.confirm'),
+          cancelButtonText: t('fancymenu.cancel'),
+          type: 'warning'
+        }
+      )
+    } catch {
+      return // 用户取消
+    }
+  }
+  const size = canvasRef.value?.getScreenSize() ?? { w: 1280, h: 720 }
+  const next = buildVanillaMainMenu(size.w, size.h, {
+    background: t('fancymenu.presetBg'),
+    logo: t('fancymenu.presetLogo'),
+    single: t('fancymenu.presetSingle'),
+    multi: t('fancymenu.presetMulti'),
+    realms: t('fancymenu.presetRealms'),
+    mods: t('fancymenu.presetMods'),
+    options: t('fancymenu.presetOptions'),
+    quit: t('fancymenu.presetQuit'),
+    language: t('fancymenu.presetLanguage'),
+    accessibility: t('fancymenu.presetAccessibility'),
+    version: t('fancymenu.presetVersion'),
+    copyright: t('fancymenu.presetCopyright'),
+    langText: t('fancymenu.presetLangText'),
+    accessText: t('fancymenu.presetAccessText'),
+    versionText: t('fancymenu.presetVersionText'),
+    copyrightText: t('fancymenu.presetCopyrightText')
+  })
+  elements.value = next
+  activeId.value = ''
+  dirty.value = true
+  ElMessage.success(t('fancymenu.templateApplied', { n: next.length }))
+}
+
 function onDeleteActive(): void {
   if (!activeId.value) return
   void ElMessageBox.confirm(t('fancymenu.confirmDelete'), t('fancymenu.confirmTitle'), {
@@ -627,6 +710,73 @@ function removeSlideItem(el: FmSlides, index: number): void {
   dirty.value = true
 }
 
+/** 选一张本机图片 → 复制进 config/fancymenu/assets，返回相对路径 */
+async function pickImageAsset(): Promise<string | null> {
+  if (!root.value) return null
+  const src = await window.api.dialog.selectFile({
+    title: t('fancymenu.pickImage'),
+    // Minecraft 只支持 PNG 纹理；其它格式导入后游戏内不会加载
+    extensions: ['png']
+  })
+  if (!src) return null
+  const res = await window.api.fancymenu.importAsset(root.value, src, loader.value)
+  if ('error' in res) {
+    ElMessage.error(res.error)
+    return null
+  }
+  return res.relPath
+}
+
+/** 追加一张本地图片到轮播背景 */
+async function onAddLocalSlide(el: FmSlides): Promise<void> {
+  const rel = await pickImageAsset()
+  if (!rel) return
+  el.slides.push({ type: 'local', path: rel })
+  dirty.value = true
+  ElMessage.success(t('fancymenu.imageImported', { path: rel }))
+}
+
+/** image 元素改用本地图片（local: 前缀，指向 config/fancymenu 下的资源） */
+async function onPickImageElement(el: FmImage): Promise<void> {
+  const rel = await pickImageAsset()
+  if (!rel) return
+  el.url = `local:${rel}`
+  dirty.value = true
+  ElMessage.success(t('fancymenu.imageImported', { path: rel }))
+}
+
+/** 一键换背景：选图 → 写入全屏 slides 背景（没有就新建，已有则追加为新的一张） */
+async function onSetBackground(): Promise<void> {
+  const rel = await pickImageAsset()
+  if (!rel) return
+  const size = canvasRef.value?.getScreenSize() ?? { w: 1280, h: 720 }
+  const existing = elements.value.find((e) => e.type === 'slides')
+  if (existing && existing.type === 'slides') {
+    existing.slides.unshift({ type: 'local', path: rel })
+    activeId.value = existing.id
+  } else {
+    const el: FmSlides = {
+      id: makeId('bgslides'),
+      type: 'slides',
+      name: t('fancymenu.backgroundName'),
+      anchor: 'top_left',
+      x: 0,
+      y: 0,
+      width: size.w,
+      height: size.h,
+      z: 0,
+      slides: [{ type: 'local', path: rel }],
+      duration: 4000,
+      fadeTime: 1200,
+      fitType: 'stretch'
+    }
+    elements.value.unshift(el)
+    activeId.value = el.id
+  }
+  dirty.value = true
+  ElMessage.success(t('fancymenu.imageImported', { path: rel }))
+}
+
 onMounted(onRead)
 </script>
 
@@ -635,8 +785,8 @@ onMounted(onRead)
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--ky-surface, #111318);
-  color: var(--ky-text, #e8ecf2);
+  background: var(--ky-bg-base);
+  color: var(--ky-text);
 }
 
 .fm-toolbar {
@@ -644,15 +794,15 @@ onMounted(onRead)
   align-items: center;
   gap: 12px;
   padding: 8px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  background: var(--ky-toolbar, #14171d);
+  border-bottom: 1px solid var(--ky-border);
+  background: var(--ky-bg-sidebar);
 }
 .fm-toolbar-left, .fm-toolbar-center { display: flex; align-items: center; gap: 6px; }
 .fm-toolbar-center { flex: 1; justify-content: center; }
 .fm-toolbar-right { display: flex; align-items: center; gap: 10px; }
 .fm-path {
   font-size: 11px;
-  color: #7a808e;
+  color: var(--ky-text-dim);
   font-family: 'Consolas', monospace;
   max-width: 320px;
   overflow: hidden;
@@ -672,17 +822,17 @@ onMounted(onRead)
 .fm-side {
   display: flex;
   flex-direction: column;
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  border-right: 1px solid var(--ky-border);
 }
-.fm-side-right { border-right: none; border-left: 1px solid rgba(255, 255, 255, 0.05); }
+.fm-side-right { border-right: none; border-left: 1px solid var(--ky-border); }
 
 .fm-side-title {
   padding: 10px 14px;
   font-size: 12px;
   font-weight: 600;
-  color: #9aa1ae;
+  color: var(--ky-text-sub);
   letter-spacing: 0.02em;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--ky-border);
   text-transform: uppercase;
 }
 
@@ -703,11 +853,15 @@ onMounted(onRead)
   border-radius: 4px;
   font-size: 12px;
   cursor: pointer;
-  color: #c5cad3;
+  color: var(--ky-text-sub);
   transition: background 0.1s;
 }
-.fm-el-item:hover { background: rgba(255,255,255,0.04); }
-.fm-el-item.active { background: rgba(74, 158, 255, 0.15); color: #fff; }
+.fm-el-item:hover { background: var(--ky-bg-hover); }
+.fm-el-item.active {
+  background: rgba(var(--ky-accent-rgb), 0.15);
+  color: var(--ky-text);
+  box-shadow: inset 2px 0 0 var(--ky-accent);
+}
 
 .fm-el-badge {
   font-size: 10px;
@@ -716,13 +870,13 @@ onMounted(onRead)
   font-family: 'Consolas', monospace;
 }
 .fm-el-badge--type { text-transform: uppercase; }
-.fm-el-badge.type-button { background: rgba(74,158,255,0.2); color: #4a9eff; }
+.fm-el-badge.type-button { background: rgba(var(--ky-accent-rgb), 0.2); color: var(--ky-accent); }
 .fm-el-badge.type-image  { background: rgba(74, 199, 135, 0.2); color: #4ac787; }
 .fm-el-badge.type-text   { background: rgba(212, 156, 74, 0.2); color: #d49c4a; }
 .fm-el-badge.type-rect   { background: rgba(220, 86, 86, 0.2); color: #dc5656; }
 .fm-el-badge.type-slides { background: rgba(122, 199, 255, 0.2); color: #7ac7ff; }
 .fm-el-badge.type-particles { background: rgba(255, 176, 122, 0.2); color: #ffb07a; }
-.fm-el-badge--z { background: rgba(255,255,255,0.06); color: #7a808e; margin-left: auto; }
+.fm-el-badge--z { background: var(--ky-bg-hover); color: var(--ky-text-dim); margin-left: auto; }
 
 .fm-el-label {
   flex: 1;
@@ -733,7 +887,7 @@ onMounted(onRead)
 .fm-el-empty {
   padding: 24px 12px;
   text-align: center;
-  color: #5a6270;
+  color: var(--ky-text-dim);
   font-size: 12px;
 }
 
@@ -742,7 +896,7 @@ onMounted(onRead)
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #5a6270;
+  color: var(--ky-text-dim);
   font-size: 12px;
   padding: 24px;
   text-align: center;
@@ -760,7 +914,7 @@ onMounted(onRead)
   width: 100%;
 }
 .fm-pos-row .el-input-number { flex: 1; }
-.fm-pos-sep { color: #6b7280; font-family: 'Consolas', monospace; }
+.fm-pos-sep { color: var(--ky-text-dim); font-family: 'Consolas', monospace; }
 .fm-action-row { display: flex; gap: 4px; width: 100%; }
 .fm-action-row .el-select { width: 110px; flex-shrink: 0; }
 .fm-action-row .el-input { flex: 1; }

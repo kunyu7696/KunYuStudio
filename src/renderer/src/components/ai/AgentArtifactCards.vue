@@ -817,7 +817,7 @@ function fileUrl(absPath: string): string | null {
   flex-shrink: 0;
   padding: 1px 5px;
   font-size: 10px;
-  background: var(--ky-surface, rgba(147, 153, 178, 0.1));
+  background: var(--ky-bg-panel, rgba(147, 153, 178, 0.1));
   border-radius: 3px;
   color: var(--ky-text-dim);
 }

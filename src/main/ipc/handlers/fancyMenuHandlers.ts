@@ -1,5 +1,9 @@
 import { ipcMain } from 'electron'
-import { readFancyMenu, writeFancyMenu } from '../../services/fancyMenuService'
+import {
+  importFancyMenuAsset,
+  readFancyMenu,
+  writeFancyMenu
+} from '../../services/fancyMenuService'
 import { IpcChannels } from '../../../shared/types/ipc'
 import type { FmElement } from '../../../shared/types/fancymenu'
 
@@ -13,5 +17,10 @@ export function registerFancyMenuHandlers(): void {
       // 不做运行时强校验（类型系统已保证），直接透传；保存内部只操作合法元素
       return writeFancyMenu(root, elements as FmElement[], loader)
     }
+  )
+  ipcMain.handle(
+    IpcChannels.FANCYMENU_IMPORT_ASSET,
+    (_evt, root: string, srcFile: string, loader?: string) =>
+      importFancyMenuAsset(root, srcFile, loader)
   )
 }

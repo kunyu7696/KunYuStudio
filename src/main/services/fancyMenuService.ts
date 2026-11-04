@@ -11,8 +11,8 @@
  * 两边都没有时，按 loader 类型选定初始创建的目录。
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { basename, dirname, extname, join } from 'node:path'
 import type {
   FancyMenuLayout,
   FancyMenuReadResult,
@@ -284,4 +284,33 @@ export function writeFancyMenu(
 /** 构造一个最小合法的空白 layout（用于新建） */
 export function emptyLayout(): FancyMenuLayout {
   return { elements: [] }
+}
+
+/**
+ * 把本机图片复制进 `<config/fancymenu>/assets/`，返回相对该目录的路径（`assets/<文件名>`）。
+ * FancyMenu 要求自定义贴图放在 config/fancymenu/assets 下，编辑器用它生成 slides/image 的路径。
+ */
+export function importFancyMenuAsset(
+  root: string,
+  srcFile: string,
+  loader?: string
+): { ok: true; relPath: string } | { ok: false; error: string } {
+  const layoutPath = detectPath(root) ?? defaultPath(root, loader)
+  const assetsDir = join(dirname(layoutPath), 'assets')
+  try {
+    if (!existsSync(srcFile)) return { ok: false, error: `图片不存在: ${srcFile}` }
+    mkdirSync(assetsDir, { recursive: true })
+    const ext = extname(srcFile) || '.png'
+    const stem = basename(srcFile, extname(srcFile)).replace(/[^\w.-]+/g, '_') || 'image'
+    let name = `${stem}${ext}`
+    let n = 1
+    while (existsSync(join(assetsDir, name))) {
+      name = `${stem}_${n}${ext}`
+      n++
+    }
+    copyFileSync(srcFile, join(assetsDir, name))
+    return { ok: true, relPath: `assets/${name}` }
+  } catch (err) {
+    return { ok: false, error: `导入图片失败: ${(err as Error).message}` }
+  }
 }

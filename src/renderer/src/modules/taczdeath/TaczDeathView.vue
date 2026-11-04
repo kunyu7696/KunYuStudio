@@ -274,24 +274,24 @@ function onRenameWorld(oldDim: string): void {
 
 // ---- 颜色码预览 ----
 
-/** MC 16 色 */
+/** MC 16 色 → 主题变量（深色主题为原色，浅色主题自动加深，避免亮色在白底上看不清） */
 const MC_COLORS: Record<string, string> = {
-  '0': '#000000',
-  '1': '#0000AA',
-  '2': '#00AA00',
-  '3': '#00AAAA',
-  '4': '#AA0000',
-  '5': '#AA00AA',
-  '6': '#FFAA00',
-  '7': '#AAAAAA',
-  '8': '#555555',
-  '9': '#5555FF',
-  a: '#55FF55',
-  b: '#55FFFF',
-  c: '#FF5555',
-  d: '#FF55FF',
-  e: '#FFFF55',
-  f: '#FFFFFF'
+  '0': 'var(--ky-mc-0)',
+  '1': 'var(--ky-mc-1)',
+  '2': 'var(--ky-mc-2)',
+  '3': 'var(--ky-mc-3)',
+  '4': 'var(--ky-mc-4)',
+  '5': 'var(--ky-mc-5)',
+  '6': 'var(--ky-mc-6)',
+  '7': 'var(--ky-mc-7)',
+  '8': 'var(--ky-mc-8)',
+  '9': 'var(--ky-mc-9)',
+  a: 'var(--ky-mc-a)',
+  b: 'var(--ky-mc-b)',
+  c: 'var(--ky-mc-c)',
+  d: 'var(--ky-mc-d)',
+  e: 'var(--ky-mc-e)',
+  f: 'var(--ky-mc-f)'
 }
 
 function escapeHtml(s: string): string {
@@ -366,7 +366,7 @@ function renderPreview(text: string): string {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--ky-surface, #111318);
+  background: var(--ky-bg-base, #111318);
   color: var(--ky-text, #e8ecf2);
 }
 
@@ -375,8 +375,8 @@ function renderPreview(text: string): string {
   align-items: center;
   gap: 12px;
   padding: 8px 14px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  background: var(--ky-toolbar, #14171d);
+  border-bottom: 1px solid var(--ky-border);
+  background: var(--ky-bg-sidebar, #14171d);
 }
 .td-toolbar-left { display: flex; align-items: center; gap: 6px; }
 .td-toolbar-right {
@@ -387,7 +387,7 @@ function renderPreview(text: string): string {
 }
 .td-path {
   font-size: 11px;
-  color: #7a808e;
+  color: var(--ky-text-dim);
   font-family: 'Consolas', monospace;
 }
 
@@ -405,13 +405,13 @@ function renderPreview(text: string): string {
   overflow-y: auto;
   padding: 12px 16px 40px;
 }
-.td-col:first-child { border-right: 1px solid rgba(255, 255, 255, 0.05); }
+.td-col:first-child { border-right: 1px solid var(--ky-border); }
 
 .td-col-title {
   margin: 0 0 12px;
   font-size: 13px;
   font-weight: 600;
-  color: #c5cad3;
+  color: var(--ky-text-sub);
   display: flex;
   align-items: baseline;
   gap: 10px;
@@ -419,7 +419,7 @@ function renderPreview(text: string): string {
 .td-file {
   font-size: 11px;
   font-weight: 400;
-  color: #7a808e;
+  color: var(--ky-text-dim);
   font-family: 'Consolas', monospace;
 }
 
@@ -437,15 +437,15 @@ function renderPreview(text: string): string {
 .td-hint {
   margin-left: 8px;
   font-size: 11px;
-  color: #7a808e;
+  color: var(--ky-text-dim);
 }
 
 .td-preview {
   margin: -12px 0 10px 110px;
   padding: 6px 10px;
   min-height: 28px;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--ky-code-bg);
+  border: 1px solid var(--ky-border);
   border-radius: 4px;
   font-size: 13px;
   line-height: 1.5;
@@ -461,11 +461,11 @@ function renderPreview(text: string): string {
 .td-new-world { flex: 1; }
 
 .td-world-card {
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--ky-border);
   border-radius: 6px;
   padding: 10px 12px 14px;
   margin-bottom: 12px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--ky-bg-hover);
 }
 
 .td-world-head {
@@ -475,7 +475,7 @@ function renderPreview(text: string): string {
   margin-bottom: 8px;
 }
 .td-world-id { flex: 1; }
-.td-world-enabled-label { font-size: 11px; color: #7a808e; }
+.td-world-enabled-label { font-size: 11px; color: var(--ky-text-dim); }
 .td-world-del { margin-left: auto; }
 
 /* 世界卡片内预览缩进更小 */

@@ -135,7 +135,9 @@ const api: IpcApi = {
   fancymenu: {
     read: (root, loader) => ipcRenderer.invoke(IpcChannels.FANCYMENU_READ, root, loader),
     save: (root, elements, loader) =>
-      ipcRenderer.invoke(IpcChannels.FANCYMENU_SAVE, root, elements, loader)
+      ipcRenderer.invoke(IpcChannels.FANCYMENU_SAVE, root, elements, loader),
+    importAsset: (root, srcFile, loader) =>
+      ipcRenderer.invoke(IpcChannels.FANCYMENU_IMPORT_ASSET, root, srcFile, loader)
   },
   taczdeath: {
     read: (root) => ipcRenderer.invoke(IpcChannels.TACZDEATH_READ, root),
