@@ -153,13 +153,17 @@
             :label="t('fancymenu.fields.action')"
           >
             <div class="fm-action-row">
-              <el-select v-model="(activeEl as any).action?.type ?? 'command'" @change="ensureAction(activeEl as any)">
+              <el-select
+                :model-value="(activeEl as FmButton).action?.type ?? 'command'"
+                @update:model-value="(v: string | number | boolean | undefined) => setActionType(activeEl as FmButton, v)"
+              >
                 <el-option value="command" :label="t('fancymenu.actions.command')" />
                 <el-option value="url" :label="t('fancymenu.actions.url')" />
               </el-select>
               <el-input
-                v-model="(activeEl as any).action.value"
+                :model-value="(activeEl as FmButton).action?.value ?? ''"
                 :placeholder="t('fancymenu.fields.actionValue')"
+                @update:model-value="(v: string) => setActionValue(activeEl as FmButton, v)"
               />
             </div>
           </el-form-item>
@@ -175,7 +179,7 @@
             v-if="activeEl.type === 'text'"
             :label="t('fancymenu.fields.size_px')"
           >
-            <el-input-number v-model="(activeEl as any).size" :min="8" :max="72" controls-position="right" />
+            <el-input-number v-model="(activeEl as FmText).size" :min="8" :max="72" controls-position="right" />
           </el-form-item>
 
           <!-- slides 轮播字段 -->
@@ -594,6 +598,20 @@ function onDuplicateActive(): void {
 /** 确保 action 对象存在（从无到有时先建空壳） */
 function ensureAction(el: FmButton): void {
   if (!el.action) el.action = { type: 'command', value: '' }
+  dirty.value = true
+}
+
+/** 切换 action 类型（先补空壳再改 type） */
+function setActionType(el: FmButton, v: string | number | boolean | undefined): void {
+  ensureAction(el)
+  el.action!.type = v === 'url' ? 'url' : 'command'
+  dirty.value = true
+}
+
+/** 写入 action 值（先补空壳再改 value） */
+function setActionValue(el: FmButton, v: string): void {
+  ensureAction(el)
+  el.action!.value = v
   dirty.value = true
 }
 
