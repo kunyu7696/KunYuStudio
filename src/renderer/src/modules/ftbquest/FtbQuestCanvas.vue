@@ -76,17 +76,17 @@
 
       <div class="fq-node-title">{{ q.title }}</div>
       <div class="fq-node-item">{{ q.item }}</div>
-      <div v-if="q.reward" class="fq-node-reward">奖励：{{ q.reward.item }} ×{{ q.reward.count }}</div>
+      <div v-if="q.reward" class="fq-node-reward">{{ t('ftbquest.nodeReward') }}{{ q.reward.item }} ×{{ q.reward.count }}</div>
 
       <!-- 依赖徽章 -->
       <div v-if="q.dependencies.length > 0" class="fq-node-deps">
-        {{ q.dependencies.length }} 依赖
+        {{ t('ftbquest.nodeDeps', { n: q.dependencies.length }) }}
       </div>
     </div>
 
     <!-- 空状态 -->
     <div v-if="quests.length === 0" class="fq-canvas-empty">
-      <p>还没有任务。用左栏的「新建任务」添加第一个节点。</p>
+      <p>{{ t('ftbquest.canvasEmpty') }}</p>
     </div>
   </div>
 </template>
@@ -95,6 +95,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import type { FtbQuest } from '../../../../shared/types/ftbquest'
 import { FTB_QUEST_NODE_W, FTB_QUEST_NODE_H } from '../../../../shared/types/ftbquest'
+import { t } from '../../i18n'
 
 const props = defineProps<{
   quests: FtbQuest[]

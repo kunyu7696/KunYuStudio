@@ -194,7 +194,7 @@
                   <el-input
                     v-model="s.path"
                     class="fm-slide-path"
-                    placeholder="textures/... 或本地路径"
+                    :placeholder="t('fancymenu.slidePathPlaceholder')"
                   />
                   <el-button
                     size="small"
@@ -582,7 +582,7 @@ function onDuplicateActive(): void {
   const src = activeEl.value
   const clone: FmElement = JSON.parse(JSON.stringify(src))
   clone.id = makeId(src.type)
-  clone.name = (clone.name ?? src.type) + ' (副本)'
+  clone.name = (clone.name ?? src.type) + t('fancymenu.duplicateSuffix')
   clone.x = src.x + 24
   clone.y = src.y + 24
   clone.z = (src.z ?? 0) + 1

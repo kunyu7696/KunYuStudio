@@ -82,8 +82,8 @@
               @mousedown.stop="onElementMouseDown($event, el)"
             >
               <div class="fm-slides-current">
-                <span class="fm-slides-badge">轮播 {{ slideIndex(el) + 1 }}/{{ el.slides.length || 1 }}</span>
-                <span class="fm-slides-path">{{ currentSlidePath(el) || '未配置图片' }}</span>
+                <span class="fm-slides-badge">{{ t('fancymenu.slidesBadge', { n: slideIndex(el) + 1, total: el.slides.length || 1 }) }}</span>
+                <span class="fm-slides-path">{{ currentSlidePath(el) || t('fancymenu.noSlideImage') }}</span>
               </div>
               <div class="fm-slides-dots">
                 <span
@@ -130,18 +130,18 @@
 
     <!-- 底栏：分辨率 + 缩放 -->
     <div class="fm-res-bar">
-      <span class="fm-res-label">屏幕：</span>
+      <span class="fm-res-label">{{ t('fancymenu.canvasScreen') }}</span>
       <el-radio-group :model-value="resKey" size="small" @update:model-value="onResChange">
         <el-radio-button value="16x9">16:9 (1280×720)</el-radio-button>
         <el-radio-button value="16x10">16:10 (1280×800)</el-radio-button>
         <el-radio-button value="4x3">4:3 (1024×768)</el-radio-button>
-        <el-radio-button value="full">宽 (1920×1080)</el-radio-button>
+        <el-radio-button value="full">{{ t('fancymenu.canvasWide') }}</el-radio-button>
       </el-radio-group>
       <span class="fm-res-dim">{{ screenW }} × {{ screenH }}</span>
 
       <span class="fm-zoom-sep" />
 
-      <span class="fm-res-label">缩放：</span>
+      <span class="fm-res-label">{{ t('fancymenu.canvasZoom') }}</span>
       <el-radio-group :model-value="scale" size="small" @update:model-value="onScaleChange">
         <el-radio-button value="0.25">25%</el-radio-button>
         <el-radio-button value="0.5">50%</el-radio-button>
@@ -150,7 +150,7 @@
         <el-radio-button value="1.5">150%</el-radio-button>
         <el-radio-button value="2">200%</el-radio-button>
       </el-radio-group>
-      <span class="fm-zoom-tip">Ctrl+滚轮</span>
+      <span class="fm-zoom-tip">{{ t('fancymenu.canvasZoomTip') }}</span>
     </div>
   </div>
 </template>
@@ -163,6 +163,7 @@ import type {
   FmParticles,
   FmSlides
 } from '../../../../shared/types/fancymenu'
+import { t } from '../../i18n'
 
 const props = defineProps<{
   elements: FmElement[]
