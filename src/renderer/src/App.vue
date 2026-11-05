@@ -96,6 +96,8 @@
     <DshFirstRunHint />
     <!-- 全局 MCP 桥接授权弹窗（外部 agent 写操作手动确认） -->
     <AuthRequestDialog />
+    <!-- 启动层：两幕动画 + 真实初始化日志（步骤由下方 onMounted 逐一绑定） -->
+    <BootSplash />
   </div>
   </el-config-provider>
 </template>
@@ -117,6 +119,8 @@ import OnboardingDialog from './components/layout/OnboardingDialog.vue'
 import DshFirstRunHint from './components/layout/DshFirstRunHint.vue'
 import ModLibraryPanel from './components/modpack/ModLibraryPanel.vue'
 import AuthRequestDialog from './components/integration/AuthRequestDialog.vue'
+import BootSplash from './components/boot/BootSplash.vue'
+import { useBootSplash } from './composables/useBootSplash'
 import { useUiStore } from './stores/ui'
 import { useProjectStore, readLastProjectId } from './stores/project'
 import type { Project } from '../../shared/types/project'
@@ -175,59 +179,67 @@ const showModLibrary = computed(
   () => projectStore.currentProject?.type === 'modpack' && ui.modLibraryVisible
 )
 
+const boot = useBootSplash()
+
+/**
+ * 启动序列：每一步都用 boot.runStep 包住，启动层上的日志行、耗时与成败
+ * 直接来自这些函数真实执行的结果（不是装饰性假进度）。
+ * 步骤顺序即依赖顺序：设置 → 主题/语言 → 模块 → 环境自检 → 恢复项目 → 运行环境。
+ */
 onMounted(async () => {
+  boot.start()
+
   // 设置先于模块激活加载（缩放/自动保存等初始值影响各组件）
-  await settings.hydrate()
-  // hydrate 后按设置的 themeMode 校正主题（main.ts 先用缓存防首帧闪烁）
-  setThemeMode(settings.general.themeMode)
+  await boot.runStep('settings', async () => {
+    await settings.hydrate()
+  })
+  // hydrate 后按设置的 themeMode 校正主题（main.ts 先用缓存防首帧闪烁）；
   // 语言同样在 hydrate 后生效：首帧固定源语言中文，避免闪烁
-  setLocale(settings.general.locale)
-  ui.activateInitialModule()
-  build.initEvents()
-  window.addEventListener('keydown', onGlobalKeyDown)
-  // T-1 幽灵任务接管：渲染层刷新后主进程可能仍有运行中的 Agent 任务，
-  // 启动时查询互斥状态并重新接管事件流（内部自守卫，无任务时空转）
-  void aiAgents.syncBackgroundRun()
-  // 写盘自检：失败时顶部横幅提示，避免"保存无反应"被当成产品 bug
-  try {
-    const probe = await window.api.app.writeProbe()
+  await boot.runStep('theme', () => {
+    setThemeMode(settings.general.themeMode)
+    setLocale(settings.general.locale)
+  })
+  await boot.runStep('modules', () => {
+    ui.activateInitialModule()
+    build.initEvents()
+    window.addEventListener('keydown', onGlobalKeyDown)
+    // T-1 幽灵任务接管：渲染层刷新后主进程可能仍有运行中的 Agent 任务，
+    // 启动时查询互斥状态并重新接管事件流（内部自守卫，无任务时空转）
+    void aiAgents.syncBackgroundRun()
+  })
+  // 写盘自检 + 密钥加密可用性：任一条异常都会在启动日志对应行标红，
+  // 并在工作台顶部横幅给出具体原因（避免「保存无反应」被当成产品 bug）
+  await boot.runStep('probe', async () => {
+    const [probe, crypto] = await Promise.all([
+      window.api.app.writeProbe(),
+      window.api.settings.cryptoStatus()
+    ])
     if (!probe.ok) writeProbeError.value = { path: probe.path, error: probe.error }
-  } catch {
-    /* 探针本身失败（通道异常）不阻塞启动 */
-  }
-  // 密钥加密可用性：safeStorage 不可用（无钥匙串的 Linux）时降级为明文落盘，横幅明示
-  try {
-    const crypto = await window.api.settings.cryptoStatus()
     if (!crypto.encrypted) cryptoPlaintext.value = true
-  } catch {
-    /* 通道异常不阻塞启动 */
-  }
-  // 启动恢复：静默打开上次项目；记录失效/目录已删除时忽略
-  if (settings.general.restoreLastProject) {
-    try {
-      await projectStore.refresh()
-      const lastId = readLastProjectId()
-      const alive = projectStore.projects.filter((p) => p.pathExists !== false)
-      const targetId =
-        (lastId && alive.some((p) => p.id === lastId) ? lastId : alive[0]?.id) ?? null
-      if (targetId) {
-        // 打开后停留在项目管理模块，由主页切换为工作区（按持久化的模式显示）
-        await projectStore.open(targetId)
-      }
-    } catch {
-      /* 失效项目静默回退项目管理 */
+  })
+  // 启动恢复：静默打开上次项目；记录失效/目录已删除时该步失败并记入日志
+  await boot.runStep('project', async () => {
+    if (!settings.general.restoreLastProject) return
+    await projectStore.refresh()
+    const lastId = readLastProjectId()
+    const alive = projectStore.projects.filter((p) => p.pathExists !== false)
+    const targetId =
+      (lastId && alive.some((p) => p.id === lastId) ? lastId : alive[0]?.id) ?? null
+    if (targetId) {
+      // 打开后停留在项目管理模块，由主页切换为工作区（按持久化的模式显示）
+      await projectStore.open(targetId)
     }
-  }
-  // 首启零配置运行环境：本机未准备运行环境时，后台直接开始下载 JDK 与目标版本运行时，
-  // 顶部细条呈现进度——不再把首次使用者强行导航到设置页（多一步、且要求他自己找回来）。
-  // 仅自动尝试一次；不想等的人点「稍后」隐藏进度条，下载照常在后台进行。
-  if (!localStorage.getItem(RUNTIME_WIZARD_SHOWN_KEY)) {
+  })
+  // 首启零配置运行环境：只登记「已安排后台置备」，不阻塞启动层等下载完成。
+  // 下载照常在后台进行，顶部细条呈现进度；不想等的人点「稍后」隐藏进度条。
+  await boot.runStep('runtime', () => {
+    if (localStorage.getItem(RUNTIME_WIZARD_SHOWN_KEY)) return
     localStorage.setItem(RUNTIME_WIZARD_SHOWN_KEY, '1')
     void autoStartRuntimeBootstrap({
       mcVersion: projectStore.currentProject?.mcVersion ?? DEFAULT_MC_VERSION,
       mirror: settings.network?.mcMirror ?? null
     })
-  }
+  })
 })
 
 /** 主题模式变更即时生效（含 system 跟随系统切换，由 theme 模块内部监听） */

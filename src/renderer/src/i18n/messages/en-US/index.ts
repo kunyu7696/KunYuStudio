@@ -5,6 +5,22 @@ import type { Messages } from '../zh-CN'
  * Typed against the zh-CN source catalog, so a missing or extra key fails typecheck.
  */
 const enUS: Messages = {
+  boot: {
+    aria: 'Starting KunYu Studio',
+    tagline: 'MINECRAFT CONTENT STUDIO',
+    slogan: 'Worlds are yours to create',
+    skip: 'Skip',
+    running: 'running',
+    error: 'failed',
+    steps: {
+      settings: 'Loading settings',
+      theme: 'Applying theme & language',
+      modules: 'Loading workspace modules',
+      probe: 'Checking environment',
+      project: 'Restoring last project',
+      runtime: 'Inspecting MC runtime'
+    }
+  },
   app: {
     writeProbe:
       '⚠ This environment forbids writing to the application data directory ({path}: {error}). Saving, generating and exporting will fail — common causes: security software (EDR) blocking writes, or a read-only directory.',

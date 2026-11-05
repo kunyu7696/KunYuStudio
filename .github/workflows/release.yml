@@ -55,6 +55,13 @@ jobs:
           npm run lint
           npm run test
 
+      # 上一步为跑单测铺了 0 字节 electron 桩；而打包链路
+      # （electron-builder -c.electronDist=node_modules/electron/dist）要读
+      # dist/version 判定版本、并把整个 dist 打进安装包。不还原真实二进制
+      # 会在「构建安装包」阶段直接失败（v0.1.8 的 Windows 构建即因此失败）。
+      - name: 还原 electron 真实二进制
+        run: node scripts/restore-electron-binary.cjs
+
       # build:win = 构建 + electron-builder --win --publish never（只出产物，不上传）
       - name: 构建安装包
         run: npm run build:win

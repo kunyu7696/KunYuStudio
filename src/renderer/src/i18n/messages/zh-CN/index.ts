@@ -3,6 +3,22 @@
  * 键名约定：<区域>.<语义>；模块元数据按 modules.<模块id>.name / .description。
  */
 const zhCN = {
+  boot: {
+    aria: '正在启动 KunYu Studio',
+    tagline: 'MINECRAFT CONTENT STUDIO',
+    slogan: '世界，由你创造',
+    skip: '跳过',
+    running: '进行中',
+    error: '异常',
+    steps: {
+      settings: '加载设置',
+      theme: '应用主题与语言',
+      modules: '装载工作区模块',
+      probe: '校验运行环境',
+      project: '恢复上次项目',
+      runtime: '检查 MC 运行环境'
+    }
+  },
   app: {
     writeProbe: '⚠ 当前环境禁止写入应用数据目录（{path}：{error}）。保存、生成与导出将失败——常见原因：安全软件（EDR）拦截或目录只读。',
     cryptoPlaintext: '⚠ 当前系统无钥匙串服务，API Key/token 将以明文保存在本机设置文件中。Windows/macOS 不受影响；Linux 请安装 gnome-keyring 或 kwallet 后重启应用。',
