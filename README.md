@@ -47,30 +47,43 @@
 
 ## 功能一览
 
-- **统一可视化编辑器**：物品 / 方块 / 实体 / 食物 / 工具 / 护甲 / 附魔 / 药水 /
-  生物群系 / 进度，同一份语义模型驱动，实时预览。
+- **两种应用模式**：工作台（IDE 式布局）与灵感台（全屏创意空间），顶栏一键切换。
+- **启动体验**：两幕启动动画（品牌亮相 → 方块世界），期间真实执行初始化并逐行显示
+  6 个步骤的耗时与成败（设置 / 主题语言 / 模块装载 / 环境自检 / 项目恢复 / 运行环境）；
+  进度条只认完成度，点击任意处可跳过，跳过不打断初始化。
+- **工坊（统一可视化编辑器）**：物品 / 方块 / 实体 / 食物 / 工具 / 护甲 / 附魔 / 药水 /
+  生物群系 / 进度，同一份语义模型驱动 Java、资源包、数据包三端，实时预览。
 - **代码手工编写**：可视化不是唯一路径——打开项目即是完整代码工作区（侧边栏文件树
   + Monaco 编辑器），可直接手写 / 修改 Java、JSON、Gradle 等产物，多标签页、
   自动保存、错误行跳转、运行前后 diff；生成器会保留你在表单里填的「自定义代码片段」。
+- **数据包 / 资源包 / 光影包编辑器**：三种独立项目类型各有一套专用编辑器——
+  配方、战利品表、进度、函数与标签；贴图模型、音效、语言、字体；Iris / OptiFine
+  的 GLSL 着色器与选项配置。
+- **模型工坊与资产库**：自研建模器支持立方体 / 骨骼 / 网格 / UV / 权重 / 动画，
+  `.bbmodel` 互导；AI 产出的贴图候选全部存档到资产库，跨项目汇总、零额度复用，
+  支持 `.kyshare.json` 分享包导入导出。
+- **音效工坊**：参数合成 / MIDI 渲染 / 本地音频统一转 OGG 44.1kHz，
+  自动注册 `sounds.json` 音效事件。
+- **整合包与社区内容**：Modrinth / CurseForge 搜索入库、拖拽组装、一键导出双清单；
+  FTB 任务书、Patchouli 指南书、KubeJS 脚本、FancyMenu 开始菜单、TaCZ 死亡消息
+  均为可视化编辑，保存即落盘。
 - **AI 流水线**：五档 Agent（迅工 / 匠造 / 大师 / 桥接 / 织星），
   理解 → 生成 → 构建 → 测试 → 导出全链路；构建失败自动读日志修复
   （按档位 0/1/3/4/5 轮），真机测试自愈至多 10 轮。单次运行有资源熔断：
   模型调用上限 24/48/72/96/144 次、Gradle 构建 3/6/10/12/14 次、
   墙钟 30/60/90/120/150 分钟，任一超限即熔断停止并如实回报。
-- **贴图 / 模型**：像素画生成（512px 大图 → 量化降采样）、自研建模器支持
-  立方体 / 骨骼 / 网格 / UV / 权重 / 动画，`.bbmodel` 互导；离线时程序化保底。
-- **整合包组装**：Modrinth / CurseForge 搜索入库，拖拽组装，一键导出，
-  可直发双平台。
 - **零配置运行环境**：应用不内置 JDK 与游戏本体——首次使用在「设置 → 运行环境」
   一键准备，按版本矩阵自动检测/下载所需 JDK（17/21/25）与 Minecraft 客户端、
   依赖库、资产，生成可直接启动的托管实例；国内可配置镜像（BMCLAPI 失败自动回退
   官方源），已下载文件校验跳过、支持断点续传。
-- **真机沙盒**：observer mod 随包分发，游戏内截图 / 世界探测 / 输入注入，
+- **真机沙盒**：observer javaagent 随包分发，游戏内截图 / 世界探测 / 输入注入，
   全自动 GameTest 闭环验证。
 - **MCP 生态**：内置 mcdev-mcp 静态检索；自定义 MCP server 接入（stdio），
   市场预置一键导入，工具级权限过滤（市场新装插件默认不暴露任何工具，需在
   插件页「工具权限」逐项勾选放行）。
-- **性能画像**：spark / JFR 报告解析，mod 性能榜单与优化建议。
+- **工程周边**：反编译工作区（Vineflower 按需下载）、版本与产物管理（Git + 构建产物）、
+  CI/CD 工作流生成（build / release / gametest）、性能画像（spark / JFR 解析、
+  五维评分与冲突建议）、插件库与 DSH 社区插件宿主。
 
 ## 快速开始
 
@@ -92,18 +105,25 @@ npm run dev
 | `npm run dev` | 开发模式（含本机 EDR 规避 shim，详见下方「已知环境问题」） |
 | `npm run typecheck` | 双端类型检查（node + web） |
 | `npm run test` | 全量单测（vitest） |
+| `npm run test:matrix` | 加载器 × MC 版本模板矩阵门禁（全量） |
+| `npm run test:matrix-pr` | 矩阵门禁（PR 档，core + extended） |
+| `npm run test:coverage` | 全量单测并输出覆盖率 |
 | `npm run lint` | ESLint（`--max-warnings 0`） |
 | `npm run build` | 编译 out/ 产物 |
-| `npm run build:win` | 打 Windows NSIS 安装包（前置见下） |
+| `npm run build:win` / `build:mac` / `build:linux` | 打对应平台安装包（只出产物，不上传） |
 | `npm run fetch-models` | 预拉 bge-small-zh 离线嵌入模型（打包用） |
 | `npm run kb:manifest` | 刷新知识库语料版本指纹（改动 `resources/knowledge` 后执行） |
 
-### 打包前置（`build:win` 之前）
+### 打包前置
 
-1. `resources/observer-mod` 下执行一次 `gradlew build`（JDK 17）——产出游戏内
-   观察 mod jar；
-2. `npm run fetch-models`——把离线嵌入模型拉进 `resources/models`
-   （可选，缺失时运行时回退在线下载）。
+`build:*` 会自动串好整条链路（`fix-dist-acl` → `build-observer-agent` →
+electron-vite build → 产物新鲜度断言 → electron-builder → 打包后校验），
+只需保证本机装了 **JDK 21**（用于构建随包分发的 observer javaagent）。
+离线嵌入模型可选：`npm run fetch-models` 拉进 `resources/models`，
+缺失时运行时回退在线下载。
+
+> 产物新鲜度断言会比对 `out/`、`app.asar`、observer jar 与工作区是否一致，
+> 陈旧包会直接失败——这能挡住「源码改了但安装包还是旧的」。
 
 ## 仓库结构
 
@@ -111,9 +131,10 @@ npm run dev
 src/
   main/       Electron 主进程：IPC、构建流水线、市场、MCP、AI 服务
   preload/    contextBridge 白名单
-  renderer/   Vue 3 + Pinia + Element Plus 界面
+  renderer/   Vue 3 + Pinia + Element Plus 界面（23 个活动栏模块 + 灵感台）
   shared/     双端共享：类型 / schema / 建模器核心（单一事实源）
-resources/    AI 参考包（1562 个活跃模板）、知识库、observer mod、离线嵌入模型
+resources/    AI 参考包（1576 个活跃模板）、知识库、observer javaagent、
+              mcdata 版本数据、插件与 DSH 插件包、离线嵌入模型
 scripts/      启动包装器、构建与验证脚本
 docs/         设计文档（见下）
 ```
@@ -123,9 +144,10 @@ docs/         设计文档（见下）
 | 文档 | 内容 |
 | --- | --- |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 进程模型、目录结构、IPC、数据流、安全模型 |
-| [docs/FEATURES.md](docs/FEATURES.md) | 19 个功能模块与工程链路能力清单 |
-| [docs/AI-PIPELINE.md](docs/AI-PIPELINE.md) | AI 子系统：五档编排、66 个内置工具、上下文管理、RAG、三态验收 |
+| [docs/FEATURES.md](docs/FEATURES.md) | 23 个活动栏模块与工程链路能力清单 |
+| [docs/AI-PIPELINE.md](docs/AI-PIPELINE.md) | AI 子系统：五档编排、93 个内置工具、上下文管理、RAG、三态验收 |
 | [docs/MODELER.md](docs/MODELER.md) | 建模器：架构、文档模型、格式矩阵、操作说明 |
+| [docs/PLUGINS.md](docs/PLUGINS.md) | 插件体系：清单格式、权限模型、语言插件与 DSH 兼容宿主 |
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | 开发环境、脚本、测试策略、代码约定 |
 
 ## 版本矩阵覆盖
@@ -136,7 +158,7 @@ docs/         设计文档（见下）
 | Forge | 1.18.2 · 1.19.2 · 1.20.1 · 1.20.4 · 1.21.1 · 26.3（1.16.5 因 FG4 + official mappings 框架级不兼容已冻结） |
 | NeoForge | 1.20.4 · 1.20.6 · 1.21.1 · 1.21.3~1.21.11 · 26.3（官方仍 Beta，暂禁用，待 GA 解除） |
 
-共 34 个可生成组合，分层验证：**core**（1.20.1 / 1.21.1，PR 与 push 均强制编译
+共 35 个可生成组合（Fabric 16 · Forge 6 · NeoForge 13），分层验证：**core**（1.20.1 / 1.21.1，PR 与 push 均强制编译
 验证）→ **extended**（1.20.4 / 1.20.6 / 1.21.3+ / 26.x，PR 档全量）→
 **legacy**（1.16.5 / 1.18.2 / 1.19.2，新建向导默认隐藏，仅定时真机构建覆盖）。
 JDK 17 / 21 / 25 按矩阵自动匹配（1.21.6+ 宿主需 25，26.x 起编译目标即 Java 25）；
@@ -146,7 +168,7 @@ Fabric 26.x 起无 Yarn 构建，自动切换 Mojang 官方映射。工具链坐
 
 ## 测试与质量
 
-- PR 门禁：双端 typecheck + ESLint 零告警 + 全量单测（276 个测试文件）。
+- PR 门禁：双端 typecheck + ESLint 零告警 + 全量单测（310 个测试文件）。
 - 矩阵门禁：`test:matrix` / `test:matrix-pr` 按上表加载器 × MC 版本组合验证模板。
 - 测试环境分层：`src/main` / `src/shared` 跑 node，`src/renderer` 跑 jsdom。
 - 构建后断言产物为本次生成（新鲜度断言），杜绝陈旧包。
