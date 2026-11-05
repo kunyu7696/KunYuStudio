@@ -1,6 +1,6 @@
 {
   "name": "kunyu-ecosystem",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "KunYu Studio - Minecraft 模组与整合包可视化开发工具",
   "main": "./out/main/index.js",
   "author": "kunyu (睏欤)",
