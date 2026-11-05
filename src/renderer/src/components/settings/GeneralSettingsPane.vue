@@ -60,6 +60,17 @@
       </SettingsRow>
 
       <SettingsRow
+        :label="t('settings.launchAnimation')"
+        :desc="t('settings.launchAnimationDesc')"
+        data-setting-id="general-launch-animation"
+      >
+        <el-switch
+          :model-value="settings.general.launchAnimation"
+          @update:model-value="(v) => commit('launchAnimation', v === true)"
+        />
+      </SettingsRow>
+
+      <SettingsRow
         :label="t('settings.restoreLast')"
         :desc="t('settings.restoreLastDesc')"
         data-setting-id="general-restore-last-project"

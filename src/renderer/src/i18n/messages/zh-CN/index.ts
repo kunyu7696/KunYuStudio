@@ -168,6 +168,8 @@ const zhCN = {
     common: '常规',
     zoom: '界面缩放',
     zoomDesc: '整体界面放大缩小，重启后保留。',
+    launchAnimation: '启动动画',
+    launchAnimationDesc: '开启后每次启动播放两幕开场动画；关闭则直接进入主界面。',
     restoreLast: '启动时恢复上次项目',
     restoreLastDesc: '开启后应用启动自动打开最近使用的项目。',
     autosave: '自动保存',

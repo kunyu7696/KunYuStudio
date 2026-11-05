@@ -55,12 +55,44 @@ function emptySteps(): Record<BootStepId, BootStepState> {
   return out
 }
 
-const visible = ref(true)
+/**
+ * 启动动画开关在渲染层留一份 localStorage 镜像：
+ * 设置项本身存在主进程（electron-store），但 hydrate 是异步的，
+ * 而启动层必须在首帧就决定显不显示——读镜像可避免「关了开关但先闪一下」。
+ */
+const BOOT_ANIM_MIRROR_KEY = 'kunyu-boot-animation'
+
+function readBootAnimationEnabled(): boolean {
+  try {
+    return localStorage.getItem(BOOT_ANIM_MIRROR_KEY) !== 'off'
+  } catch {
+    return true
+  }
+}
+
+/** 首帧即按镜像值决定是否渲染启动层（关闭时直接不出现） */
+const visible = ref(readBootAnimationEnabled())
 const phase = ref<BootPhase>('brand')
 const steps = ref<Record<BootStepId, BootStepState>>(emptySteps())
 const startedAt = ref(0)
 
 let playing = false
+
+/**
+ * 同步启动动画开关（设置 hydrate 后、以及用户在设置页切换时调用）。
+ * 关闭时立刻收起启动层，不必等动画演完。
+ */
+export function setBootAnimationEnabled(enabled: boolean): void {
+  try {
+    localStorage.setItem(BOOT_ANIM_MIRROR_KEY, enabled ? 'on' : 'off')
+  } catch {
+    /* localStorage 不可用（隐私模式）时只影响下次启动的判断，不影响本次 */
+  }
+  if (!enabled) {
+    visible.value = false
+    phase.value = 'done'
+  }
+}
 
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -108,6 +140,8 @@ async function play(): Promise<void> {
 /** 在渲染层挂载时调用一次；幂等，重复调用不会重播 */
 function start(): void {
   if (startedAt.value) return
+  // 开关关闭：不渲染也不跑计时，直接让初始化在后台进行
+  if (!visible.value) return
   startedAt.value = performance.now()
   void play()
 }

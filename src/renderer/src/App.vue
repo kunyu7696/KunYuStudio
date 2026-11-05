@@ -120,7 +120,7 @@ import DshFirstRunHint from './components/layout/DshFirstRunHint.vue'
 import ModLibraryPanel from './components/modpack/ModLibraryPanel.vue'
 import AuthRequestDialog from './components/integration/AuthRequestDialog.vue'
 import BootSplash from './components/boot/BootSplash.vue'
-import { useBootSplash } from './composables/useBootSplash'
+import { useBootSplash, setBootAnimationEnabled } from './composables/useBootSplash'
 import { useUiStore } from './stores/ui'
 import { useProjectStore, readLastProjectId } from './stores/project'
 import type { Project } from '../../shared/types/project'
@@ -193,6 +193,10 @@ onMounted(async () => {
   await boot.runStep('settings', async () => {
     await settings.hydrate()
   })
+  // 启动动画开关：hydrate 后立即同步到渲染层镜像——关闭时当前这次也立刻收起，
+  // 并让下次启动直接不渲染启动层（镜像读在主进程设置之前，避免首帧闪一下）。
+  // 旧版本设置里没有该字段时按「开」处理，不能让迁移期默认变成关。
+  setBootAnimationEnabled(settings.general.launchAnimation !== false)
   // hydrate 后按设置的 themeMode 校正主题（main.ts 先用缓存防首帧闪烁）；
   // 语言同样在 hydrate 后生效：首帧固定源语言中文，避免闪烁
   await boot.runStep('theme', () => {
@@ -246,6 +250,12 @@ onMounted(async () => {
 watch(
   () => settings.general.themeMode,
   (mode) => setThemeMode(mode)
+)
+
+/** 启动动画开关：切换后立刻写入镜像，下次启动据此决定是否播放 */
+watch(
+  () => settings.general.launchAnimation,
+  (enabled) => setBootAnimationEnabled(enabled !== false)
 )
 
 /** 界面语言变更即时生效（Element Plus 内置文案由 elLocale 同步） */

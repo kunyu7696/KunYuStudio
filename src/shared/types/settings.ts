@@ -21,6 +21,8 @@ export interface GeneralSettings {
   themeMode: ThemeMode
   /** 界面语言（默认 zh-CN：中文为源语言） */
   locale: LocalePreference
+  /** 启动时播放启动动画（关闭后直接进入主界面） */
+  launchAnimation: boolean
   /** 启动时恢复上次打开的项目 */
   restoreLastProject: boolean
   /** 编辑器自动保存开关 */
@@ -384,6 +386,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     zoomLevel: 1,
     themeMode: 'system',
     locale: 'zh-CN',
+    launchAnimation: true,
     restoreLastProject: false,
     autosaveEnabled: false,
     autosaveIntervalSec: 2,
@@ -649,6 +652,7 @@ function parseGeneral(raw: unknown): GeneralSettings {
     zoomLevel: Math.round(num(r['zoomLevel'], ZOOM_MIN, ZOOM_MAX, d.zoomLevel) * 100) / 100,
     themeMode: oneOf(r['themeMode'], ['dark', 'light', 'system'] as const, d.themeMode),
     locale: oneOf(r['locale'], ['zh-CN', 'en-US', 'system'] as const, d.locale),
+    launchAnimation: bool(r['launchAnimation'], d.launchAnimation),
     restoreLastProject: bool(r['restoreLastProject'], d.restoreLastProject),
     autosaveEnabled: bool(r['autosaveEnabled'], d.autosaveEnabled),
     autosaveIntervalSec: Math.round(num(r['autosaveIntervalSec'], 1, 30, d.autosaveIntervalSec)),

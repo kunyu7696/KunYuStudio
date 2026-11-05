@@ -173,6 +173,9 @@ const enUS: Messages = {
     common: 'Behavior',
     zoom: 'Interface scale',
     zoomDesc: 'Scale the whole interface up or down. Persists across restarts.',
+    launchAnimation: 'Launch animation',
+    launchAnimationDesc:
+      'Play the two-act intro on every launch. Turn off to go straight to the workspace.',
     restoreLast: 'Restore last project on startup',
     restoreLastDesc: 'Automatically open the most recently used project at startup.',
     autosave: 'Autosave',
