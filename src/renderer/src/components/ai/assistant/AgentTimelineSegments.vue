@@ -58,31 +58,53 @@
             ><ArrowRight /></el-icon>
           </button>
           <div v-if="open[seg.key]" class="ap-tl-details">
-            <div v-for="it in seg.items" :key="it.id" class="ap-tl-item">
-              <el-icon :size="13" class="ap-tl-item-icon">
-                <component :is="metaOf(it.tool).icon" />
-              </el-icon>
-              <span class="ap-tl-item-verb">{{ metaOf(it.tool).verb }}</span>
-              <span class="ap-tl-item-target" :title="it.resultSummary ?? toolTarget(it)">
-                <template v-if="pathParts(toolTarget(it))">
-                  <span class="ap-tl-path-head">{{ pathParts(toolTarget(it))!.head }}</span><span class="ap-tl-path-name">{{ pathParts(toolTarget(it))!.name }}</span>
+            <template v-for="it in seg.items" :key="it.id">
+              <div class="ap-tl-item">
+                <el-icon :size="13" class="ap-tl-item-icon">
+                  <component :is="metaOf(it.tool).icon" />
+                </el-icon>
+                <span class="ap-tl-item-verb">{{ metaOf(it.tool).verb }}</span>
+                <span class="ap-tl-item-target" :title="it.resultSummary ?? toolTarget(it)">
+                  <template v-if="pathParts(toolTarget(it))">
+                    <span class="ap-tl-path-head">{{ pathParts(toolTarget(it))!.head }}</span><span class="ap-tl-path-name">{{ pathParts(toolTarget(it))!.name }}</span>
+                  </template>
+                  <template v-else>{{ toolTarget(it) }}</template>
+                </span>
+                <!-- T1：执行结果状态（tool-activity 回填）；无结果=进行中 -->
+                <el-icon
+                  v-if="it.ok === true"
+                  :size="12"
+                  class="ap-tl-item-status is-ok"
+                  :title="it.resultSummary"
+                ><CircleCheckFilled /></el-icon>
+                <el-icon
+                  v-else-if="it.ok === false"
+                  :size="12"
+                  class="ap-tl-item-status is-fail"
+                  :title="it.resultSummary"
+                ><CircleCloseFilled /></el-icon>
+                <!-- 依据：模型自述 + 证据链，按条展开 -->
+                <button
+                  v-if="it.reason || it.evidence?.length"
+                  type="button"
+                  class="ap-tl-basis-toggle"
+                  :class="{ 'is-open': basisOpen[it.id] }"
+                  :title="t('assistant.timeline.basisTip')"
+                  @click.stop="toggleBasis(it.id)"
+                >
+                  {{ t('assistant.timeline.basis') }}
+                </button>
+              </div>
+              <div v-if="basisOpen[it.id]" class="ap-tl-basis">
+                <p v-if="it.reason" class="ap-tl-basis-reason">{{ it.reason }}</p>
+                <template v-if="it.evidence?.length">
+                  <p class="ap-tl-basis-label">{{ t('assistant.timeline.basisEvidence') }}</p>
+                  <ul class="ap-tl-basis-list">
+                    <li v-for="(e, i) in it.evidence" :key="i">{{ e }}</li>
+                  </ul>
                 </template>
-                <template v-else>{{ toolTarget(it) }}</template>
-              </span>
-              <!-- T1：执行结果状态（tool-activity 回填）；无结果=进行中 -->
-              <el-icon
-                v-if="it.ok === true"
-                :size="12"
-                class="ap-tl-item-status is-ok"
-                :title="it.resultSummary"
-              ><CircleCheckFilled /></el-icon>
-              <el-icon
-                v-else-if="it.ok === false"
-                :size="12"
-                class="ap-tl-item-status is-fail"
-                :title="it.resultSummary"
-              ><CircleCloseFilled /></el-icon>
-            </div>
+              </div>
+            </template>
             <!-- T1：最近一次结果摘要（组内最后一条带结果的调用），让「AI 做了什么」一眼可见 -->
             <div
               v-for="it in seg.items.filter((x) => x.resultSummary).slice(-1)"
@@ -103,6 +125,7 @@
 </template>
 
 <script setup lang="ts">
+import { reactive } from 'vue'
 import { ArrowRight, CircleCheckFilled, CircleCloseFilled, Connection, Tools } from '@element-plus/icons-vue'
 import { metaOf, pathParts, segmentSummary, toolTarget, type TimelineSegment } from './useTimeline'
 import { useI18n } from '../../../i18n'
@@ -113,6 +136,12 @@ defineProps<{
 }>()
 
 const { t } = useI18n()
+
+/** 每条动作的「依据」展开状态（按 timeline 条目 id 独立记忆） */
+const basisOpen = reactive<Record<string, boolean>>({})
+function toggleBasis(id: string): void {
+  basisOpen[id] = !basisOpen[id]
+}
 
 /** 子代理段标题尾注：「（N 步，已完成/失败/进行中）」 */
 function subAgentSteps(n: number, ok: boolean | undefined): string {
@@ -262,6 +291,56 @@ const emit = defineEmits<{
 .ap-tl-item-status { flex: 0 0 auto; }
 .ap-tl-item-status.is-ok { color: #67c23a; }
 .ap-tl-item-status.is-fail { color: #f56c6c; }
+/* 依据：每条动作自带的折叠入口（模型自述 + 证据链） */
+.ap-tl-basis-toggle {
+  flex: 0 0 auto;
+  padding: 0 5px;
+  border: 1px solid var(--ky-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ky-text-sub);
+  font-size: 10.5px;
+  line-height: 16px;
+  cursor: pointer;
+}
+.ap-tl-basis-toggle:hover,
+.ap-tl-basis-toggle.is-open {
+  color: var(--ky-accent);
+  border-color: rgba(var(--ky-accent-rgb), 0.45);
+  background: rgba(var(--ky-accent-rgb), 0.1);
+}
+.ap-tl-basis {
+  margin: 2px 0 4px 19px;
+  padding: 6px 8px;
+  border-left: 2px solid rgba(var(--ky-accent-rgb), 0.35);
+  border-radius: 0 4px 4px 0;
+  background: rgba(var(--ky-accent-rgb), 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11.5px;
+  line-height: 1.55;
+}
+.ap-tl-basis-reason {
+  margin: 0;
+  color: var(--ky-text-sub);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 160px;
+  overflow-y: auto;
+}
+.ap-tl-basis-label {
+  margin: 0;
+  color: var(--ky-text-sub);
+  opacity: 0.8;
+}
+.ap-tl-basis-list {
+  margin: 0;
+  padding-left: 14px;
+  color: var(--ky-text-sub);
+  word-break: break-word;
+}
+.ap-tl-basis-list li { margin: 1px 0; }
 .ap-tl-item-result {
   margin-top: 2px;
   padding: 4px 8px;

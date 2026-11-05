@@ -127,6 +127,10 @@ export interface AgentTimelineTool {
   parentCallId?: string
   /** M3：子代理任务标题（嵌套节点标题用） */
   subAgentTask?: string
+  /** 依据（模型自述）：本轮 reasoning 摘要；无推理能力/未回传时为空 */
+  reason?: string
+  /** 依据（证据链）：写入前已成功读取/检索的工具与命中摘要 */
+  evidence?: string[]
 }
 /** 时间轴条目：一条普通过程日志（护栏/阶段说明等） */
 export interface AgentTimelineLog {
@@ -541,6 +545,9 @@ export const useAiAgentsStore = defineStore('aiAgents', {
           if (item && item.kind === 'tool') {
             item.ok = act.ok
             item.resultSummary = act.summary
+            // 「依据」随 tool-activity 回填（模型自述 + 写入前证据链）
+            if (act.reason) item.reason = act.reason
+            if (act.evidence?.length) item.evidence = act.evidence
           } else {
             this.timeline.push({
               kind: 'tool',
@@ -550,6 +557,8 @@ export const useAiAgentsStore = defineStore('aiAgents', {
               body: act.path ?? act.summary,
               ok: act.ok,
               resultSummary: act.summary,
+              reason: act.reason,
+              evidence: act.evidence,
               stage: event.stage,
               at: event.at
             })

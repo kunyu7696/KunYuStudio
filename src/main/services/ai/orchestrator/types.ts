@@ -134,6 +134,8 @@ export interface GeneratePipelineInput {
   comboActive: boolean
   templates: TemplateContent[]
   setTemplates: (t: TemplateContent[]) => void
+  /** 初始检索命中的参考模板/mcdev 机制（作为生成动作「依据」证据链的起点） */
+  retrievalReferences?: string[]
   ctx: ContextBuilder
   mcpReady: boolean
   registry: ToolRegistry

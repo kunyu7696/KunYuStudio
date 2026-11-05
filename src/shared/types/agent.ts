@@ -469,6 +469,16 @@ export interface AgentToolActivity {
   parentCallId?: string
   /** M3：子代理任务标题（嵌套节点展示用；仅子代理活动携带） */
   subAgentTask?: string
+  /**
+   * 依据（模型自述）：本轮 assistant 响应的 reasoning/thinking 摘要。
+   * 非推理模型或厂商未回传时为空——渲染层据此展示「为什么做这一步」。
+   */
+  reason?: string
+  /**
+   * 依据（证据链）：写入动作发生前，本轮已成功读取/检索的工具与命中摘要（最近若干条）。
+   * 让「AI 写了这个文件，依据是什么」可追溯，而不只是看到结果。
+   */
+  evidence?: string[]
 }
 
 /**

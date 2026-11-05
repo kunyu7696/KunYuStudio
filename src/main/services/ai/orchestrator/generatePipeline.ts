@@ -118,13 +118,15 @@ export function toolActivityKind(name: string): AgentToolActivity['kind'] {
 /**
  * 把一次工具调用归纳为渲染层活动卡片（tool-activity 事件负载）。
  * 文件类工具带 relPath（渲染层可点击定位）；摘要取结果首行截断。
+ * basis 为「依据」补充：本轮模型推理摘要 + 写入动作前已收集的读取/检索证据。
  */
 export function buildToolActivity(
   callId: string,
   name: string,
   args: Record<string, unknown>,
   ok: boolean,
-  resultText: string
+  resultText: string,
+  basis?: { reason?: string; evidence?: string[] }
 ): AgentToolActivity {
   const relPath = typeof args['relPath'] === 'string' ? args['relPath'] : undefined
   const firstLine = resultText.split('\n').find((l) => l.trim().length > 0) ?? ''
@@ -134,8 +136,22 @@ export function buildToolActivity(
     kind: toolActivityKind(name),
     path: relPath,
     summary: clip(firstLine, 120),
-    ok
+    ok,
+    ...(basis?.reason ? { reason: basis.reason } : {}),
+    ...(basis?.evidence && basis.evidence.length > 0 ? { evidence: basis.evidence } : {})
   }
+}
+
+/** 证据链最多保留的条目数（更早的读取/检索会被挤掉，避免事件负载无限膨胀） */
+const EVIDENCE_TRAIL_MAX = 8
+
+/** 工具参数里最具辨识度的目标（路径/查询词），用于证据链文案 */
+function toolTargetOf(args: Record<string, unknown>): string {
+  for (const key of ['relPath', 'query', 'pattern', 'path', 'name', 'className', 'url', 'target']) {
+    const v = args[key]
+    if (typeof v === 'string' && v.trim()) return v.trim()
+  }
+  return ''
 }
 
 /**
@@ -530,6 +546,8 @@ export async function runGeneratePipeline(input: GeneratePipelineInput): Promise
     templates = await retrieveTemplates(input, plan, references)
     input.setTemplates(templates)
   }
+  // 供 runToolLoop 的证据链使用：生成动作的「依据」从检索命中的参考模板/机制开始
+  input.retrievalReferences = references.length > 0 ? [...references] : undefined
   input.emit('generate', {
     type: 'log',
     detail: `参考包命中 ${templates.length} 个相关模板`,
@@ -845,10 +863,21 @@ async function runToolLoop(
     undefined,
     Math.max(1, tierCfg.toolLoopRounds - 1)
   )
+  /**
+   * 「依据」证据链：记录本轮已成功的读取/检索（工具名 + 目标 + 结果首行）。
+   * 写给定时随附快照——用户因此能看到「写这个文件前，AI 读了什么、查了什么」，
+   * 而不是只有一个结果。跨轮累积，只保留最近 EVIDENCE_TRAIL_MAX 条。
+   * 起点是初始检索命中的参考模板/机制（若有）。
+   */
+  const evidenceTrail: string[] = (input.retrievalReferences ?? [])
+    .slice(0, EVIDENCE_TRAIL_MAX)
+    .map((r) => `参考模板 · ${clip(r, 120)}`)
 
   // 执行一轮 assistant 给出的工具调用并回填结果（主循环与零产出补救轮共用）
+  // roundReason：本轮 assistant 响应的 reasoning 摘要，作为每个动作的「依据（模型自述）」。
   const applyToolCalls = async (
-    toolCalls: NonNullable<AiChatResponse['toolCalls']>
+    toolCalls: NonNullable<AiChatResponse['toolCalls']>,
+    roundReason?: string
   ): Promise<{ names: string[]; writeSucceeded: boolean; failedCalls: number }> => {
     const roundToolNames: string[] = []
     // 按结果记账——本轮是否有写工具真正执行成功（result.ok===true）
@@ -939,9 +968,25 @@ async function runToolLoop(
         if (stuck.stuck && stuck.notice) toolText = `${toolText}\n${stuck.notice}`
       }
       // T1：工具活动卡片（全工具，含被护栏拦截的调用）——运行面板实时可见「读取了 X / 写入了 Y」
+      // 「依据」：只读成功结果进入证据链；写动作随附本轮模型自述 + 最近证据快照
+      const activity = buildToolActivity(tc.id, tc.function.name, args, toolOk, toolText)
+      let evidence: string[] | undefined
+      if (activity.ok && (activity.kind === 'read' || activity.kind === 'search')) {
+        const target = activity.path ?? toolTargetOf(args)
+        evidenceTrail.push(
+          clip(`${activity.tool}${target ? ` ${target}` : ''} · ${activity.summary}`, 160)
+        )
+        if (evidenceTrail.length > EVIDENCE_TRAIL_MAX) evidenceTrail.shift()
+      } else if (activity.kind === 'write' && evidenceTrail.length > 0) {
+        evidence = [...evidenceTrail]
+      }
+      const reason = roundReason?.trim() ? clip(roundReason.trim(), 600) : undefined
       emit('generate', {
         type: 'tool-activity',
-        toolActivity: buildToolActivity(tc.id, tc.function.name, args, toolOk, toolText)
+        toolActivity: buildToolActivity(tc.id, tc.function.name, args, toolOk, toolText, {
+          reason,
+          evidence
+        })
       })
       messages.push({
         role: 'tool',
@@ -1095,7 +1140,10 @@ async function runToolLoop(
     }
     // 记录 assistant 工具调用并回填结果
     messages.push({ role: 'assistant', content: response.content ?? '', toolCalls })
-    const { names: roundToolNames, writeSucceeded, failedCalls } = await applyToolCalls(toolCalls)
+    const { names: roundToolNames, writeSucceeded, failedCalls } = await applyToolCalls(
+      toolCalls,
+      response.reasoning
+    )
 
     // P2：token 感知的分层压缩——先微压缩超长 tool 结果，仍超预算再把旧轮次摘要成文本
     await compactHistoryMessages()
@@ -1135,7 +1183,7 @@ async function runToolLoop(
       // 收口轮允许直接调写工具分片落盘，有工具调用则执行；正文作为最终 JSON 解析
       if (closing.toolCalls && closing.toolCalls.length > 0) {
         messages.push({ role: 'assistant', content: closing.content ?? '', toolCalls: closing.toolCalls })
-        await applyToolCalls(closing.toolCalls)
+        await applyToolCalls(closing.toolCalls, closing.reasoning)
       }
       finalContent = closing.content ?? ''
       break
@@ -1288,7 +1336,7 @@ async function runToolLoop(
     const retryToolCalls = retry.toolCalls ?? []
     if (retryToolCalls.length > 0) {
       messages.push({ role: 'assistant', content: retry.content ?? '', toolCalls: retryToolCalls })
-      await applyToolCalls(retryToolCalls)
+      await applyToolCalls(retryToolCalls, retry.reasoning)
       // P2：补救轮同样做 token 感知的分层压缩
       await compactHistoryMessages()
       finalContent = retry.content ?? ''

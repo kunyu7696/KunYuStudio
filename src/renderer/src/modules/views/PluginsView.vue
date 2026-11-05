@@ -75,6 +75,39 @@
         </div>
         <div v-if="mcpServers.length === 0" class="ext-list-empty">{{ t('plugins.emptyInstalled') }}</div>
 
+        <!-- 语言插件（声明式渲染层插件，如内置的 SNBT 着色） -->
+        <div class="ext-section-label ext-section-lang">
+          {{ t('plugins.languageSection') }} <span class="ext-count">{{ languagePlugins.length }}</span>
+        </div>
+        <div
+          v-for="p in languagePlugins"
+          :key="p.manifest.id"
+          :class="['ext-row', { 'is-selected': sel?.kind === 'language' && sel.id === p.manifest.id }]"
+          @click="sel = { kind: 'language', id: p.manifest.id }"
+        >
+          <span class="ext-row-icon">🧩</span>
+          <div class="ext-row-main">
+            <div class="ext-row-name">
+              <span class="ext-row-name-text">{{ p.manifest.name }}</span>
+              <el-tag
+                size="small"
+                :type="p.origin === 'builtin' ? 'success' : 'info'"
+                effect="plain"
+                round
+                class="ext-row-badge"
+              >{{ p.origin === 'builtin' ? t('plugins.originBuiltin') : t('plugins.originUser') }}</el-tag>
+            </div>
+            <div class="ext-row-desc">{{ p.manifest.description || t('plugins.noDesc') }}</div>
+          </div>
+          <el-tag size="small" type="info" effect="plain" class="ext-row-perm">
+            {{ t('plugins.langCount', { n: p.languages.length }) }}
+          </el-tag>
+        </div>
+        <div v-if="languagePlugins.length === 0" class="ext-list-empty">{{ t('plugins.emptyLanguage') }}</div>
+        <div v-for="err in languageErrors" :key="err.pluginDir" class="ext-lang-error" :title="err.error">
+          ⚠ {{ err.pluginDir }} · {{ err.error }}
+        </div>
+
         <!-- 市场结果 -->
         <div class="ext-section-label ext-section-market">
           {{ t('plugins.marketSection') }}
@@ -252,6 +285,66 @@
                 <dt>{{ t('plugins.permission') }}</dt><dd>{{ permissionLabel(detailInstalled.permission) }}</dd>
                 <dt>{{ t('plugins.timeout') }}</dt><dd>{{ detailInstalled.timeoutMs / 1000 }}s</dd>
                 <dt>{{ t('plugins.envVars') }}</dt><dd>{{ Object.keys(detailInstalled.env).length ? Object.keys(detailInstalled.env).join(t('plugins.listSep')) : t('plugins.none') }}</dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- 语言插件详情（声明式、零代码执行） -->
+      <template v-else-if="detailLanguage">
+        <div class="ext-detail-scroll">
+          <div class="ext-detail-header">
+            <div class="ext-detail-icon">🧩</div>
+            <div class="ext-detail-title-wrap">
+              <div class="ext-detail-title-row">
+                <h2 class="ext-detail-title">{{ detailLanguage.manifest.name }}</h2>
+                <el-tag
+                  size="small"
+                  :type="detailLanguage.origin === 'builtin' ? 'success' : 'info'"
+                  effect="plain"
+                  round
+                >{{ detailLanguage.origin === 'builtin' ? t('plugins.originBuiltin') : t('plugins.originUser') }}</el-tag>
+                <el-tag size="small" type="info" effect="plain">{{ t('plugins.languagePluginTag') }}</el-tag>
+              </div>
+              <div class="ext-detail-publisher">
+                {{ detailLanguage.manifest.author || t('plugins.unknownAuthor') }} · {{ detailLanguage.manifest.version }} · {{ detailLanguage.manifest.id }}
+              </div>
+            </div>
+          </div>
+
+          <div class="ext-detail-grid">
+            <div class="ext-detail-main">
+              <h3 class="ext-section-h3">{{ t('plugins.detailsSection') }}</h3>
+              <p class="ext-detail-desc">{{ detailLanguage.manifest.description || t('plugins.noDesc') }}</p>
+
+              <h3 class="ext-section-h3">{{ t('plugins.langContribSection', { n: detailLanguage.languages.length }) }}</h3>
+              <div v-for="lang in detailLanguage.languages" :key="lang.id" class="ext-lang-row">
+                <div class="ext-lang-head">
+                  <code class="ext-lang-id">{{ lang.id }}</code>
+                  <span class="ext-lang-alias">{{ (lang.aliases ?? []).join(' / ') }}</span>
+                  <span class="ext-lang-ext">{{ (lang.extensions ?? []).join('  ') }}</span>
+                </div>
+                <div class="ext-lang-note">{{ t('plugins.langRuleNote') }}</div>
+              </div>
+
+              <h3 class="ext-section-h3">{{ t('plugins.langInstallSection') }}</h3>
+              <p class="ext-detail-desc">{{ t('plugins.langInstallBody') }}</p>
+              <div class="ext-code-wrap">
+                <code class="ext-code">{{ languageUserDir }}</code>
+              </div>
+            </div>
+
+            <div class="ext-detail-aside">
+              <h3 class="ext-section-h3">{{ t('plugins.metaInfo') }}</h3>
+              <dl class="ext-meta">
+                <dt>{{ t('plugins.identifier') }}</dt><dd class="ext-meta-break">{{ detailLanguage.manifest.id }}</dd>
+                <dt>{{ t('plugins.version') }}</dt><dd>{{ detailLanguage.manifest.version }}</dd>
+                <dt>{{ t('plugins.author') }}</dt><dd>{{ detailLanguage.manifest.author || t('plugins.unknownAuthor') }}</dd>
+                <dt>{{ t('plugins.languageSource') }}</dt><dd>{{ detailLanguage.origin === 'builtin' ? t('plugins.originBuiltinDesc') : t('plugins.originUserDesc') }}</dd>
+                <dt>{{ t('plugins.permission') }}</dt><dd>
+                  <el-tag size="small" type="success" effect="plain">{{ t('plugins.langNoRuntime') }}</el-tag>
+                </dd>
               </dl>
             </div>
           </div>
@@ -447,6 +540,7 @@ import { identifierFromArgs, isCertifiedIdentifier } from '../../../../shared/mc
 import type { McpToolFilter, McpToolFilterMode } from '../../../../shared/mcpToolFilter'
 import type { CustomMcpServer } from '../../../../shared/types/settings'
 import type { MarketPlugin, McpRuntimeStatus } from '../../../../shared/types/plugin'
+import type { LoadedRendererPlugin, RendererPluginListResult } from '../../../../shared/types/rendererPlugin'
 
 const pluginStore = usePluginStore()
 const settingsStore = useSettingsStore()
@@ -462,7 +556,31 @@ const searchInput = ref('')
 const quickChips = ['minecraft', 'filesystem', 'github', 'browser', 'memory', 'thinking']
 
 // 左栏选中项
-const sel = ref<{ kind: 'installed' | 'market'; id: string } | null>(null)
+const sel = ref<{ kind: 'installed' | 'market' | 'language'; id: string } | null>(null)
+
+/* ---- 语言插件（声明式渲染层插件）：与 MCP 插件并列，此前未在插件库展示 ---- */
+const languagePlugins = ref<LoadedRendererPlugin[]>([])
+const languageErrors = ref<RendererPluginListResult['errors']>([])
+const languageUserDir = ref('')
+
+async function loadLanguagePlugins(): Promise<void> {
+  try {
+    const res = await window.api.plugin.listRendererPlugins()
+    if (!res.ok) return
+    languagePlugins.value = res.plugins
+    languageErrors.value = res.errors
+    languageUserDir.value = res.userPluginsDir
+  } catch {
+    // 主进程扫描失败不影响 MCP 插件列表
+  }
+}
+
+/** 语言插件详情：按当前选中项的 manifest id 查找 */
+const detailLanguage = computed(() =>
+  sel.value?.kind === 'language'
+    ? languagePlugins.value.find((p) => p.manifest.id === sel.value!.id) ?? null
+    : null
+)
 
 /** 列表项直达工具权限——选中该 server 并把详情面板滚动到权限编辑区 */
 async function openToolPermission(id: string): Promise<void> {
@@ -541,7 +659,7 @@ async function saveToolFilter(): Promise<void> {
 }
 
 onMounted(async () => {
-  await pluginStore.loadMcpServers()
+  await Promise.all([pluginStore.loadMcpServers(), loadLanguagePlugins()])
   await pluginStore.searchMarket('minecraft')
 })
 
@@ -633,7 +751,7 @@ function quickSearch(kw: string): void {
 }
 
 async function refreshAll(): Promise<void> {
-  await Promise.all([pluginStore.loadMcpServers(), doSearch()])
+  await Promise.all([pluginStore.loadMcpServers(), loadLanguagePlugins(), doSearch()])
 }
 
 async function toggleMcp(id: string, enabled: boolean): Promise<void> {
@@ -887,6 +1005,63 @@ function goToSettings(): void {
   margin-top: 8px;
   border-top: 1px solid var(--ky-border, #2a2a38);
   padding-top: 14px;
+}
+
+.ext-section-lang {
+  margin-top: 8px;
+  border-top: 1px solid var(--ky-border, #2a2a38);
+  padding-top: 14px;
+}
+
+/* 坏插件扫描错误：不阻断列表，单行提示（悬停看完整原因） */
+.ext-lang-error {
+  margin: 4px 10px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #e6a23c;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: help;
+}
+
+/* 语言插件详情：贡献的语言规则 */
+.ext-lang-row {
+  margin: 6px 0 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--ky-border, #2a2a38);
+  border-radius: 6px;
+  background: var(--ky-bg-hover, rgba(255, 255, 255, 0.03));
+}
+
+.ext-lang-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ext-lang-id {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ky-text, #e6e6f0);
+}
+
+.ext-lang-alias {
+  font-size: 11.5px;
+  color: var(--ky-text-dim, #999);
+}
+
+.ext-lang-ext {
+  font-size: 11px;
+  color: var(--ky-accent, #6ea8fe);
+  font-family: var(--ky-font-mono, monospace);
+}
+
+.ext-lang-note {
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--ky-text-dim, #888);
 }
 
 .ext-count {
