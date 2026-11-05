@@ -413,7 +413,7 @@ export const useModelerStore = defineStore('modeler', () => {
       if (!d || !root.value || !dirty.value) return
       // 自动保存失败静默：不打断编辑，下次编辑会重试
       void window.api.modeler
-        .autosaveDoc(root.value, d.id, JSON.stringify(serializeDocument(d)))
+        .autosaveDoc(root.value, d.id, serializeDocument(d))
         .catch(() => {})
     }, AUTOSAVE_DELAY)
   }
@@ -624,7 +624,7 @@ export const useModelerStore = defineStore('modeler', () => {
       const saved = await window.api.modeler.saveDoc(
         root.value,
         d.id,
-        JSON.stringify(serializeDocument(d)),
+        serializeDocument(d),
         savedRevision.value
       )
       savedRevision.value = saved.revision

@@ -52,6 +52,12 @@ export function buildGithubFeed(): { provider: 'github'; owner: string; repo: st
  * 镜像兜底 feed：ghproxy 风格前缀 + releases/latest/download 稳定路径。
  * latest.yml / 安装包 / blockmap 均以 `releases/latest/download/<file>` 暴露，
  * 前缀代理后目录布局不变，generic provider 可直接消费（差分 blockmap 同目录）。
+ *
+ * 信任边界（务必知悉）：latest.yml 与安装包都来自同一个第三方代理，
+ * electron-updater 的 sha512 校验值也取自该 latest.yml——代理可同时替换两者，
+ * 因此镜像链路无法自证发布者。当前构建未做 Windows Authenticode 签名，
+ * 无法用 publisherName 兜底；要真正闭合这条链路，需要引入代码签名证书
+ * 并在 CI 中签名产物，届时 electron-updater 会校验签名失败即中止。
  * @returns 前缀为空（用户禁用镜像）时返回 null
  */
 export function buildMirrorFeed(

@@ -31,7 +31,7 @@
 import { sampleChannel } from '../anim'
 import { isIdentityEasing } from '../curve'
 import { faceNormal, facePoints, triangulateFace } from '../mesh'
-import { quatFromEulerXYZDeg } from '../quat'
+import { eulerXYZDegFromQuat, quatFromEulerXYZDeg } from '../quat'
 import type { Quat } from '../quat'
 import {
   eulerMatrix,
@@ -1138,7 +1138,7 @@ export function gltfToDocument(
     const origin: Vec3 = tr ? [tr[0]! * 16, tr[1]! * 16, tr[2]! * 16] : [0, 0, 0]
     let rotation: Vec3 = [0, 0, 0]
     if (rot && rot.length === 4) {
-      rotation = quatToEulerXYZDeg([rot[0]!, rot[1]!, rot[2]!, rot[3]!])
+      rotation = eulerXYZDegFromQuat([rot[0]!, rot[1]!, rot[2]!, rot[3]!])
     }
     const scale: Vec3 = sc ? [sc[0]!, sc[1]!, sc[2]!] : [1, 1, 1]
     const hasAny = !!tr || !!rot || !!sc
@@ -1163,21 +1163,6 @@ export function gltfToDocument(
       ry = Math.atan2(-m20, sy)
       rz = 0
     }
-    const DEG = 180 / Math.PI
-    return [rx * DEG, ry * DEG, rz * DEG]
-  }
-
-  /** 四元数 → 欧拉角 XYZ 度（XYZ 旋转序，与导出端 quatFromEulerXYZDeg 对称） */
-  function quatToEulerXYZDeg(q: number[]): Vec3 {
-    const [x, y, z, w] = [q[0]!, q[1]!, q[2]!, q[3]!]
-    const sinr = 2 * (w * x + y * z)
-    const cosr = 1 - 2 * (x * x + y * y)
-    let rx = Math.atan2(sinr, cosr)
-    const sinp = 2 * (w * y - z * x)
-    let ry = Math.abs(sinp) >= 1 ? (sinp >= 0 ? Math.PI / 2 : -Math.PI / 2) : Math.asin(sinp)
-    const siny = 2 * (w * z + x * y)
-    const cosy = 1 - 2 * (y * y + z * z)
-    let rz = Math.atan2(siny, cosy)
     const DEG = 180 / Math.PI
     return [rx * DEG, ry * DEG, rz * DEG]
   }

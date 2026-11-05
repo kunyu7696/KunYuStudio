@@ -685,6 +685,14 @@ export type PostInstallAnalysisHook = (
   mcVersion: string
 ) => { analyzed: number; warnings: string[] }
 
+function sanitizeFileName(raw: unknown, fileId: string | number | undefined): string {
+  const input = typeof raw === 'string' ? raw : ''
+  const base = input.replace(/\\/g, '/').split('/').pop() ?? ''
+  const cleaned = base.replace(/[\u0000-\u001f<>:"|?*]/g, '').trim()
+  if (!cleaned || cleaned === '.' || cleaned === '..') return `${fileId || 'file'}.jar`
+  return cleaned
+}
+
 /**
  * 构造来源记录条目（仅供整合包项目消费，失败返回 null 不阻断安装）。
  * 坐标为平台反查所需：CF 记数值 modId/fileID，Modrinth 记 project id / version id + 直链。
@@ -702,7 +710,7 @@ function toSourceEntry(
 ): ModSourceEntry | null {
   try {
     return {
-      fileName: file.fileName,
+      fileName: sanitizeFileName(file.fileName, file.id),
       platform,
       modId,
       versionId: file.id,
@@ -765,7 +773,9 @@ export async function installMod(
       try { unlinkSync(existing) } catch { /* 忽略 */ }
     }
 
-    const destFile = join(destDir, file.fileName)
+    // 文件名来自第三方响应，落盘前必须清洗（防 ../ 穿越到安装目录之外）
+    const safeName = sanitizeFileName(file.fileName, file.id)
+    const destFile = join(destDir, safeName)
     await fetchToFile(file.downloadUrl, platform, destFile, {
       sha512: file.hashes?.sha512,
       sha1: file.hashes?.sha1,
@@ -782,7 +792,7 @@ export async function installMod(
     if (entry) provenance?.record(entry)
 
     const installed: string[] = [destFile]
-    const installedNames = [file.fileName]
+    const installedNames = [safeName]
 
     // 递归安装 required 依赖（深度上限 5，防循环）；仅模组有依赖语义
     if (projectType === 'mod' && includeDependencies) {
@@ -873,14 +883,15 @@ async function installDependencies(
       const existing = findExistingFile(destDir, detail.slug, ['.jar'])
       // 已存在同 slug：不写记录（记录归先前那次安装所有）
       if (existing) continue
-      const destFile = join(destDir, file.fileName)
+      const safeName = sanitizeFileName(file.fileName, file.id)
+      const destFile = join(destDir, safeName)
       await fetchToFile(file.downloadUrl, dep.platform, destFile, {
         sha512: file.hashes?.sha512,
         sha1: file.hashes?.sha1,
         size: file.size
       })
       installed.push(destFile)
-      installedNames.push(file.fileName)
+      installedNames.push(safeName)
       const entry = toSourceEntry(dep.platform, dep.modId, detail.slug, detail.name, file, destFile, {
         clientSide: detail.clientSide,
         serverSide: detail.serverSide

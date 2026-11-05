@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, renameSync } from 'node:fs'
 import { join } from 'node:path'
 import type { EnchantmentSchema } from '../../../shared/schemas/enchantment.schema'
 import type { EntitySchema } from '../../../shared/schemas/entity.schema'
@@ -96,12 +96,36 @@ export function protectForeignPlannedFiles(root: string, plannedRelPaths: string
     added++
   }
   if (added > 0) {
-    writeFile(
-      join(root, '.kunyu', 'content', 'generated.json'),
-      JSON.stringify(manifest, null, 2) + '\n'
-    )
+    writeManifestFile(root, manifest)
   }
   return added
+}
+
+/** 清单相对路径（唯一写入点见 writeManifestFile） */
+const MANIFEST_REL = join('.kunyu', 'content', 'generated.json')
+
+/**
+ * 清单存在但不可解析：写入中断、磁盘故障或人工改坏。
+ * 必须与「首轮无清单」区分——两者都会被 readManifest 判成 null，
+ * 若一并按基线轮处理，漂移检测会被静默关闭，随后覆盖用户手改的产物。
+ */
+export function isManifestCorrupt(root: string): boolean {
+  const p = join(root, MANIFEST_REL)
+  if (!existsSync(p)) return false
+  try {
+    const m = readJson(p) as { version?: number; files?: unknown }
+    return (m.version !== 1 && m.version !== 2) || !Array.isArray(m.files)
+  } catch {
+    return true
+  }
+}
+
+/** 原子写清单：同目录临时文件 + rename，进程中断不会留下半截 JSON */
+export function writeManifestFile(root: string, manifest: Manifest): void {
+  const target = join(root, MANIFEST_REL)
+  const tmp = `${target}.tmp-${process.pid}`
+  writeFile(tmp, JSON.stringify(manifest, null, 2) + '\n')
+  renameSync(tmp, target)
 }
 
 /** 首次生成时通过 sink 清理模板自带的 example_block 占位产物 */

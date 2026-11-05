@@ -85,9 +85,24 @@ describe('resolveSpawnPlan 拦截矩阵', () => {
     expect(resolveSpawnPlan('rm', ['-rf']).ok).toBe(false)
   })
 
-  it('大小写/路径/.exe 归一后按白名单匹配', () => {
+  it('大小写/.exe 归一后按白名单匹配', () => {
     expect(resolveSpawnPlan('GIT.EXE', ['status']).ok).toBe(true)
-    expect(resolveSpawnPlan('C:\\tools\\Git.exe', ['status']).ok).toBe(true)
+  })
+
+  it('带路径的可执行文件一律拒绝（防绕过白名单执行磁盘上的同名文件）', () => {
+    // 之前只校验 basename，`./node` / `C:\tools\Git.exe` 都能过白名单直接起进程
+    for (const exec of [
+      './node',
+      '../bin/node',
+      'C:\\tools\\Git.exe',
+      'D:/tools/node.exe',
+      '/usr/local/bin/git',
+      '..\\node'
+    ]) {
+      const plan = resolveSpawnPlan(exec, ['--version'])
+      expect(plan.ok, exec).toBe(false)
+      expect(plan.reason ?? '').toContain('不允许带路径')
+    }
   })
 
   it('git 危险子命令拦截，常规子命令放行', () => {

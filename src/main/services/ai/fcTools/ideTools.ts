@@ -145,6 +145,11 @@ export function resolveSpawnPlan(
   args: string[],
   platform: NodeJS.Platform = process.platform
 ): SpawnPlan {
+  // 只接受裸命令名：带路径的 exec（./node、..\\bin\\node）能绕过白名单直接执行磁盘上的
+  // 任意同名文件（如仓库自带的 ./node），必须在这里就拒绝，而不是只看 basename
+  if (/[\\/]/.test(exec)) {
+    return { ok: false, reason: `可执行文件不允许带路径（只接受白名单内的裸命令名）：${exec}` }
+  }
   const base = (exec.split(/[\\/]/).pop() ?? '').toLowerCase().replace(/\.exe$/, '')
   if (!EXEC_WHITELIST.has(base)) {
     return { ok: false, reason: `可执行名不在白名单（${[...EXEC_WHITELIST].join('/')}）：${exec}` }

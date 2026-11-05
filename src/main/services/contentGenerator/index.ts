@@ -58,7 +58,7 @@ import {
 } from '../../templates/textureSynthesizer'
 import { getCustomMcpManager } from '../ai/mcpClient'
 import { generateGameTestClasses, gameTestJavaRelPath } from '../gameTestGenerator'
-import { assertWithinRoot, writeFile } from '../fsService'
+import { assertWithinRoot } from '../fsService'
 import { pascal } from './utils'
 import { resolveModContext } from './context'
 import { makeSink, type PlannedEntry } from './sink'
@@ -93,7 +93,9 @@ import {
 import {
   cleanupTemplateExample,
   collectManagedFiles,
+  isManifestCorrupt,
   readManifest,
+  writeManifestFile,
   syncFabricEnchantments,
   syncFabricMainClass,
   syncFabricModJson,
@@ -260,11 +262,14 @@ function runGeneration(
   // 1.21+ NeoForge 附魔数据驱动（JSON），其余加载器走 Java 注册类
   const dataDrivenEnchantments = isDataDrivenEnchantment(ctx)
   const oldManifest = readManifest(root)
+  // 清单损坏（写入中断/改坏）不能当首轮：否则漂移检测整体失效，
+  // 生成器会静默覆盖用户手改的 Java / assets。此处改为「来源未知」按冲突处理。
+  const manifestCorrupt = isManifestCorrupt(root)
 
   const writes = new Map<string, PlannedEntry>()
   const deletes = new Map<string, { exists: boolean; drifted: boolean; skipped: boolean }>()
   // v1 清单或首轮（无清单）没有 hash 基线：本轮只建档，不判漂移
-  const baseline = !oldManifest || Object.keys(oldManifest.fileHashes).length === 0
+  const baseline = !manifestCorrupt && (!oldManifest || Object.keys(oldManifest.fileHashes).length === 0)
   // 上轮清单登记、本轮语义已删除的内容 id：注册类增量合并时这些 id 的旧注册语句
   // 不视为外来（否则用户在编辑器删除内容后，合并会把它永远并回来）
   const currentIds = new Set([...blocks.map((b) => b.id), ...items.map((i) => i.id)])
@@ -279,6 +284,7 @@ function runGeneration(
     overwrite: new Set(options?.overwritePaths ?? []),
     oldHashes: oldManifest?.fileHashes ?? {},
     baseline,
+    unknownProvenance: manifestCorrupt,
     retiredContentIds,
     writes,
     deletes
@@ -835,10 +841,7 @@ export function generateContent(
     fileHashes,
     diverged
   }
-  writeFile(
-    join(root, '.kunyu', 'content', 'generated.json'),
-    JSON.stringify(manifest, null, 2) + '\n'
-  )
+  writeManifestFile(root, manifest)
 
   const writtenFiles: GeneratedFile[] = [
     ...[...run.writes.entries()]

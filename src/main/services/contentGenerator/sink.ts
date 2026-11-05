@@ -47,6 +47,12 @@ interface SinkContext {
   /** 上轮工具产物 hash（relPath → sha1）；空对象表示基线轮（v1 清单/首轮） */
   oldHashes: Record<string, string>
   baseline: boolean
+  /**
+   * 清单存在但已损坏：来源未知。
+   * 此时不能按基线轮放行——磁盘上已存在的托管文件一律按漂移处理，
+   * 交由用户在冲突列表里确认，避免静默覆盖手改内容。
+   */
+  unknownProvenance?: boolean
   /** 上轮清单登记、本轮语义已删除的内容 id（这些 id 的注册语句不视为外来，不并入） */
   retiredContentIds: Set<string>
   writes: Map<string, PlannedEntry>
@@ -69,7 +75,9 @@ export function makeSink(cx: SinkContext): GenSink {
     const rp = rel(cx.root, absPath)
     const exists = existsSync(absPath)
     let drifted = false
-    if (exists && !cx.baseline && Object.prototype.hasOwnProperty.call(cx.oldHashes, rp)) {
+    if (exists && cx.unknownProvenance) {
+      drifted = true
+    } else if (exists && !cx.baseline && Object.prototype.hasOwnProperty.call(cx.oldHashes, rp)) {
       const diskHash = sha1File(absPath)
       drifted = diskHash !== null && diskHash !== cx.oldHashes[rp]
     }
