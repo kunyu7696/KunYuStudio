@@ -403,6 +403,7 @@ export function registerAiRuntimeHandlers(ctx: IpcContext): void {
 
   ipcMain.handle(IpcChannels.MONITOR_GET_STATE, () => aiRuntime.monitor.getState())
   ipcMain.handle(IpcChannels.MONITOR_CHECK, () => aiRuntime.monitor.runUpstreamCheck())
+  ipcMain.handle(IpcChannels.MONITOR_REFRESH, () => aiRuntime.monitor.refreshMatrixHealth())
   ipcMain.handle(IpcChannels.PROBE_RUN, (_event, comboId: string) =>
     aiRuntime.probe.runBuildProbe(comboId)
   )

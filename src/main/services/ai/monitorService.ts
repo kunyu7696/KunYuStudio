@@ -24,6 +24,7 @@ import {
 import type {
   ComboMatrixCell,
   DriftEvent,
+  MatrixHealthRefreshResult,
   MonitorEvent,
   MonitorStage,
   MonitorState
@@ -43,6 +44,12 @@ export interface MonitorService {
   getState(): MonitorState
   isChecking(): boolean
   runUpstreamCheck(): Promise<MonitorState>
+  /**
+   * 矩阵健康度刷新：重读参考包基线，把比 overlay 更新的门禁结论并入后返回最新状态。
+   * 与 getState 的区别是它会真正落盘（可能改变 UI 看到的数据），
+   * 供「设置 → AI 助手 → 版本矩阵健康度」的刷新按钮使用。
+   */
+  refreshMatrixHealth(): MatrixHealthRefreshResult
   /** IPC 层注册事件广播（Task 9） */
   setEmitter(emit: ((e: MonitorEvent) => void) | null): void
 }
@@ -273,6 +280,10 @@ export function createMonitorService(deps: MonitorServiceDeps): MonitorService {
     getState: snapshotState,
     isChecking: () => checking,
     runUpstreamCheck: run,
+    refreshMatrixHealth() {
+      const syncedCombos = deps.reference.reloadBaseline()
+      return { state: snapshotState(), syncedCombos }
+    },
     setEmitter(e) {
       emitter = e
     }

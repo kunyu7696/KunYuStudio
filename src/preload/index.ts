@@ -434,6 +434,7 @@ const api: IpcApi = {
   monitor: {
     getState: () => ipcRenderer.invoke(IpcChannels.MONITOR_GET_STATE),
     check: () => ipcRenderer.invoke(IpcChannels.MONITOR_CHECK),
+    refresh: () => ipcRenderer.invoke(IpcChannels.MONITOR_REFRESH),
     runProbe: (comboId) => ipcRenderer.invoke(IpcChannels.PROBE_RUN, comboId)
   },
   mcp: {

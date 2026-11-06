@@ -1,17 +1,16 @@
 name: 定时刷新加载器版本矩阵
 
-# 自动从 FabricMeta / Forge promotions / NeoForged maven-metadata 拉取各加载器 MC 线
-# 最新版本号（loader / yarn / fabric-api / forge / neoforge），diff 进 loaderVersionMatrix.ts。
+# 自动从上游拉取各加载器的最新工具链坐标，diff 进 loaderVersionMatrix.ts + mdkSnapshot.json。
 #
-# 不会自动刷新的字段：loomVersion / gradleVersion / jdk / hostJdk / forgeGradleVersion 区间 /
-# forgeConstructorStyle / modDevGradleVersion —— 这些没公共元数据源（要抓 MDK 仓库分支
-# gradle.properties），需要人手动核实，脚本只做版本号 patch 升级。
+# Fabric 部分整组跟随官方 MDK（loader / yarn / fabric-api / loom / gradle 同批），
+# 取不到 MDK 就整条跳过——不允许"loader 升了、loom 没升"这种官方未验证的组合。
+# Forge / NeoForge 仍是版本号 patch 级刷新。
 #
 # 触发：每天 UTC 03:00（北京时间 11:00）；也可手动 workflow_dispatch。
 # 结果：
 #   - 上游没变化 → 无 commit、无 PR，绿灯
-#   - 有版本号升级 → 自动 commit + 开 PR，标题 chore 前缀、automation 标签
-#   - 上游元数据挂了 → job 红（exit 2），在 summary 里列 skip 原因
+#   - 有升级     → 自动 commit + 开 PR（body 含 diff 与未验证提示）
+#   - 上游挂了   → job 红；连续 3 天失败自动开 issue（无人订阅 CI 时的兜底）
 on:
   schedule:
     - cron: '0 3 * * *'
@@ -19,11 +18,12 @@ on:
 
 jobs:
   refresh-matrix:
-    name: 刷新 loaderVersionMatrix 并开 PR
+    name: 刷新加载器矩阵并开 PR
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
+      issues: write
     steps:
       - uses: actions/checkout@v4
 
@@ -35,66 +35,109 @@ jobs:
 
       - name: 运行刷新脚本
         id: refresh
+        shell: bash
         run: |
-          # 脚本 exit code: 0=无变化，1=有变化，2=致命错误
+          # 脚本 exit code: 0=无变化，1=有变化，2=致命错误。
+          # 必须 set +e，否则 Actions 默认的 -e 会在 exit 1（有变化）时直接终止整个 job。
+          set +e
           node scripts/refresh-loader-matrix.mjs --write
           EC=$?
-          if [ $EC -eq 0 ]; then
+          set -e
+          if [ "$EC" -eq 0 ]; then
             echo "summary=上游版本号未变，无需刷新" >> "$GITHUB_OUTPUT"
             exit 0
-          elif [ $EC -eq 1 ]; then
-            echo "summary=发现上游版本号升级，已写入 loaderVersionMatrix.ts" >> "$GITHUB_OUTPUT"
-            # 继续往下走 create-pull-request
+          elif [ "$EC" -eq 1 ]; then
+            echo "summary=发现上游升级，已写入矩阵与 MDK 快照" >> "$GITHUB_OUTPUT"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
           else
-            echo "summary=刷新失败（exit $EC）：可能是上游元数据不可达或脚本 bug，请检查 logs" >> "$GITHUB_OUTPUT"
-            exit $EC
+            echo "summary=刷新失败（exit $EC）：上游元数据不可达或脚本异常，见 job 日志" >> "$GITHUB_OUTPUT"
+            exit "$EC"
           fi
 
-      - name: 生成 PR 体摘要
-        if: steps.refresh.outcome == 'success'
-        id: body
+      - name: 收集变更摘要
+        id: diff
+        if: steps.refresh.outputs.changed == 'true'
         shell: bash
         run: |
           {
-            echo "## 自动刷新：loaderVersionMatrix"
+            echo "## 自动刷新：加载器版本矩阵"
             echo ""
             echo "脚本：\`scripts/refresh-loader-matrix.mjs --write\`"
             echo ""
-            echo "### 上游刷新摘要"
+            echo "### 变更内容"
             echo '```diff'
-            git diff src/main/templates/loaderVersionMatrix.ts || true
+            git --no-pager diff -- src/main/templates/loaderVersionMatrix.ts src/main/templates/mdkSnapshot.json || true
             echo '```'
             echo ""
-            echo "### 变更清单"
-            git diff --name-only
+            echo "### 变更条目"
+            git --no-pager diff --name-only
             echo ""
-            echo "### 说明"
-            echo "- 版本号字段（loader / yarn / fabric-api / forge / neoforge）会自动 patch 升级"
-            echo "- 大跨度变更（Fabric loader 次大版本差 ≥3）脚本只警告、不自动覆盖"
-            echo "- 以下字段无公共元数据源，**不会**被自动刷新：loomVersion / gradleVersion / jdk / hostJdk / forgeGradleVersion 区间 / forgeConstructorStyle / modDevGradleVersion"
-            echo "- 请 review diff 后决定是否合并"
+            echo "### 验证状态"
+            echo "- 结构断言（\`loaderVersionMatrix.spec.ts\`）会检查矩阵与 MDK 快照一致，CI 必须绿"
+            echo "- **本次变更的组合尚未做真机构建验证**；合并前请在本机跑 \`npm run test:matrix\`（或针对变更版本跑矩阵门禁）"
+            echo "- Forge / NeoForge 仅做版本号 patch 级刷新，FG 区间 / MDG 版本需人工核对"
+            echo "- jdk / hostJdk 不自动推导（MDK 不声明目标 Java），loom 大版本变动时请一并复核"
           } > /tmp/pr-body.md
           cat /tmp/pr-body.md
 
-      - name: 自动开 PR（无变化则跳过）
-        if: steps.refresh.outcome == 'success'
+      - name: 自动开 PR
+        if: steps.refresh.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v7
         with:
           branch: chore/refresh-loader-matrix
-          title: 'chore: 刷新 loaderVersionMatrix（定时）'
+          title: 'chore: 刷新加载器版本矩阵（定时）'
           labels: automation
           body-path: /tmp/pr-body.md
           add-paths: |
             src/main/templates/loaderVersionMatrix.ts
-          commit-message: 'chore: 刷新 loaderVersionMatrix（定时）'
-          push-to-fork: false
+            src/main/templates/mdkSnapshot.json
+          commit-message: 'chore: 刷新加载器版本矩阵（定时）'
           delete-branch: true
+
+      # 无人订阅 CI 时"job 红"等于静默：连续 3 天失败就开一条 issue 留痕
+      - name: 连续失败自动开 issue
+        if: failure()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          THRESHOLD=3
+          # 取最近 5 次运行（排除本次），统计尾部连续失败数
+          PREV=$(gh run list --workflow=matrix-refresh.yml --limit 5 --json databaseId,conclusion \
+            --jq "[.[] | select(.databaseId != $GITHUB_RUN_ID)][0:3] | map(select(.conclusion == \"failure\")) | length")
+          TOTAL=$((PREV + 1))
+          echo "连续失败次数（含本次）：$TOTAL / $THRESHOLD"
+          if [ "$TOTAL" -lt "$THRESHOLD" ]; then
+            echo "未达阈值，仅保持 job 红"
+            exit 0
+          fi
+          TITLE='[自动化] 定时刷新加载器版本矩阵连续失败'
+          BODY=$(printf '%s\n' \
+            "定时刷新已经连续 **${TOTAL}** 天失败，请检查上游数据源是否变更或不可达。" \
+            "" \
+            "常见原因：" \
+            "- \`raw.githubusercontent.com\` / \`gitee.com\` 的 MDK 分支拉取失败（Fabric 整组坐标来源）" \
+            "- \`files.minecraftforge.net\` promotions / \`maven.minecraftforge.net\` 不可达" \
+            "- BMCLAPI 的 NeoForge maven-metadata 限流（HTTP 429）" \
+            "" \
+            "本次运行：$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            "" \
+            "处理完上游问题后可关闭本 issue；后续成功运行不会自动关闭。")
+          EXISTING=$(gh issue list --state open --search "定时刷新加载器版本矩阵连续失败 in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "$BODY"
+            echo "已在 issue #$EXISTING 追加评论"
+          else
+            gh issue create --title "$TITLE" --body "$BODY"
+            echo "已新建 issue"
+          fi
 
       - name: 工作流摘要
         if: always()
+        shell: bash
         run: |
           echo "${{ steps.refresh.outputs.summary || '执行完毕' }}" >> "$GITHUB_STEP_SUMMARY"
           if [ -f /tmp/pr-body.md ]; then
-            echo "---" >> "$GITHUB_STEP_SUMMARY"
-            tail -n +1 /tmp/pr-body.md >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            cat /tmp/pr-body.md >> "$GITHUB_STEP_SUMMARY"
           fi

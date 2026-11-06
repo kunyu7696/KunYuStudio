@@ -6,11 +6,17 @@
 
 - **设置项「启动动画」开关**：关闭后启动直接进入主界面，运行中关闭也会立刻收起当前启动层
 - **生成任务的上下文交接**：AI 生成流水线压缩历史时，摘要同样写入项目记忆（`.kunyu/agent-memory.md`，`[上下文交接]` 标记），与聊天链路一致；此前长任务被压缩掉的结论下一次会话就没了
-- **加载器版本矩阵定时自动刷新**：新增 `scripts/refresh-loader-matrix.mjs` 从 FabricMeta / Forge promotions / NeoForged maven-metadata 拉取各加载器 MC 线最新版本号（loader / yarn / fabric-api / forge / neoforge / stability），`--write` 直接刷新 `loaderVersionMatrix.ts`；配合 `.github/workflows/matrix-refresh.yml` 每天 UTC 03:00 跑一次，有变化就自动开 PR（无变化静默跳过）。大跨度变更（Fabric loader 次大版本差 ≥3）脚本只警告不自动覆盖，等人工判断；loom / gradle / jdk / forgeGradle 区间等字段无公共元数据源，不自动刷新
-- **项目 toolchain 冻结（自动）**：项目创建时会把当时的矩阵版本号录进 `.kunyu/project.json`；全局矩阵后续自动刷新不影响既有项目，不会静默改坏正在开发中的工程。渲染层升级入口（项目级「升级到最新工具链」按钮）待后续接入
+- **加载器版本矩阵定时自动刷新**：新增 `scripts/refresh-loader-matrix.mjs`，配合 `.github/workflows/matrix-refresh.yml` 每天 UTC 03:00 拉取上游元数据，有变化自动开 PR。
+  - Fabric 的 `loader / yarn / fabric-api / loom / gradle` 一律整体跟随官方 MDK（`FabricMC/fabric-example-mod` 各 MC 分支的 `gradle.properties` + `gradle-wrapper.properties`），取不到 MDK 就整条跳过——不会出现"loader 升了、loom 没升"这种官方未验证的组合。源不可达时自动回退 Gitee 镜像。
+  - 若上游 loom 要求更高的宿主 JVM 而矩阵的 JDK 不够，该条**只报告不写入**（`[hold]`），避免产出 `loom 1.19 + JDK 17` 这种必然跑不起来的组合。
+  - 新增 `src/main/templates/mdkSnapshot.json` 作为 MDK 坐标 lockfile，`loaderVersionMatrix.spec.ts` 增加离线结构断言：矩阵与快照不一致即失败（已用「只改 loader 不改 loom」的注入缺陷验证会红）。
+  - 连续 3 天失败自动开/追加 issue，避免"job 红但没人订阅 CI"等于静默。
+  - Forge / NeoForge 仍为版本号 patch 级刷新；`jdk / hostJdk / forgeConstructorStyle / FG 区间 / MDG 版本` 不自动推导，需人工核对。
+- **既有项目不会被矩阵刷新追溯修改**：加载器/映射/API 版本在创建项目时就写进了工程自己的 `gradle.properties`，矩阵自动刷新只影响之后新建的项目。需要升级老项目目前只能手工改这几个版本号（项目级「升级到最新工具链」入口尚未实现）
 
 ### 修复
 
+- **「版本矩阵健康度」刷新按钮无效**：按钮此前只重读本地 overlay，而 overlay 对已存在的组合一旦写入就永不更新（`seedFromBaseline` 只补缺失项），所以参考包里更新的门禁结论永远进不来——实测本机 34 个组合的基线数据都比本地新。新增 `monitor:refresh` 通道：重读参考包基线，按 `lastVerifiedAt` 把更新的 `matrixHealth` 统计并入 overlay（不动灯色，避免旧基线把探针红灯刷回绿灯），并提示本次同步条数
 - **模型工坊保存写坏文档**：`serializeDocument` 本身已返回 JSON 字符串，调用处又 `JSON.stringify` 了一次，导致落盘的是被转义的字符串；主进程读回后 `format` 恒为 `undefined`，资源包/应用实体编译 100% 失败。自动保存与手动保存两处均已修正
 - **glTF 导入多轴旋转错误**：导入端自带的四元数转欧拉公式与导出端 `quatFromEulerXYZDeg` 不是同一旋转序，多轴旋转解出的角度完全对不上（如 `[30,40,50]` 解成 `[48.42,-1.44,60.49]`）；改为复用 `shared/modeler/quat.ts` 的 `eulerXYZDegFromQuat`
 - **市场安装路径穿越**：此前直接用第三方响应里的 `fileName` 拼安装路径，投毒响应（如 `../../Startup/a.jar`）可写到目标目录之外；现在落盘前只取文件名最后一段并剔除非法字符，来源记录同步使用清洗后的名字

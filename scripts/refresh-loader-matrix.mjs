@@ -1,35 +1,42 @@
 /**
  * 刷新加载器版本矩阵（Fabric / Forge / NeoForged）。
  *
- * 设计：
- * - 自动从上游元数据拉取"可变版本号"（loader / yarn / fabric-api / forge / neoforge / FG / MDG）；
- *   但 loomVersion / gradleVersion / jdk / hostJdk / forgeConstructorStyle 这些字段没有公共元数据源
- *   （要抓 MDK 仓库分支的 gradle.properties，CI 环境需要单独鉴权/镜像），暂保留矩阵内原值不动；
- *   后续 GitHub raw 通路在 CI 上通了再补全这部分自动推导。
- * - 输出新的 src/main/templates/loaderVersionMatrix.ts：保留原注释与结构，仅在发生变化的条目上覆盖版本号，
- *   并在每个变化行上方插入 // REFRESH: <旧值> → <新值> 标记，便于人工 review。
- * - exit code：0 = 无变化；1 = 有变化；2 = 上游拉取失败（不输出新文件）。
+ * 设计原则：**能自动跟的字段必须成组跟，不能跟的字段绝不单独跟。**
  *
- * 数据源：
- * - Fabric loader / yarn / launcherMeta:   meta.fabricmc.net/v2/versions/*
- * - Fabric API 各线最新构建:              maven.fabricmc.net  maven-metadata.xml
- * - Forge promotions:                     files.minecraftforge.net  promotions_slim.json
- * - ForgeGradle 各 major 最新 patch:      maven.minecraftforge.net  ForgeGradle maven-metadata.xml
- * - NeoForged 各线最新构建:               BMCLAPI maven.neoforged.net  maven-metadata.xml（官方 maven 本机不通）
- * - ModDevGradle 版本（NeoForged 共用）:  BMCLAPI  maven-metadata.xml
+ * Fabric 的 loader / yarn / fabric-api / loom / gradle 在官方 MDK 里是同一批升级的
+ * （FabricMC/fabric-example-mod 的 <MC 分支>/gradle.properties + gradle-wrapper.properties）。
+ * 只要其中一个自动升、另一个不动，矩阵就会变成官方从未验证过的组合，
+ * 因此这些字段一律从 MDK 整组取，取不到就整条跳过，不做单字段升级。
+ *
+ * MDK 数据源（raw.githubusercontent.com 完全公开、零鉴权；Gitee 镜像做兜底）：
+ *   https://raw.githubusercontent.com/FabricMC/fabric-example-mod/<mc>/gradle.properties
+ *   https://gitee.com/mirrors_fabricmc/fabric-example-mod/raw/<mc>/gradle.properties
+ * gradle 版本从同分支 gradle/wrapper/gradle-wrapper.properties 的 distributionUrl 提取。
+ *
+ * 不自动推导的字段：jdk / hostJdk（MDK 不声明目标 Java，由 MC 线决定）、
+ * forgeConstructorStyle、Forge 的 FG 区间与 NeoForge 的 MDG 版本（无统一元数据源）。
+ *
+ * 输出：
+ * - src/main/templates/loaderVersionMatrix.ts：保留原注释与结构，仅在变化行上方插入
+ *   // REFRESH: <旧值> → <新值> 标记，便于人工 review。
+ * - src/main/templates/mdkSnapshot.json：本次同步到的 MDK 坐标快照（等价于 lockfile）。
+ *   loaderVersionMatrix.spec.ts 用它做离线结构断言——矩阵与快照不一致就 fail，
+ *   防止"loader 升了、loom 没升"这类半更新再次溜进仓库。
+ *
+ * exit code：0 = 无变化；1 = 有变化；2 = 上游拉取失败（不输出新文件）。
  *
  * 用法：
- *   node scripts/refresh-loader-matrix.mjs                       # 输出到 stdout（dry-run 看 diff）
- *   node scripts/refresh-loader-matrix.mjs --write               # 直接写 src/main/templates/loaderVersionMatrix.ts
- *   node scripts/refresh-loader-matrix.mjs --write --check        # CI 门禁：有变化就 exit 1，用于 nightly 自动 PR
+ *   node scripts/refresh-loader-matrix.mjs                       # dry-run，打印 diff
+ *   node scripts/refresh-loader-matrix.mjs --write               # 写矩阵与快照
  */
-import { readFileSync, writeFileSync } from 'node:fs'
+import { readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = resolve(__dirname, '..')
 const MATRIX_PATH = resolve(REPO_ROOT, 'src/main/templates/loaderVersionMatrix.ts')
+const SNAPSHOT_PATH = resolve(REPO_ROOT, 'src/main/templates/mdkSnapshot.json')
 
 const WRITE = process.argv.includes('--write')
 const CHECK = process.argv.includes('--check')
@@ -89,41 +96,89 @@ function mcMajor(mc) {
   return m ? Number(m[1]) : 0
 }
 
-// ---------- Fabric ----------
+// ---------- Fabric：官方 MDK 坐标（loader / yarn / api / loom / gradle 同组） ----------
 
-async function fabricLatestLoader(mc) {
-  // meta.fabricmc.net/v2/versions/loader/<mc> 已按 stable 优先排序；取首个 stable
-  const list = await fetchJson(`https://meta.fabricmc.net/v2/versions/loader/${encodeURIComponent(mc)}`)
-  const stable = list.find((x) => x.loader?.stable) ?? list[0]
-  return {
-    loaderVersion: stable.loader.version,
-    minJava: stable.launcherMeta?.min_java_version ?? 17
+/** MDK 源，按顺序尝试：GitHub raw 优先，Gitee 镜像兜底（国内网络 raw 常被墙） */
+const MDK_SOURCES = [
+  (mc) => `https://raw.githubusercontent.com/FabricMC/fabric-example-mod/${mc}`,
+  (mc) => `https://gitee.com/mirrors_fabricmc/fabric-example-mod/raw/${mc}`
+]
+
+/** 解析 .properties（忽略注释行；值里允许出现 = 与 +） */
+function parseProps(text) {
+  const out = {}
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim()
+    if (!line || line.startsWith('#') || line.startsWith('//')) continue
+    const i = line.indexOf('=')
+    if (i <= 0) continue
+    out[line.slice(0, i).trim()] = line.slice(i + 1).trim()
   }
+  return out
 }
 
-async function fabricLatestYarn(mc) {
-  // yarn / intermediary 是同一个 channel，MC 26.x 可能返回空数组（官方已停止 Yarn 构建，Loom 改走 Mojang 官方映射）
-  try {
-    const list = await fetchJson(`https://meta.fabricmc.net/v2/versions/yarn/${encodeURIComponent(mc)}`)
-    if (!Array.isArray(list) || list.length === 0) return ''
-    // 最新 build（按 build 数字倒序）
-    return list.sort((a, b) => (b.build ?? 0) - (a.build ?? 0))[0].version
-  } catch {
-    return ''
+/**
+ * 取某 MC 线官方 MDK 的整组坐标。取不到返回 null（调用方必须整条跳过，不允许半更新）。
+ * @returns {Promise<null | {mcVersion:string,loaderVersion:string,yarnVersion:string,fabricVersion:string,loomVersion:string,gradleVersion:string,source:string}>}
+ */
+async function fetchMdk(mc) {
+  for (const base of MDK_SOURCES) {
+    const root = base(mc)
+    let props
+    try {
+      props = parseProps(await fetchText(`${root}/gradle.properties`))
+    } catch {
+      continue // 该分支不存在或网络不通，试下一个源
+    }
+    if (!props.loader_version || !props.loom_version) continue
+    // gradle 版本从同分支 wrapper 提取；拿不到就留空（留空表示不覆盖矩阵现有值）
+    let gradleVersion = ''
+    try {
+      const wrapper = parseProps(await fetchText(`${root}/gradle/wrapper/gradle-wrapper.properties`))
+      gradleVersion = /gradle-([\d.]+)-(?:bin|all)\.zip/.exec(wrapper.distributionUrl ?? '')?.[1] ?? ''
+    } catch {
+      /* wrapper 缺失不致命 */
+    }
+    return {
+      mcVersion: mc,
+      loaderVersion: props.loader_version,
+      yarnVersion: props.yarn_mappings ?? '',
+      fabricVersion: props.fabric_api_version ?? '',
+      loomVersion: props.loom_version,
+      gradleVersion,
+      source: root
+    }
   }
+  return null
 }
 
-async function fabricLatestApi(mc) {
-  const xml = await fetchText(
-    'https://maven.fabricmc.net/net/fabricmc/fabric-api/fabric-api/maven-metadata.xml'
-  )
-  const all = [...xml.matchAll(/<version>([^<]+)<\/version>/g)].map((m) => m[1])
-  // 过滤出该 MC 线（版本号末尾 '+<mc>'）
-  const suffix = `+${mc}`
-  const matches = all.filter((v) => v.endsWith(suffix))
-  if (matches.length === 0) return null
-  // 版本号里有 build 号：0.165.2+26.3 vs 0.165.0+26.3，字符串 sort 即可
-  return matches.sort().slice(-1)[0]
+// ---------- 版本比较 ----------
+
+function compareSemver(a, b) {
+  const pa = a.split('.').map((x) => Number.parseInt(x, 10) || 0)
+  const pb = b.split('.').map((x) => Number.parseInt(x, 10) || 0)
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] ?? 0) - (pb[i] ?? 0)
+    if (d !== 0) return d
+  }
+  return 0
+}
+
+/**
+ * loom 版本 → 宿主 JVM 最低版本（沿用矩阵里已真机验证过的观察值）：
+ *   1.18.x 起 loom 强制 JVM 25（1.21.6+ 条目 hostJdk=25 的来源）
+ *   1.10.x 起强制 JVM 21，1.6/1.4 时代 JVM 17 即可。
+ * loom 大版本变动时请同步复核这张表。
+ */
+function hostJdkForLoom(loomVersion) {
+  const m = /^(\d+)\.(\d+)/.exec(loomVersion)
+  if (!m) return 17
+  const major = Number(m[1])
+  const minor = Number(m[2])
+  if (major > 1) return 25
+  if (minor >= 18) return 25
+  if (minor >= 10) return 21
+  return 17
 }
 
 // ---------- Forge ----------
@@ -232,14 +287,35 @@ async function modDevGradleLatest() {
   return null
 }
 
-function compareSemver(a, b) {
-  const pa = a.split('.').map((x) => Number.parseInt(x, 10) || 0)
-  const pb = b.split('.').map((x) => Number.parseInt(x, 10) || 0)
-  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
-    const d = (pa[i] ?? 0) - (pb[i] ?? 0)
-    if (d !== 0) return d
+// ---------- MDK 快照（离线结构断言的基准） ----------
+
+/** 读已有快照；文件不存在或损坏时返回空对象（首轮由脚本生成） */
+function readSnapshot() {
+  if (!existsSync(SNAPSHOT_PATH)) return {}
+  try {
+    const raw = JSON.parse(readFileSync(SNAPSHOT_PATH, 'utf8'))
+    return raw && typeof raw === 'object' ? raw : {}
+  } catch {
+    console.error('[refresh] mdkSnapshot.json 解析失败，按空快照处理')
+    return {}
   }
-  return 0
+}
+
+/** 按 MC 版本排序后序列化，保证 diff 稳定 */
+function serializeSnapshot(snapshot) {
+  const sorted = {}
+  for (const mc of Object.keys(snapshot).sort(compareSemver)) {
+    const e = snapshot[mc]
+    if (!e) continue
+    sorted[mc] = {
+      loaderVersion: e.loaderVersion,
+      yarnVersion: e.yarnVersion,
+      fabricVersion: e.fabricVersion,
+      loomVersion: e.loomVersion,
+      gradleVersion: e.gradleVersion
+    }
+  }
+  return JSON.stringify(sorted, null, 2) + '\n'
 }
 
 // ---------- 解析现有矩阵 ----------
@@ -355,32 +431,56 @@ async function main() {
   console.log(`[refresh] 追踪 ${allMcs.length} 个 MC 版本: ${allMcs.join(', ')}`)
 
   // --- Fabric ---
+  // 整组跟随官方 MDK：loader / yarn / fabric-api / loom / gradle 必须一起动。
+  // MDK 取不到就整条跳过——宁可过期，也不能造出"loader 升了、loom 没升"的组合。
   const fabricUpdates = {}
+  const fabricHolds = []
+  const mdkSnapshot = { ...readSnapshot() }
   for (const mc of matrixMcVersions.fabric) {
     const orig = parsed.fabric[mc]
+    const mdk = await fetchMdk(mc)
+    if (!mdk) {
+      console.log(`  [skip] Fabric ${mc}: 未取到官方 MDK 坐标，整条跳过（不做单字段升级）`)
+      continue
+    }
+    // JDK 门槛检查：loom 升到需要更高 JVM 时，若矩阵宿主 JDK 不够，
+    // 这次升级必须连 jdk / hostJdk 一起改——属于产品级决策，脚本只报告不写。
+    // 宁可这一行继续过期，也不能产出"loom 1.19 + JDK 17"这种必然跑不起来的组合。
+    const needHostJdk = hostJdkForLoom(mdk.loomVersion)
+    const curHostJdk = orig.hostJdk ?? orig.jdk
+    if (needHostJdk > curHostJdk) {
+      console.log(
+        `  [hold] Fabric ${mc}: loom ${orig.loomVersion} → ${mdk.loomVersion} 需要宿主 JDK ${needHostJdk}，` +
+          `当前 ${curHostJdk}；需人工确认 JDK 后整组升级`
+      )
+      fabricHolds.push({ mc, loomVersion: mdk.loomVersion, needHostJdk, curHostJdk })
+      // 快照保持上一次的值（＝矩阵当前值）：hold 的条目不能被上游值污染，
+      // 否则结构断言会一直红
+      continue
+    }
+
+    // 快照记录上游值，只有实际采用的条目才写（hold 的条目保持旧快照）
+    mdkSnapshot[mc] = mdk
+
     const newVals = {}
-    try {
-      const [loader, yarn, api] = await Promise.all([
-        fabricLatestLoader(mc),
-        fabricLatestYarn(mc),
-        fabricLatestApi(mc)
-      ])
-      if (loader && loader.loaderVersion !== orig.loaderVersion) {
-        // 大跨度保护：Fabric loader 版本号是 0.X.Y 格式，次大版本号差 ≥3 时只输出 diff 不自动覆盖
-        // （loom 版本号未纳入自动元数据，大跨度升级需要人工验证 loom 兼容性）
-        const oldMinor = Number(orig.loaderVersion.split('.')[1] || 0)
-        const newMinor = Number(loader.loaderVersion.split('.')[1] || 0)
-        if (Math.abs(newMinor - oldMinor) >= 3) {
-          console.log(`  [warn] Fabric ${mc} loader 大跨度 ${orig.loaderVersion}→${loader.loaderVersion}，跳过自动覆盖`)
-        } else {
-          newVals.loaderVersion = loader.loaderVersion
-        }
-      }
-      if (yarn !== null && yarn !== orig.yarnVersion) newVals.yarnVersion = yarn
-      if (api !== null && api !== orig.fabricVersion) newVals.fabricVersion = api
-      if (Object.keys(newVals).length > 0) fabricUpdates[mc] = newVals
-    } catch (e) {
-      console.error(`  [skip] Fabric ${mc}: ${e.message}`)
+    // 空值表示 MDK 未声明该字段（如 26.x 无 yarn），保留矩阵现有值
+    for (const field of ['loaderVersion', 'yarnVersion', 'fabricVersion', 'loomVersion', 'gradleVersion']) {
+      const next = mdk[field]
+      if (next && next !== orig[field]) newVals[field] = next
+    }
+    if (Object.keys(newVals).length > 0) {
+      // 明确打印整组变更，让 review 时一眼看到 loader/loom/gradle 是否同步
+      const parts = ['loaderVersion', 'yarnVersion', 'fabricVersion', 'loomVersion', 'gradleVersion']
+        .map((f) => `${f}: ${orig[f]} → ${newVals[f] ?? orig[f]}`)
+        .join(' | ')
+      console.log(`  [mdk] ${mc}: ${parts}`)
+      fabricUpdates[mc] = newVals
+    }
+  }
+  if (fabricHolds.length > 0) {
+    console.log('\n[refresh] 以下条目因宿主 JDK 不足被 hold（需人工决策）：')
+    for (const h of fabricHolds) {
+      console.log(`  - ${h.mc}: loom → ${h.loomVersion} 需 JDK ${h.needHostJdk}（当前 ${h.curHostJdk}）`)
     }
   }
 
@@ -448,7 +548,12 @@ async function main() {
     0
   )
 
-  console.log(`\n[refresh] 总变更: ${totalChanges} 个 (loader 版本号刷新条目)`)
+  // 快照也要落盘：首次生成或有新增/变动时算作变化
+  const nextSnapshotText = serializeSnapshot(mdkSnapshot)
+  const prevSnapshotText = existsSync(SNAPSHOT_PATH) ? readFileSync(SNAPSHOT_PATH, 'utf8') : ''
+  const snapshotChanged = nextSnapshotText.trim() !== prevSnapshotText.trim()
+
+  console.log(`\n[refresh] 总变更: ${totalChanges} 个矩阵条目，快照${snapshotChanged ? '有变化' : '无变化'}`)
   for (const [loader, u] of Object.entries(allUpdates)) {
     if (Object.keys(u).length > 0) {
       console.log(`  ${loader}:`)
@@ -458,19 +563,17 @@ async function main() {
     }
   }
 
-  if (totalChanges === 0) {
+  if (totalChanges === 0 && !snapshotChanged) {
     console.log('[refresh] 上游版本未变，输出文件不动。')
-    process.exit(CHECK ? 0 : 0)
-    return
+    process.exit(0)
   }
 
   if (!WRITE) {
     console.log('\n[refresh] --write 未指定，dry-run 结束（exit 1 表示有变更）。')
     process.exit(1)
-    return
   }
 
-  // --- 生成新文件 ---
+  // --- 生成新矩阵 ---
   let out = src
   for (const [loader, updates] of Object.entries(allUpdates)) {
     if (Object.keys(updates).length === 0) continue
@@ -495,6 +598,10 @@ async function main() {
 
   writeFileSync(MATRIX_PATH, out, 'utf8')
   console.log(`[refresh] 已写 ${MATRIX_PATH}`)
+  if (snapshotChanged) {
+    writeFileSync(SNAPSHOT_PATH, nextSnapshotText, 'utf8')
+    console.log(`[refresh] 已写 ${SNAPSHOT_PATH}`)
+  }
   process.exit(1)
 }
 

@@ -576,7 +576,9 @@ const enUS: Messages = {
         healthDeprecated: 'Deprecated',
         healthBeta: 'Beta disabled',
         healthUnknown: 'Unverified',
-        label: '{label} · build pass rate {rate}%'
+        label: '{label} · build pass rate {rate}%',
+        refreshed: 'Synced the latest gate results for {n} combos',
+        refreshedNone: 'Already up to date — no newer gate results'
       },
       tierSection: 'Tier models',
       tierTag: 'Optional overrides',

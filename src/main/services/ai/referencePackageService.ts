@@ -195,6 +195,12 @@ export interface ReferenceService {
   /** 上游监测回写：最新加载器版本与漂移灯色（不动 verifiedAt；red 由调用方决定是否覆盖） */
   recordUpstreamState(input: UpstreamStateInput): void
   getOverlay(): ReferenceOverlay
+  /**
+   * 重读参考包基线（manifest）并把比 overlay 更新的门禁结论并入 overlay。
+   * 用于「版本矩阵健康度 → 刷新」：不改灯色，只同步 matrixHealth 统计。
+   * @returns 采纳的组合数（0 = 本地已是最新）
+   */
+  reloadBaseline(): number
 }
 
 /** 探针回写输入（语义与字段同 matrixHealthStore.ProbeRecordInput） */
@@ -237,6 +243,20 @@ export function createReferenceService(deps: {
     loadError: () => error,
 
     getManifest: () => manifest,
+
+    reloadBaseline() {
+      let next: ReferenceManifest
+      try {
+        next = loadManifestFromDir(deps.referenceDir, templates)
+      } catch (e) {
+        // 基线损坏时不破坏已在内存里的旧 manifest，也不动 overlay
+        error = (e as Error).message
+        return 0
+      }
+      manifest = next
+      error = null
+      return store.mergeFromBaseline(next)
+    },
 
     listTemplates(loader, version, types, opts) {
       if (!manifest) return []

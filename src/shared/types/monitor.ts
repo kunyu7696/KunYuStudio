@@ -79,6 +79,17 @@ export interface MonitorState {
   events: DriftEvent[]
 }
 
+/**
+ * 矩阵健康度「刷新」结果。
+ * 刷新语义：重新读取参考包基线（manifest），把其中比 overlay 更新的门禁结论并入 overlay，
+ * 再返回最新状态；syncedCombos=0 表示本地已是最新（不是失败）。
+ */
+export interface MatrixHealthRefreshResult {
+  state: MonitorState
+  /** 本次从基线采纳的更新条数 */
+  syncedCombos: number
+}
+
 /** 主进程 -> 渲染层监测事件 */
 export type MonitorEventType =
   | 'check-started'

@@ -289,6 +289,8 @@ export const IpcChannels = {
   MODEL_EVENT: 'aiRuntime:model-event',
   MONITOR_GET_STATE: 'monitor:get-state',
   MONITOR_CHECK: 'monitor:check',
+  /** 矩阵健康度刷新：重读参考包基线并把更新的门禁结论并入 overlay */
+  MONITOR_REFRESH: 'monitor:refresh',
   MONITOR_EVENT: 'monitor:event',
   PROBE_RUN: 'probe:run',
   MCP_GET_STATUS: 'mcp:get-status',
@@ -1483,6 +1485,8 @@ export interface IpcApi {
     getState(): Promise<import('./monitor').MonitorState>
     /** 立即拉取 Fabric/Forge/NeoForge 上游并比对基线 */
     check(): Promise<import('./monitor').MonitorState>
+    /** 刷新版本矩阵健康度：重读参考包基线并并入更新的门禁结论 */
+    refresh(): Promise<import('./monitor').MatrixHealthRefreshResult>
     /** 对 active 组合执行真实 Gradle 编译回测（M7 仅 fabric-1.20.1） */
     runProbe(comboId: string): Promise<import('./monitor').ProbeStatus>
   }

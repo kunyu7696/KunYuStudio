@@ -1,0 +1,114 @@
+{
+  "1.16.5": {
+    "loaderVersion": "0.14.0",
+    "yarnVersion": "1.16.5+build.10",
+    "fabricVersion": "0.42.0+1.16",
+    "loomVersion": "1.4-SNAPSHOT",
+    "gradleVersion": "8.10.2"
+  },
+  "1.18.2": {
+    "loaderVersion": "0.15.11",
+    "yarnVersion": "1.18.2+build.4",
+    "fabricVersion": "0.77.0+1.18.2",
+    "loomVersion": "1.6-SNAPSHOT",
+    "gradleVersion": "8.10.2"
+  },
+  "1.19.2": {
+    "loaderVersion": "0.15.11",
+    "yarnVersion": "1.19.2+build.2",
+    "fabricVersion": "0.76.1+1.19.2",
+    "loomVersion": "1.6-SNAPSHOT",
+    "gradleVersion": "8.10.2"
+  },
+  "1.20.1": {
+    "loaderVersion": "0.15.11",
+    "yarnVersion": "1.20.1+build.10",
+    "fabricVersion": "0.92.1+1.20.1",
+    "loomVersion": "1.6-SNAPSHOT",
+    "gradleVersion": "8.10.2"
+  },
+  "1.20.4": {
+    "loaderVersion": "0.15.11",
+    "yarnVersion": "1.20.4+build.2",
+    "fabricVersion": "0.96.4+1.20.4",
+    "loomVersion": "1.6-SNAPSHOT",
+    "gradleVersion": "8.10.2"
+  },
+  "1.20.6": {
+    "loaderVersion": "0.15.11",
+    "yarnVersion": "1.20.6+build.1",
+    "fabricVersion": "0.100.8+1.20.6",
+    "loomVersion": "1.6-SNAPSHOT",
+    "gradleVersion": "8.10.2"
+  },
+  "1.21.1": {
+    "loaderVersion": "0.15.11",
+    "yarnVersion": "1.21.1+build.3",
+    "fabricVersion": "0.106.0+1.21.1",
+    "loomVersion": "1.6-SNAPSHOT",
+    "gradleVersion": "8.10.2"
+  },
+  "1.21.4": {
+    "loaderVersion": "0.16.14",
+    "yarnVersion": "1.21.4+build.8",
+    "fabricVersion": "0.119.4+1.21.4",
+    "loomVersion": "1.10.5",
+    "gradleVersion": "8.12"
+  },
+  "1.21.5": {
+    "loaderVersion": "0.16.14",
+    "yarnVersion": "1.21.5+build.1",
+    "fabricVersion": "0.128.2+1.21.5",
+    "loomVersion": "1.10.5",
+    "gradleVersion": "8.12"
+  },
+  "1.21.6": {
+    "loaderVersion": "0.19.5",
+    "yarnVersion": "1.21.6+build.1",
+    "fabricVersion": "0.128.2+1.21.6",
+    "loomVersion": "1.18.4",
+    "gradleVersion": "9.7.1"
+  },
+  "1.21.7": {
+    "loaderVersion": "0.19.5",
+    "yarnVersion": "1.21.7+build.8",
+    "fabricVersion": "0.129.0+1.21.7",
+    "loomVersion": "1.18.4",
+    "gradleVersion": "9.7.1"
+  },
+  "1.21.8": {
+    "loaderVersion": "0.19.5",
+    "yarnVersion": "1.21.8+build.1",
+    "fabricVersion": "0.136.1+1.21.8",
+    "loomVersion": "1.18.4",
+    "gradleVersion": "9.7.1"
+  },
+  "1.21.9": {
+    "loaderVersion": "0.19.5",
+    "yarnVersion": "1.21.9+build.1",
+    "fabricVersion": "0.134.1+1.21.9",
+    "loomVersion": "1.18.4",
+    "gradleVersion": "9.7.1"
+  },
+  "1.21.10": {
+    "loaderVersion": "0.19.5",
+    "yarnVersion": "1.21.10+build.3",
+    "fabricVersion": "0.138.4+1.21.10",
+    "loomVersion": "1.18.4",
+    "gradleVersion": "9.7.1"
+  },
+  "1.21.11": {
+    "loaderVersion": "0.19.5",
+    "yarnVersion": "1.21.11+build.6",
+    "fabricVersion": "0.141.6+1.21.11",
+    "loomVersion": "1.18.4",
+    "gradleVersion": "9.7.1"
+  },
+  "26.3": {
+    "loaderVersion": "0.19.5",
+    "yarnVersion": "",
+    "fabricVersion": "0.162.0+26.3",
+    "loomVersion": "1.18-SNAPSHOT",
+    "gradleVersion": "9.7.1"
+  }
+}

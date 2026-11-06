@@ -565,7 +565,9 @@ const zhCN = {
         healthDeprecated: '已废弃',
         healthBeta: 'Beta 禁用',
         healthUnknown: '未验证',
-        label: '{label} · 构建通过率 {rate}%'
+        label: '{label} · 构建通过率 {rate}%',
+        refreshed: '已同步 {n} 个组合的最新门禁结果',
+        refreshedNone: '本地已是最新，没有新的门禁结果'
       },
       tierSection: '分档模型',
       tierTag: '可选覆盖',

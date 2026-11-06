@@ -8,9 +8,12 @@ import {
   isSupportedCombo,
   jdkRequirementsFor,
   jdkRequirementsForMcVersion,
-  tierOfMcVersion
+  LOADER_VERSION_MATRIX,
+  tierOfMcVersion,
+  type FabricToolchain
 } from '../loaderVersionMatrix'
 import { judgeJdkCompatibility, LEGACY_JDK_REQUIREMENTS } from '../../../shared/types/build'
+import MDK_SNAPSHOT from '../mdkSnapshot.json'
 
 describe('compareMcVersion（F5-01：非数字版本不归一化为 NaN）', () => {
   it('纯数字版本：1.20.4 < 1.20.5 < 1.20.6 < 1.21.1', () => {
@@ -57,15 +60,14 @@ describe('V-02 矩阵补 1.21.6~1.21.11（坐标一手验证）', () => {
     }
   })
 
-  it('fabric 新条目 jdk=21、Gradle 9.7.1、loom 1.18.4（官方模板分支核实）', () => {
+  it('fabric 新条目 jdk=21，且版本坐标由 MDK 快照守门', () => {
     for (const v of NEW_VERS) {
       const tc = getToolchain('fabric', v)
       if (!('yarnVersion' in tc)) throw new Error(`fabric ${v} 工具链类型异常`)
       expect(tc.jdk, `${v} jdk`).toBe(21)
-      expect(tc.gradleVersion, `${v} gradle`).toBe('9.7.1')
-      expect(tc.loomVersion, `${v} loom`).toBe('1.18.4')
-      // loaderVersion 是会被自动刷新的版本号：断言"合法 semver"即可， nightly 刷新会升级 minor
-      expect(/^\d+\.\d+\.\d+$/.test(tc.loaderVersion), `${v} loader ${tc.loaderVersion}`).toBe(true)
+      // 版本号一律由 mdkSnapshot.json 做结构断言（见文末「MDK 坐标一致性」），
+      // 这里不再硬编码具体值，否则上游刷新时会产生假红
+      expect(tc.loaderVersion, `${v} loader`).toMatch(/^\d+\.\d+\.\d+$/)
     }
   })
 
@@ -98,20 +100,17 @@ describe('26.3 接入（Mojang 映射时代 / Java 25）：fabric/forge 可用�
     expect(isMojangEra('1.21.1')).toBe(false)
   })
 
-  it('fabric 26.3：loader 合法 semver / fabric-api 带 +26.3 后缀 / loom 1.18-SNAPSHOT / JDK 25 / 无 yarn', () => {
+  it('fabric 26.3：Mojang 映射时代（无 yarn）/ JDK 25，坐标由 MDK 快照守门', () => {
     expect(isSupportedCombo('fabric', '26.3')).toBe(true)
     const tc = getToolchain('fabric', '26.3')
     if (!('yarnVersion' in tc)) throw new Error('fabric 26.3 工具链类型异常')
-    // loaderVersion 自动刷新：断言合法 semver
-    expect(/^\d+\.\d+\.\d+$/.test(tc.loaderVersion)).toBe(true)
-    // fabric-api 自动刷新 patch：断言带 +26.3 后缀
-    expect(tc.fabricVersion).toMatch(/^0\.\d+\.\d+\+26\.3$/)
-    // 以下字段脚本不自动刷新，精确断言守门
-    expect(tc.loomVersion).toBe('1.18-SNAPSHOT')
-    expect(tc.gradleVersion).toBe('9.7.1')
-    expect(tc.jdk).toBe(25)
+    // 26.x 无 Yarn 构建：必须留空，模板据此不输出 mappings 行
     expect(tc.yarnVersion).toBe('')
+    expect(tc.jdk).toBe(25)
     expect(fabricTargetJdk(tc)).toBe(25)
+    // loom/gradle/loader/api 具体值统一由文末 MDK 快照断言守门
+    expect(tc.loomVersion).toMatch(/^\d+\.\d+/)
+    expect(tc.fabricVersion).toMatch(/\+26\.3$/)
   })
 
   it('forge 26.3：Forge 版本号 / FG 区间 / JDK 25 / modbusgroup 构造风格', () => {
@@ -210,5 +209,50 @@ describe('jdkRequirementsForMcVersion（零配置向导：无 loader 的纯 MC �
     expect(jdkRequirementsForMcVersion('1.20.7').requiredMajor).toBe(21)
     expect(jdkRequirementsForMcVersion('1.17.1').requiredMajor).toBe(17)
     expect(jdkRequirementsForMcVersion('1.12.2').requiredMajor).toBe(17)
+  })
+})
+
+/**
+ * MDK 坐标一致性（离线结构断言，不联网）。
+ *
+ * mdkSnapshot.json 是「最近一次从官方 MDK 同步到的坐标」的 lockfile，
+ * 由 scripts/refresh-loader-matrix.mjs 整组写入（loader / yarn / fabric-api / loom / gradle 同批）。
+ *
+ * 为什么需要它：这些字段在官方 MDK 里是同批升级的。若某次只升了 loader 没升 loom，
+ * 矩阵就会变成官方从未验证过的组合，而单看任何一条测试都是绿的。
+ * 这里强制矩阵与 lockfile 完全一致 —— 任何"半更新"都会失败。
+ * 断言失败的处理方式：`npm run matrix:refresh:dry` 看上游差异，或用 `npm run matrix:refresh` 同步整组。
+ */
+describe('MDK 坐标一致性（防止 loader/loom 半更新）', () => {
+  const snapshot = MDK_SNAPSHOT as Record<
+    string,
+    { loaderVersion: string; yarnVersion: string; fabricVersion: string; loomVersion: string; gradleVersion: string }
+  >
+  const matrix = LOADER_VERSION_MATRIX.fabric as Record<string, FabricToolchain>
+
+  it('每条 fabric 矩阵条目都有对应的 MDK 快照（新增版本必须同步登记）', () => {
+    const missing = Object.keys(matrix).filter((mc) => !snapshot[mc])
+    expect(
+      missing,
+      `以下 MC 版本在矩阵里有、mdkSnapshot.json 里没有：${missing.join(', ')}。` +
+        ' 新增条目必须同时补快照，否则无法做三元组联动校验。'
+    ).toEqual([])
+  })
+
+  it('loader / yarn / fabric-api / loom / gradle 五项与快照完全一致', () => {
+    const fields = ['loaderVersion', 'yarnVersion', 'fabricVersion', 'loomVersion', 'gradleVersion'] as const
+    for (const [mc, entry] of Object.entries(snapshot)) {
+      if (!matrix[mc]) continue // 快照可能有矩阵已移除的历史条目，跳过
+      for (const field of fields) {
+        // 快照为空 = 官方 MDK 未声明该字段（如 26.x 无 yarn、个别分支无 wrapper），矩阵自行处置
+        if (!entry[field]) continue
+        expect(
+          matrix[mc][field],
+          `${mc} 的 ${field} 与官方 MDK 快照不一致（矩阵=${String(matrix[mc][field])}，` +
+            `快照=${entry[field]}）。这五个字段在 MDK 里同批升级，` +
+            `只改其中几个会造出官方未验证的组合；请核对 loader_version / loom_version / gradle wrapper 三项后整组更新。`
+        ).toBe(entry[field])
+      }
+    }
   })
 })

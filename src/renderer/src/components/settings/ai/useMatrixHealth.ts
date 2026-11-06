@@ -69,7 +69,8 @@ export function useMatrixHealth() {
     return d.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
   }
 
-  async function refreshMatrixHealth(): Promise<void> {
+  /** 进入设置页时读取当前状态（只读，不写盘） */
+  async function loadMatrixHealth(): Promise<void> {
     matrixLoading.value = true
     try {
       const state = await window.api.monitor.getState()
@@ -81,12 +82,30 @@ export function useMatrixHealth() {
     }
   }
 
+  /**
+   * 刷新按钮：重读参考包基线，把比本地 overlay 更新的门禁结论并进来。
+   * 返回本次采纳的条数（0 = 已是最新）。
+   */
+  async function refreshMatrixHealth(): Promise<number> {
+    matrixLoading.value = true
+    try {
+      const res = await window.api.monitor.refresh()
+      matrixCells.value = res.state.cells ?? []
+      return res.syncedCombos ?? 0
+    } catch {
+      return 0
+    } finally {
+      matrixLoading.value = false
+    }
+  }
+
   return {
     matrixLoading,
     matrixHealthRows,
     matrixHealthDotClass,
     matrixHealthLabel,
     formatMatrixTime,
+    loadMatrixHealth,
     refreshMatrixHealth
   }
 }

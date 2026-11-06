@@ -14,7 +14,7 @@
           <span class="ext-name">{{ t('settings.ai.matrix.section') }}</span>
           <el-tag size="small" effect="plain">{{ t('settings.ai.matrix.tag') }}</el-tag>
         </div>
-        <el-button size="small" :loading="matrixLoading" @click="refreshMatrixHealth">{{ t('settings.ai.refresh') }}</el-button>
+        <el-button size="small" :loading="matrixLoading" @click="onRefreshMatrixHealth">{{ t('settings.ai.refresh') }}</el-button>
       </div>
       <p class="ext-desc">
         {{ t('settings.ai.matrix.desc') }}
@@ -856,6 +856,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import { useSettingsStore } from '../../stores/settings'
 import { useI18n } from '../../i18n'
 import { useAiMonitorStore } from '../../stores/aiMonitor'
@@ -978,8 +979,16 @@ const {
   matrixHealthDotClass,
   matrixHealthLabel,
   formatMatrixTime,
+  loadMatrixHealth,
   refreshMatrixHealth
 } = useMatrixHealth()
+
+/** 刷新按钮：重读参考包基线并给出明确的成功/无变化反馈（此前点了没有任何提示） */
+async function onRefreshMatrixHealth(): Promise<void> {
+  const synced = await refreshMatrixHealth()
+  if (synced > 0) ElMessage.success(t('settings.ai.matrix.refreshed', { n: synced }))
+  else ElMessage.info(t('settings.ai.matrix.refreshedNone'))
+}
 
 // 三栏提供商
 const providers = computed(() => settings.ai.providers)
@@ -1087,7 +1096,7 @@ onMounted(() => {
   void syncCustomMcpServers()
   void refreshObserverStatus()
   customMcpRefreshTimer = setInterval(() => void refreshCustomMcpStatus(), 3000)
-  void refreshMatrixHealth()
+  void loadMatrixHealth()
 })
 
 // 切换项目后刷新探针注入状态（不同项目 run/mods 各自独立）

@@ -114,6 +114,14 @@ export interface MatrixHealthStore {
    * 已有运行时记录的组合绝不覆盖（运行时层优先级恒高于基线）。
    */
   seedFromBaseline(manifest: ReferenceManifest): void
+  /**
+   * 增量同步基线：把 manifest 里比 overlay 更新的 matrixHealth 采纳过来
+   * （按 lastVerifiedAt 比较；overlay 无记录时整条灌入）。
+   * 只动 matrixHealth 统计，不改 health / verifiedAt —— 灯色仍归运行时通道，
+   * 避免旧基线把探针/监测写下的红灯刷回绿灯。
+   * @returns 实际采纳的组合数（0 = 本地已是最新）
+   */
+  mergeFromBaseline(manifest: ReferenceManifest): number
   /** 磁盘新鲜度检查：文件 mtime 变化（外部进程写入）则丢弃内存态重新加载 */
   syncFromDisk(): void
 }
@@ -268,6 +276,37 @@ export function createMatrixHealthStore(deps: { path: string }): MatrixHealthSto
       overlay = structuredClone(overlay)
       Object.assign(overlay.combos, seeded)
       persist()
+    },
+
+    mergeFromBaseline(manifest) {
+      syncFromDisk()
+      const next = structuredClone(overlay)
+      let adopted = 0
+      for (const f of manifest.versionFingerprints) {
+        const incoming = f.matrixHealth
+        if (!incoming) continue
+        const cur = next.combos[f.id]
+        // 无记录 → 整条灌入；有记录 → 仅在基线证据更新时采纳统计
+        if (!cur) {
+          next.combos[f.id] = {
+            health: f.health,
+            verifiedAt: f.verifiedAt,
+            matrixHealth: incoming
+          }
+          adopted += 1
+          continue
+        }
+        const curAt = cur.matrixHealth?.lastVerifiedAt ?? ''
+        const inAt = incoming.lastVerifiedAt ?? ''
+        if (inAt <= curAt) continue
+        next.combos[f.id] = { ...cur, matrixHealth: incoming }
+        adopted += 1
+      }
+      if (adopted > 0) {
+        overlay = next
+        persist()
+      }
+      return adopted
     },
 
     syncFromDisk
