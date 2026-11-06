@@ -201,9 +201,9 @@ const zhCN = {
     openReleasePage: '浏览器打开发布页',
     autoCheck: '启动时自动检查',
     autoCheckDesc: '应用启动后自动检查一次更新，发现新版本时在此处提示（仅打包版生效）。',
-    mirrorPrefix: '镜像兜底前缀',
+    mirrorPrefix: '安装包镜像前缀',
     mirrorPrefixDesc:
-      'GitHub 直连失败时的代理前缀（ghproxy 风格），置空则禁用镜像兜底。注意：安装包经第三方代理下载且本应用未做代码签名，请只填写你信任的镜像。',
+      '仅用于下载安装包的代理前缀（ghproxy 风格），置空则禁用。更新清单始终从 GitHub 直连获取，安装包会用清单里的 sha512 自校验，代理篡改无效——仍建议只填写你信任的镜像。',
     mirrorPlaceholder: '如 https://ghproxy.net，留空禁用',
     resetSection: '恢复本页默认设置',
     resetTitle: '恢复默认设置',

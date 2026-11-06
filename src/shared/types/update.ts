@@ -1,9 +1,10 @@
 /**
  * 应用自更新状态（updaterService → 渲染层）。
  *
- * 通道与策略：GitHub Releases 主源（kunyu7696/KunYuStudio），直连失败/下载停滞时
- * 按 settings.general.updateMirrorPrefix（ghproxy 风格前缀）+ releases/latest/download
- * 稳定路径兜底重试一次；下载需用户确认（electron-updater autoDownload=false）。
+ * 通道与策略：更新清单（latest.yml）始终从 GitHub Releases 主源读取；
+ * 安装包可按 settings.general.updateMirrorPrefix（ghproxy 风格前缀）走镜像，
+ * 但下载后会以可信清单里的 sha512 自校验，校验通过才进入可安装态。
+ * 下载需用户确认（electron-updater autoDownload=false）。
  */
 
 export type UpdatePhase =
@@ -35,7 +36,7 @@ export interface UpdateState {
   /** 已下载/总字节（downloading 时存在） */
   transferred?: number
   total?: number
-  /** 本次检查/下载是否走了镜像兜底 */
+  /** 本次下载是否走了安装包镜像（清单始终来自 GitHub） */
   viaMirror?: boolean
   /** 错误信息（phase=error 时存在） */
   error?: string

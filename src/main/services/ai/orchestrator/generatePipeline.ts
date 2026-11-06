@@ -41,6 +41,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { decodePng, lintTextureContent } from '../pixelize'
 import { factsToPromptLine, readFacts } from '../fcTools/projectFacts'
+import { appendMemoryEntry } from '../fcTools/memoryTools'
 
 const TOOL_RESULT_CLIP = 8_000
 
@@ -1062,6 +1063,18 @@ async function runToolLoop(
       })
     }
     replaceMessages(messages, summary ? composeCompacted(plan.head, summary, plan.recent) : plan.messages)
+    // 跨会话交接：与聊天链路同一约定，摘要进项目记忆（生成任务被压缩的结论不随会话消失）。
+    // 写入失败只记事件不打断流水线——记忆是增强，不是生成的关键路径。
+    if (summary && input.project?.path) {
+      try {
+        appendMemoryEntry(input.project.path, `[上下文交接] 生成任务压缩摘要：${summary.slice(0, 380)}`)
+      } catch (err) {
+        emit('generate', {
+          type: 'log',
+          detail: `压缩摘要写入项目记忆失败：${(err as Error).message}`
+        })
+      }
+    }
     emit('generate', {
       type: 'log',
       detail: summary

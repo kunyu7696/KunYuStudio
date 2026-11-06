@@ -209,9 +209,9 @@ const enUS: Messages = {
     openReleasePage: 'Open release page in browser',
     autoCheck: 'Check automatically on startup',
     autoCheckDesc: 'Check once for updates after launch and show the result here (packaged builds only).',
-    mirrorPrefix: 'Mirror fallback prefix',
+    mirrorPrefix: 'Installer mirror prefix',
     mirrorPrefixDesc:
-      'Proxy prefix for GitHub (ghproxy style) used when direct access fails; leave empty to disable the mirror fallback. Note: installers come through a third-party proxy and this app is not code-signed — only use a mirror you trust.',
+      'Proxy prefix (ghproxy style) used only to download the installer; leave empty to disable. Update metadata always comes directly from GitHub, and the installer is verified against the manifest sha512, so a tampering proxy cannot help — still, only use a mirror you trust.',
     mirrorPlaceholder: 'e.g. https://ghproxy.net, empty to disable',
     resetSection: 'Restore defaults for this page',
     resetTitle: 'Restore default settings',
