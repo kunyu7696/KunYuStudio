@@ -31,7 +31,9 @@
     "test:coverage": "node scripts/run-vitest.cjs run --coverage",
     "test:watch": "node scripts/run-vitest.cjs",
     "verify:enchant": "node scripts/verify-enchant-build.mjs",
-    "lint": "eslint src --max-warnings 0"
+    "lint": "eslint src --max-warnings 0",
+    "matrix:refresh": "node scripts/refresh-loader-matrix.mjs --write",
+    "matrix:refresh:dry": "node scripts/refresh-loader-matrix.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",

@@ -1,0 +1,100 @@
+name: 定时刷新加载器版本矩阵
+
+# 自动从 FabricMeta / Forge promotions / NeoForged maven-metadata 拉取各加载器 MC 线
+# 最新版本号（loader / yarn / fabric-api / forge / neoforge），diff 进 loaderVersionMatrix.ts。
+#
+# 不会自动刷新的字段：loomVersion / gradleVersion / jdk / hostJdk / forgeGradleVersion 区间 /
+# forgeConstructorStyle / modDevGradleVersion —— 这些没公共元数据源（要抓 MDK 仓库分支
+# gradle.properties），需要人手动核实，脚本只做版本号 patch 升级。
+#
+# 触发：每天 UTC 03:00（北京时间 11:00）；也可手动 workflow_dispatch。
+# 结果：
+#   - 上游没变化 → 无 commit、无 PR，绿灯
+#   - 有版本号升级 → 自动 commit + 开 PR，标题 chore 前缀、automation 标签
+#   - 上游元数据挂了 → job 红（exit 2），在 summary 里列 skip 原因
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  refresh-matrix:
+    name: 刷新 loaderVersionMatrix 并开 PR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - run: npm ci
+
+      - name: 运行刷新脚本
+        id: refresh
+        run: |
+          # 脚本 exit code: 0=无变化，1=有变化，2=致命错误
+          node scripts/refresh-loader-matrix.mjs --write
+          EC=$?
+          if [ $EC -eq 0 ]; then
+            echo "summary=上游版本号未变，无需刷新" >> "$GITHUB_OUTPUT"
+            exit 0
+          elif [ $EC -eq 1 ]; then
+            echo "summary=发现上游版本号升级，已写入 loaderVersionMatrix.ts" >> "$GITHUB_OUTPUT"
+            # 继续往下走 create-pull-request
+          else
+            echo "summary=刷新失败（exit $EC）：可能是上游元数据不可达或脚本 bug，请检查 logs" >> "$GITHUB_OUTPUT"
+            exit $EC
+          fi
+
+      - name: 生成 PR 体摘要
+        if: steps.refresh.outcome == 'success'
+        id: body
+        shell: bash
+        run: |
+          {
+            echo "## 自动刷新：loaderVersionMatrix"
+            echo ""
+            echo "脚本：\`scripts/refresh-loader-matrix.mjs --write\`"
+            echo ""
+            echo "### 上游刷新摘要"
+            echo '```diff'
+            git diff src/main/templates/loaderVersionMatrix.ts || true
+            echo '```'
+            echo ""
+            echo "### 变更清单"
+            git diff --name-only
+            echo ""
+            echo "### 说明"
+            echo "- 版本号字段（loader / yarn / fabric-api / forge / neoforge）会自动 patch 升级"
+            echo "- 大跨度变更（Fabric loader 次大版本差 ≥3）脚本只警告、不自动覆盖"
+            echo "- 以下字段无公共元数据源，**不会**被自动刷新：loomVersion / gradleVersion / jdk / hostJdk / forgeGradleVersion 区间 / forgeConstructorStyle / modDevGradleVersion"
+            echo "- 请 review diff 后决定是否合并"
+          } > /tmp/pr-body.md
+          cat /tmp/pr-body.md
+
+      - name: 自动开 PR（无变化则跳过）
+        if: steps.refresh.outcome == 'success'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: chore/refresh-loader-matrix
+          title: 'chore: 刷新 loaderVersionMatrix（定时）'
+          labels: automation
+          body-path: /tmp/pr-body.md
+          add-paths: |
+            src/main/templates/loaderVersionMatrix.ts
+          commit-message: 'chore: 刷新 loaderVersionMatrix（定时）'
+          push-to-fork: false
+          delete-branch: true
+
+      - name: 工作流摘要
+        if: always()
+        run: |
+          echo "${{ steps.refresh.outputs.summary || '执行完毕' }}" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f /tmp/pr-body.md ]; then
+            echo "---" >> "$GITHUB_STEP_SUMMARY"
+            tail -n +1 /tmp/pr-body.md >> "$GITHUB_STEP_SUMMARY"
+          fi

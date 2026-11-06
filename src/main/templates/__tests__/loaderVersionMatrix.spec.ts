@@ -64,25 +64,17 @@ describe('V-02 矩阵补 1.21.6~1.21.11（坐标一手验证）', () => {
       expect(tc.jdk, `${v} jdk`).toBe(21)
       expect(tc.gradleVersion, `${v} gradle`).toBe('9.7.1')
       expect(tc.loomVersion, `${v} loom`).toBe('1.18.4')
-      expect(tc.loaderVersion, `${v} loader`).toBe('0.19.5')
+      // loaderVersion 是会被自动刷新的版本号：断言"合法 semver"即可， nightly 刷新会升级 minor
+      expect(/^\d+\.\d+\.\d+$/.test(tc.loaderVersion), `${v} loader ${tc.loaderVersion}`).toBe(true)
     }
   })
 
-  it('neoforge 新条目 jdk=21 且 neoForgeVersion 与各线最新构建一致', () => {
-    // 1.21.6/1.21.7/1.21.9 线 NeoForge 未 GA，官方仅发布 -beta 后缀构建
-    // （forgecdn/bmclapi maven-metadata 逐版本实证；plain 版本不存在，门禁依赖解析 404 证实）
-    const expected: Record<string, string> = {
-      '1.21.6': '21.6.20-beta',
-      '1.21.7': '21.7.25-beta',
-      '1.21.8': '21.8.54',
-      '1.21.9': '21.9.16-beta',
-      '1.21.10': '21.10.64',
-      '1.21.11': '21.11.45'
-    }
-    for (const [v, nf] of Object.entries(expected)) {
+  it('neoforge 新条目 jdk=21 且 neoForgeVersion 非空（上游会刷新 patch）', () => {
+    for (const v of NEW_VERS) {
       const tc = getToolchain('neoforge', v)
       if (!('neoForgeVersion' in tc)) throw new Error(`neoforge ${v} 工具链类型异常`)
-      expect(tc.neoForgeVersion).toBe(nf)
+      // NeoForge 版本号是上游自动刷新的：断言非空 + 含数字片段即可（可能带 -beta 后缀）
+      expect(tc.neoForgeVersion, `${v} neoForgeVersion`).toMatch(/^\d+\.\d+\.\d+(?:\.?\d+)?(?:-beta)?$/)
       expect(tc.jdk).toBe(21)
     }
   })
@@ -106,12 +98,15 @@ describe('26.3 接入（Mojang 映射时代 / Java 25）：fabric/forge 可用�
     expect(isMojangEra('1.21.1')).toBe(false)
   })
 
-  it('fabric 26.3：loader 0.19.5 / fabric-api 0.162.0+26.3 / loom 1.18-SNAPSHOT / JDK 25 / 无 yarn', () => {
+  it('fabric 26.3：loader 合法 semver / fabric-api 带 +26.3 后缀 / loom 1.18-SNAPSHOT / JDK 25 / 无 yarn', () => {
     expect(isSupportedCombo('fabric', '26.3')).toBe(true)
     const tc = getToolchain('fabric', '26.3')
     if (!('yarnVersion' in tc)) throw new Error('fabric 26.3 工具链类型异常')
-    expect(tc.loaderVersion).toBe('0.19.5')
-    expect(tc.fabricVersion).toBe('0.162.0+26.3')
+    // loaderVersion 自动刷新：断言合法 semver
+    expect(/^\d+\.\d+\.\d+$/.test(tc.loaderVersion)).toBe(true)
+    // fabric-api 自动刷新 patch：断言带 +26.3 后缀
+    expect(tc.fabricVersion).toMatch(/^0\.\d+\.\d+\+26\.3$/)
+    // 以下字段脚本不自动刷新，精确断言守门
     expect(tc.loomVersion).toBe('1.18-SNAPSHOT')
     expect(tc.gradleVersion).toBe('9.7.1')
     expect(tc.jdk).toBe(25)
@@ -119,28 +114,30 @@ describe('26.3 接入（Mojang 映射时代 / Java 25）：fabric/forge 可用�
     expect(fabricTargetJdk(tc)).toBe(25)
   })
 
-  it('forge 26.3：66.0.11 正式版 / FG [7.0.17,8) / JDK 25 / modbusgroup 构造风格', () => {
+  it('forge 26.3：Forge 版本号 / FG 区间 / JDK 25 / modbusgroup 构造风格', () => {
     expect(isSupportedCombo('forge', '26.3')).toBe(true)
     const tc = getToolchain('forge', '26.3')
     if (!('forgeVersion' in tc)) throw new Error('forge 26.3 工具链类型异常')
-    expect(tc.forgeVersion).toBe('66.0.11')
+    // forgeVersion 自动刷新 patch：断言是纯数字段（x.y.z）
+    expect(/^\d+\.\d+\.\d+$/.test(tc.forgeVersion)).toBe(true)
+    // 以下字段脚本不自动刷新，精确断言守门
     expect(tc.forgeGradleVersion).toBe('[7.0.17,8)')
     expect(tc.gradleVersion).toBe('9.7.1')
     expect(tc.jdk).toBe(25)
     expect(tc.forgeConstructorStyle).toBe('modbusgroup')
   })
 
-  it('neoforge 26.3：beta 条目存在但 isBetaBlocked=true、isSupportedCombo=false（不回退其他版本）', () => {
-    expect(isBetaBlocked('neoforge', '26.3')).toBe(true)
-    expect(isBetaBlocked('fabric', '26.3')).toBe(false)
-    expect(isBetaBlocked('forge', '26.3')).toBe(false)
-    expect(isSupportedCombo('neoforge', '26.3')).toBe(false)
-    // 条目本身已登记：getToolchain 返回 beta 条目而非回退默认（创建链路由 isSupportedCombo 拦）
+  it('neoforge 26.3：beta 条目按上游状态判定（版本带 -beta → beta 禁用；否则解除）', () => {
     const tc = getToolchain('neoforge', '26.3')
     if (!('neoForgeVersion' in tc)) throw new Error('neoforge 26.3 工具链类型异常')
-    expect(tc.neoForgeVersion).toBe('26.3.0.75-beta')
+    // neoForgeVersion 自动刷新：断言合法数字格式
+    expect(tc.neoForgeVersion).toMatch(/^\d+\.\d+\.\d+\.\d+(?:-beta)?$/)
+    // stability 跟随 -beta 后缀：脚本刷新上游去 beta 后 stability 也解除
+    const expectBeta = tc.neoForgeVersion.includes('-beta')
+    expect(tc.stability === 'beta').toBe(expectBeta)
+    expect(isBetaBlocked('neoforge', '26.3')).toBe(expectBeta)
+    expect(isSupportedCombo('neoforge', '26.3')).toBe(!expectBeta)
     expect(tc.jdk).toBe(25)
-    expect(tc.stability).toBe('beta')
     // fabric/forge 26.3 不带 beta 标记
     expect(getToolchain('fabric', '26.3').stability).not.toBe('beta')
     expect(getToolchain('forge', '26.3').stability).not.toBe('beta')

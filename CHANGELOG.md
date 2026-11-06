@@ -6,6 +6,8 @@
 
 - **设置项「启动动画」开关**：关闭后启动直接进入主界面，运行中关闭也会立刻收起当前启动层
 - **生成任务的上下文交接**：AI 生成流水线压缩历史时，摘要同样写入项目记忆（`.kunyu/agent-memory.md`，`[上下文交接]` 标记），与聊天链路一致；此前长任务被压缩掉的结论下一次会话就没了
+- **加载器版本矩阵定时自动刷新**：新增 `scripts/refresh-loader-matrix.mjs` 从 FabricMeta / Forge promotions / NeoForged maven-metadata 拉取各加载器 MC 线最新版本号（loader / yarn / fabric-api / forge / neoforge / stability），`--write` 直接刷新 `loaderVersionMatrix.ts`；配合 `.github/workflows/matrix-refresh.yml` 每天 UTC 03:00 跑一次，有变化就自动开 PR（无变化静默跳过）。大跨度变更（Fabric loader 次大版本差 ≥3）脚本只警告不自动覆盖，等人工判断；loom / gradle / jdk / forgeGradle 区间等字段无公共元数据源，不自动刷新
+- **项目 toolchain 冻结（自动）**：项目创建时会把当时的矩阵版本号录进 `.kunyu/project.json`；全局矩阵后续自动刷新不影响既有项目，不会静默改坏正在开发中的工程。渲染层升级入口（项目级「升级到最新工具链」按钮）待后续接入
 
 ### 修复
 
