@@ -331,8 +331,14 @@ function parseMatrixObjects(ts) {
   for (const [name, m] of Object.entries(map)) {
     if (!m) continue
     const block = m[1]
+    // 先剔除注释行：被注释掉的历史条目（如 1.16.5）不应进入本次刷新目标，
+    // 否则会被算进「变更条数」，且 patch 时也没有对应可改的真实行。
+    const live = block
+      .split('\n')
+      .filter((l) => !/^\s*(\/\/|\*|\/\*)/.test(l))
+      .join('\n')
     // 每个条目形如 'mc.version': { ... },
-    const entries = [...block.matchAll(/'([^']+)'\s*:\s*\{([\s\S]*?)\n\s*\}/g)]
+    const entries = [...live.matchAll(/'([^']+)'\s*:\s*\{([\s\S]*?)\n\s*\}/g)]
     for (const e of entries) {
       const mc = e[1]
       const obj = {}
@@ -368,15 +374,17 @@ function rebuildMatrixBlock(name, origBlock, updates) {
   const mcRe = new RegExp(`'([^']+)'\\s*:\\s*\\{`)
   const lines = origBlock.split('\n')
   let curMc = null
+  /** 注释行不参与「条目起点」识别与字段替换：否则被注释掉的 1.16.5 条目会被误改 */
+  const isComment = (l) => /^\s*(\/\/|\*|\/\*)/.test(l)
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i]
-    const mcMatch = line.match(mcRe)
+    const mcMatch = isComment(line) ? null : line.match(mcRe)
     if (mcMatch) {
       curMc = mcMatch[1]
       out += line + '\n'
       continue
     }
-    if (!curMc || !mcs.has(curMc)) {
+    if (!curMc || !mcs.has(curMc) || isComment(line)) {
       out += line + '\n'
       continue
     }
@@ -399,6 +407,17 @@ function rebuildMatrixBlock(name, origBlock, updates) {
     // 依次替换，每个替换前都写一条 REFRESH 注释。
     let lineContent = line
     for (const { field, oldVal, newVal, fieldRe } of hits) {
+      if (typeof newVal === 'undefined') {
+        // 上游去掉了该标记（如 NeoForge 26.3 由 -beta 转正）：
+        // 从对象里删掉属性，而不是写成 `stability: undefined`（后者会污染生成的源码）
+        out += `    // REFRESH: ${field} ${oldVal} → 移除（上游已取消该标记）\n`
+        const lead = new RegExp(`\\b${field}\\s*:\\s*'[^']*'\\s*,\\s*`)
+        const trail = new RegExp(`\\s*,\\s*\\b${field}\\s*:\\s*'[^']*'`)
+        lineContent = lead.test(lineContent)
+          ? lineContent.replace(lead, '')
+          : lineContent.replace(trail, '')
+        continue
+      }
       if (String(oldVal) !== String(newVal).replace(/^'|'$/g, '')) {
         const newValStr = typeof newVal === 'string' ? `'${newVal}'` : String(newVal)
         out += `    // REFRESH: ${field} ${oldVal} → ${newVal}\n`
@@ -407,7 +426,8 @@ function rebuildMatrixBlock(name, origBlock, updates) {
     }
     out += lineContent + '\n'
   }
-  return out
+  // 每行都补了 '\n'，末尾会多出一个：去掉，避免在对象闭合前多出空行
+  return out.replace(/\n$/, '')
 }
 
 // ---------- 主流程 ----------
@@ -525,7 +545,11 @@ async function main() {
     try {
       if (latest) {
         if (latest.version !== orig.neoForgeVersion) newVals.neoForgeVersion = latest.version
-        if (latest.stability !== orig.stability) newVals.stability = latest.stability
+        // 只做「上游转正 → 解除 beta」，绝不自动加禁用：
+        // 1.21.6/1.21.7/1.21.9 线官方只发 -beta 构建，但产品上仍允许创建
+        // （loaderVersionMatrix.spec.ts 的 NEW_VERS 断言 isSupportedCombo=true），
+        // 自动加 stability='beta' 会与 spec 冲突并让本脚本每天都报「有变更」。
+        if (orig.stability === 'beta' && latest.stability !== 'beta') newVals.stability = undefined
       }
       // ModDevGradle：所有 NeoForge 线共用同一版本号（26.3 beta 行的 orig.modDevGradleVersion 是空串，跳过）
       if (moddevgradle && orig.modDevGradleVersion && orig.modDevGradleVersion !== '' && moddevgradle !== orig.modDevGradleVersion) {

@@ -1,7 +1,7 @@
 {
   "manifestVersion": "3.3.0",
-  "generatedAt": "2026-10-31T22:07:25.290Z",
-  "description": "KunYuEcosystem anti-hallucination AI reference package (M23: 16 combos active — fabric 7 / forge 5 / neoforge 4, forge 1.16.5 frozen and removed from m7ActiveVersions; V-01: 4 pending combos for 1.21.4/1.21.5; V-02 #18: 12 more pending combos for 1.21.6~1.21.11 — fabric×6 + neoforge×6, coordinates verified via Fabric meta / maven.fabricmc.net / BMCLAPI-neoforge metadata, registeredButInactive pending real-machine verification; 26.3 registered (2026-10): fabric 0.19.5 stable-day support + forge 66.0.11 GA (FG7 mavenizer, Java 25, Mojang mappings — no Yarn build exists) are registeredButInactive pending real-machine verification; neoforge 26.3.0.75-beta stays upstream Beta and is matrix-disabled (health=beta, wizard greyed out) until official GA)",
+  "generatedAt": "2026-11-07T13:22:32.754Z",
+  "description": "KunYuEcosystem anti-hallucination AI reference package (M23: 16 combos active — fabric 7 / forge 5 / neoforge 4, forge 1.16.5 frozen and removed from m7ActiveVersions; V-01: 4 pending combos for 1.21.4/1.21.5; V-02 #18: 12 more pending combos for 1.21.6~1.21.11 — fabric×6 + neoforge×6, coordinates verified via Fabric meta / maven.fabricmc.net / BMCLAPI-neoforge metadata, registeredButInactive pending real-machine verification; 26.3 registered (2026-10): fabric 0.20.1 (loom 1.19-SNAPSHOT / Gradle 9.8.2) + forge 66.1.0 GA (FG7 mavenizer, Java 25, Mojang mappings — no Yarn build exists) are active pending real-machine verification; neoforge 26.3.0.101 went GA (26.3.0.76 dropped the -beta suffix) and is now enabled with ModDevGradle 2.0.147 / Gradle 9.7.1, pending real-machine verification)",
   "scopeControl": {
     "m7ActiveVersions": [
       {
@@ -139,10 +139,14 @@
       {
         "loader": "neoforge",
         "version": "1.21.11"
+      },
+      {
+        "loader": "neoforge",
+        "version": "26.3"
       }
     ],
     "registeredButInactive": [],
-    "rule": "34 entries listed in m7ActiveVersions (fabric×16 / forge×6 / neoforge×12), all build-reachable (forge 1.16.5 frozen entry removed in V-02). 2026-10-16: 原 registeredButInactive 的 18 个储备组合 (1.21.4~1.21.11 × fabric/neoforge 各 8 + fabric/forge 26.3) 已按用户指令全部激活，模板已随迁移脚本补齐 (verified=null/build=pending，探针真机验证后逐条回写)。NeoForge 26.3 (26.3.0.75-beta) 仍不在列：上游 Beta，指纹 health=beta，矩阵/向导禁用至官方 GA。Templates are loader/version-scoped."
+    "rule": "35 entries listed in m7ActiveVersions (fabric×16 / forge×6 / neoforge×13), all build-reachable (forge 1.16.5 frozen entry removed in V-02). 2026-10-16: 原 registeredButInactive 的 18 个储备组合 (1.21.4~1.21.11 × fabric/neoforge 各 8 + fabric/forge 26.3) 已按用户指令全部激活，模板已随迁移脚本补齐 (verified=null/build=pending，探针真机验证后逐条回写)。2026-11-07: NeoForge 26.3 上游转正（26.3.0.76 起去除 -beta 后缀，当前 26.3.0.101），已纳入本清单并解除 beta 禁用（矩阵 MDG 2.0.147 / Gradle 9.7.1），真机验证待补。Templates are loader/version-scoped."
   },
   "mappingTypes": {
     "fabric": {
@@ -847,15 +851,15 @@
       "id": "neoforge-1.21.6",
       "loader": "neoforge",
       "mcVersion": "1.21.6",
-      "loaderVersion": "21.6.20",
+      "loaderVersion": "21.6.20-beta",
       "mapping": "mojang_official",
       "jdk": 21,
       "health": "green",
       "verifiedAt": "2026-10-27T16:15:40.060Z",
       "driftRisk": "medium",
-      "note": "NeoForge 21.6.20（BMCLAPI 镜像官方 maven-metadata 核实，2026-10）；ModDevGradle 2.0.147。真机验证未完成，registeredButInactive，向导标「待验证」",
+      "note": "NeoForge 21.6.20-beta（BMCLAPI 镜像官方 maven-metadata 核实，2026-10；该线无 GA 构建，最新即 -beta）；ModDevGradle 2.0.147。真机验证未完成，registeredButInactive，向导标「待验证」",
       "templatePin": {
-        "loaderVersion": "21.6.20",
+        "loaderVersion": "21.6.20-beta",
         "loom": "2.0.147",
         "gradle": "8.10.2"
       },
@@ -871,15 +875,15 @@
       "id": "neoforge-1.21.7",
       "loader": "neoforge",
       "mcVersion": "1.21.7",
-      "loaderVersion": "21.7.25",
+      "loaderVersion": "21.7.25-beta",
       "mapping": "mojang_official",
       "jdk": 21,
       "health": "green",
       "verifiedAt": "2026-10-27T16:17:04.929Z",
       "driftRisk": "medium",
-      "note": "NeoForge 21.7.25（BMCLAPI 镜像官方 maven-metadata 核实，2026-10）；ModDevGradle 2.0.147。真机验证未完成，registeredButInactive，向导标「待验证」",
+      "note": "NeoForge 21.7.25-beta（BMCLAPI 镜像官方 maven-metadata 核实，2026-10；该线无 GA 构建，最新即 -beta）；ModDevGradle 2.0.147。真机验证未完成，registeredButInactive，向导标「待验证」",
       "templatePin": {
-        "loaderVersion": "21.7.25",
+        "loaderVersion": "21.7.25-beta",
         "loom": "2.0.147",
         "gradle": "8.10.2"
       },
@@ -919,15 +923,15 @@
       "id": "neoforge-1.21.9",
       "loader": "neoforge",
       "mcVersion": "1.21.9",
-      "loaderVersion": "21.9.16",
+      "loaderVersion": "21.9.16-beta",
       "mapping": "mojang_official",
       "jdk": 21,
       "health": "green",
       "verifiedAt": "2026-10-27T16:19:42.727Z",
       "driftRisk": "medium",
-      "note": "NeoForge 21.9.16（BMCLAPI 镜像官方 maven-metadata 核实，2026-10）；ModDevGradle 2.0.147。真机验证未完成，registeredButInactive，向导标「待验证」",
+      "note": "NeoForge 21.9.16-beta（BMCLAPI 镜像官方 maven-metadata 核实，2026-10；该线无 GA 构建，最新即 -beta）；ModDevGradle 2.0.147。真机验证未完成，registeredButInactive，向导标「待验证」",
       "templatePin": {
-        "loaderVersion": "21.9.16",
+        "loaderVersion": "21.9.16-beta",
         "loom": "2.0.147",
         "gradle": "8.10.2"
       },
@@ -1040,17 +1044,17 @@
       "id": "neoforge-26.3",
       "loader": "neoforge",
       "mcVersion": "26.3",
-      "loaderVersion": "26.3.0.75-beta",
+      "loaderVersion": "26.3.0.101",
       "mapping": "mojang_official",
       "jdk": 25,
-      "health": "beta",
+      "health": "unknown",
       "verifiedAt": null,
       "driftRisk": "high",
-      "note": "NeoForge 26.3 官方仍标记 Beta（maven 最新 26.3.0.75-beta；26.3.0.76 去 -beta 后缀但官方通道未宣告 GA）。矩阵禁用：向导该格灰显不可选，projectService/matrixGate/buildProbe 均拦截，ModDevGradle/Gradle 坐标留空待官方稳定版发布后一手核实再开放",
+      "note": "NeoForge 26.3 已转正（maven 26.3.0.76 起去除 -beta 后缀，当前 26.3.0.101），矩阵解除 beta 禁用，组合可由脚手架/整合包/CI/探针选用；ModDevGradle 取全矩阵统一 2.0.147、Gradle 取 26.3 线通用 9.7.1（与 fabric/forge 26.3 一致），真机构建验证待补",
       "templatePin": {
-        "loaderVersion": "26.3.0.75-beta",
-        "loom": "",
-        "gradle": ""
+        "loaderVersion": "26.3.0.101",
+        "loom": "2.0.147",
+        "gradle": "9.7.1"
       },
       "tier": "extended"
     }

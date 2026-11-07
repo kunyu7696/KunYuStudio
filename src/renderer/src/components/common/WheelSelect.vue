@@ -48,7 +48,7 @@ export interface WheelOption {
   label?: string
   badge?: string
   badgeType?: 'success' | 'warning' | 'info' | 'danger'
-  /** 禁用项灰显：点击/吸附/滚轮步进均跳过（如 NeoForge 26.3 官方 Beta） */
+  /** 禁用项灰显：点击/吸附/滚轮步进均跳过（如上游仍处 Beta 的组合） */
   disabled?: boolean
   /** 禁用项悬停提示 */
   disabledTip?: string

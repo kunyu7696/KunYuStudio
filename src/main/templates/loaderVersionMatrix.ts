@@ -1,3 +1,4 @@
+// refresh-loader-matrix.mjs 刷新于 2026-11-07（3 条变更）
 /**
  * 加载器版本矩阵（Fabric / Forge / NeoForge 全版本线）。
  *
@@ -18,16 +19,15 @@
  *  - stability: 'beta' 表示上游仍处 Beta（登记仅为向导展示/矩阵可见），
  *               isSupportedCombo 返回 false，脚手架/整合包/CI/探针一律拒绝生成
  *
- * 版本覆盖 manifest.versionFingerprints：34 个活跃组合（用户指令全部激活，
- * 原 16 已验证 + 18 原储备组合 1.21.4~1.21.11 × Fabric/NeoForge 各 8 + Fabric/Forge 26.3，
- * 模板已补齐、verified=null 待探针回写）+ MC 26.3 三个组合（一手核实）：
- *  - Fabric 26.3：官方发布当天即稳定（loader 0.19.5 / fabric-api 0.162.0+26.3 /
- *    loom 1.18-SNAPSHOT / Java 25）；26.x 起 Yarn 无构建，改用 Loom 默认 Mojang 官方映射，
- *    yarnVersion 留空（模板据此不输出 mappings 行）。已激活，真机验证未完成。
- *  - Forge 26.3：66.0.11 正式版（promotions latest 频道），FG7 mavenizer 体系 + Java 25，
+ * 版本覆盖 manifest.versionFingerprints（36 条：34 条已验证 + 冻结的 forge-1.16.5
+ * + 待探针回写的 neoforge-26.3）；矩阵内 35 个组合当前全部可生成：
+ *  - Fabric 26.3：官方发布当天即稳定（loader 0.20.1 / fabric-api 0.165.0+26.3 /
+ *    loom 1.19-SNAPSHOT / Gradle 9.8.2 / Java 25）；26.x 起 Yarn 无构建，改用 Loom 默认
+ *    Mojang 官方映射，yarnVersion 留空（模板据此不输出 mappings 行）。已激活，真机验证未完成。
+ *  - Forge 26.3：66.1.0 正式版（promotions latest 频道），FG7 mavenizer 体系 + Java 25，
  *    已激活，真机验证未完成。
- *  - NeoForge 26.3：官方仍标 Beta（26.3.0.x-beta），stability='beta' 禁用，
- *    向导灰显「Beta，暂不支持」，待官方 GA 后解除。
+ *  - NeoForge 26.3：26.3.0.76 起上游去除 -beta 后缀，已转正（当前 26.3.0.101）；
+ *    解除 beta 禁用，MDG 取全矩阵统一 2.0.147、Gradle 取 9.7.1，真机验证未完成。
  * 注：Forge 1.16.5 因 FG4 + official mappings 框架级不兼容已冻结（见下方注释），
  * 不计入可达组合。
  */
@@ -181,39 +181,57 @@ const FABRIC_MATRIX: Record<string, FabricToolchain> = {
   // 但编译目标仍是 Java 21（游戏侧需求），故 jdk 字段保持 21、新增 hostJdk=25 表示宿主。
   '1.21.6': {
     loader: 'fabric', mcVersion: '1.21.6',
-    loaderVersion: '0.19.5', yarnVersion: '1.21.6+build.1',
-    fabricVersion: '0.128.2+1.21.6', loomVersion: '1.18.4',
-    gradleVersion: '9.7.1', jdk: 21, hostJdk: 25
+    // REFRESH: loaderVersion 0.19.5 → 0.20.1
+    loaderVersion: '0.20.1', yarnVersion: '1.21.6+build.1',
+    // REFRESH: loomVersion 1.18.4 → 1.19-SNAPSHOT
+    fabricVersion: '0.128.2+1.21.6', loomVersion: '1.19-SNAPSHOT',
+    // REFRESH: gradleVersion 9.7.1 → 9.8.2
+    gradleVersion: '9.8.2', jdk: 21, hostJdk: 25
   },
   '1.21.7': {
     loader: 'fabric', mcVersion: '1.21.7',
-    loaderVersion: '0.19.5', yarnVersion: '1.21.7+build.8',
-    fabricVersion: '0.129.0+1.21.7', loomVersion: '1.18.4',
-    gradleVersion: '9.7.1', jdk: 21, hostJdk: 25
+    // REFRESH: loaderVersion 0.19.5 → 0.20.1
+    loaderVersion: '0.20.1', yarnVersion: '1.21.7+build.8',
+    // REFRESH: loomVersion 1.18.4 → 1.19-SNAPSHOT
+    fabricVersion: '0.129.0+1.21.7', loomVersion: '1.19-SNAPSHOT',
+    // REFRESH: gradleVersion 9.7.1 → 9.8.2
+    gradleVersion: '9.8.2', jdk: 21, hostJdk: 25
   },
   '1.21.8': {
     loader: 'fabric', mcVersion: '1.21.8',
-    loaderVersion: '0.19.5', yarnVersion: '1.21.8+build.1',
-    fabricVersion: '0.136.1+1.21.8', loomVersion: '1.18.4',
-    gradleVersion: '9.7.1', jdk: 21, hostJdk: 25
+    // REFRESH: loaderVersion 0.19.5 → 0.20.1
+    loaderVersion: '0.20.1', yarnVersion: '1.21.8+build.1',
+    // REFRESH: loomVersion 1.18.4 → 1.19-SNAPSHOT
+    fabricVersion: '0.136.1+1.21.8', loomVersion: '1.19-SNAPSHOT',
+    // REFRESH: gradleVersion 9.7.1 → 9.8.2
+    gradleVersion: '9.8.2', jdk: 21, hostJdk: 25
   },
   '1.21.9': {
     loader: 'fabric', mcVersion: '1.21.9',
-    loaderVersion: '0.19.5', yarnVersion: '1.21.9+build.1',
-    fabricVersion: '0.134.1+1.21.9', loomVersion: '1.18.4',
-    gradleVersion: '9.7.1', jdk: 21, hostJdk: 25
+    // REFRESH: loaderVersion 0.19.5 → 0.20.1
+    loaderVersion: '0.20.1', yarnVersion: '1.21.9+build.1',
+    // REFRESH: loomVersion 1.18.4 → 1.19-SNAPSHOT
+    fabricVersion: '0.134.1+1.21.9', loomVersion: '1.19-SNAPSHOT',
+    // REFRESH: gradleVersion 9.7.1 → 9.8.2
+    gradleVersion: '9.8.2', jdk: 21, hostJdk: 25
   },
   '1.21.10': {
     loader: 'fabric', mcVersion: '1.21.10',
-    loaderVersion: '0.19.5', yarnVersion: '1.21.10+build.3',
-    fabricVersion: '0.138.4+1.21.10', loomVersion: '1.18.4',
-    gradleVersion: '9.7.1', jdk: 21, hostJdk: 25
+    // REFRESH: loaderVersion 0.19.5 → 0.20.1
+    loaderVersion: '0.20.1', yarnVersion: '1.21.10+build.3',
+    // REFRESH: loomVersion 1.18.4 → 1.19-SNAPSHOT
+    fabricVersion: '0.138.4+1.21.10', loomVersion: '1.19-SNAPSHOT',
+    // REFRESH: gradleVersion 9.7.1 → 9.8.2
+    gradleVersion: '9.8.2', jdk: 21, hostJdk: 25
   },
   '1.21.11': {
     loader: 'fabric', mcVersion: '1.21.11',
-    loaderVersion: '0.19.5', yarnVersion: '1.21.11+build.6',
-    fabricVersion: '0.141.6+1.21.11', loomVersion: '1.18.4',
-    gradleVersion: '9.7.1', jdk: 21, hostJdk: 25
+    // REFRESH: loaderVersion 0.19.5 → 0.20.1
+    loaderVersion: '0.20.1', yarnVersion: '1.21.11+build.6',
+    // REFRESH: loomVersion 1.18.4 → 1.19-SNAPSHOT
+    fabricVersion: '0.141.6+1.21.11', loomVersion: '1.19-SNAPSHOT',
+    // REFRESH: gradleVersion 9.7.1 → 9.8.2
+    gradleVersion: '9.8.2', jdk: 21, hostJdk: 25
   },
   // MC 26.3（正式版，Java 25）：Fabric 发布当天即稳定。
   // 坐标一手核实（meta.fabricmc.net / maven.fabricmc.net /
@@ -225,9 +243,13 @@ const FABRIC_MATRIX: Record<string, FabricToolchain> = {
   // 真机编译验证未完成，组合状态以 manifest 指纹 health=unknown / inactive 表达。
   '26.3': {
     loader: 'fabric', mcVersion: '26.3',
-    loaderVersion: '0.19.5', yarnVersion: '',
-    fabricVersion: '0.162.0+26.3', loomVersion: '1.18-SNAPSHOT',
-    gradleVersion: '9.7.1', jdk: 25
+    // REFRESH: loaderVersion 0.19.5 → 0.20.1
+    loaderVersion: '0.20.1', yarnVersion: '',
+    // REFRESH: fabricVersion 0.162.0+26.3 → 0.165.0+26.3
+    // REFRESH: loomVersion 1.18-SNAPSHOT → 1.19-SNAPSHOT
+    fabricVersion: '0.165.0+26.3', loomVersion: '1.19-SNAPSHOT',
+    // REFRESH: gradleVersion 9.7.1 → 9.8.2
+    gradleVersion: '9.8.2', jdk: 25
   }
 }
 
@@ -243,28 +265,33 @@ const FORGE_MATRIX: Record<string, ForgeToolchain> = {
   // },
   '1.18.2': {
     loader: 'forge', mcVersion: '1.18.2',
-    forgeVersion: '40.2.0', forgeGradleVersion: '[5.1,5.2)',
+    // REFRESH: forgeVersion 40.2.0 → 40.3.0
+    forgeVersion: '40.3.0', forgeGradleVersion: '[5.1,5.2)',
     gradleVersion: '7.6.3', jdk: 17, forgeConstructorStyle: 'classic'
   },
   '1.19.2': {
     loader: 'forge', mcVersion: '1.19.2',
-    forgeVersion: '43.4.0', forgeGradleVersion: '[5.1,5.2)',
+    // REFRESH: forgeVersion 43.4.0 → 43.5.0
+    forgeVersion: '43.5.0', forgeGradleVersion: '[5.1,5.2)',
     gradleVersion: '7.6.3', jdk: 17, forgeConstructorStyle: 'classic'
   },
   '1.20.1': {
     loader: 'forge', mcVersion: '1.20.1',
-    forgeVersion: '47.4.23', forgeGradleVersion: '[6.0,6.2)',
+    // REFRESH: forgeVersion 47.4.23 → 47.4.28
+    forgeVersion: '47.4.28', forgeGradleVersion: '[6.0,6.2)',
     gradleVersion: '8.10.2', jdk: 17, forgeConstructorStyle: 'classic'
   },
   '1.20.4': {
     loader: 'forge', mcVersion: '1.20.4',
-    forgeVersion: '49.0.53', forgeGradleVersion: '[6.0,6.2)',
+    // REFRESH: forgeVersion 49.0.53 → 49.2.13
+    forgeVersion: '49.2.13', forgeGradleVersion: '[6.0,6.2)',
     gradleVersion: '8.10.2', jdk: 17, forgeConstructorStyle: 'injected'
   },
   '1.21.1': {
     loader: 'forge', mcVersion: '1.21.1',
     // 官方 1.21.1-52.0.57 MDK 锁定 FG [6.0.24,6.2) + Gradle 8.x（M23 探针实测 FG7/Gradle9 组合不兼容）
-    forgeVersion: '52.0.57', forgeGradleVersion: '[6.0.24,6.2)',
+    // REFRESH: forgeVersion 52.0.57 → 52.1.20
+    forgeVersion: '52.1.20', forgeGradleVersion: '[6.0.24,6.2)',
     gradleVersion: '8.10.2', jdk: 21, forgeConstructorStyle: 'injected'
   },
   // MC 26.3（正式版，Java 25）：Forge 66.0.11 已为正式版
@@ -276,7 +303,8 @@ const FORGE_MATRIX: Record<string, ForgeToolchain> = {
   // 真机编译验证未完成，组合状态以 manifest 指纹 health=unknown / inactive 表达。
   '26.3': {
     loader: 'forge', mcVersion: '26.3',
-    forgeVersion: '66.0.11', forgeGradleVersion: '[7.0.17,8)',
+    // REFRESH: forgeVersion 66.0.11 → 66.1.0
+    forgeVersion: '66.1.0', forgeGradleVersion: '[7.0.17,8)',
     gradleVersion: '9.7.1', jdk: 25, forgeConstructorStyle: 'modbusgroup'
   }
 }
@@ -285,22 +313,26 @@ const FORGE_MATRIX: Record<string, ForgeToolchain> = {
 const NEOFORGE_MATRIX: Record<string, NeoForgeToolchain> = {
   '1.20.4': {
     loader: 'neoforge', mcVersion: '1.20.4',
-    neoForgeVersion: '20.4.240', modDevGradleVersion: '2.0.147',
+    // REFRESH: neoForgeVersion 20.4.240 → 20.4.253
+    neoForgeVersion: '20.4.253', modDevGradleVersion: '2.0.147',
     gradleVersion: '8.10.2', jdk: 17
   },
   '1.20.6': {
     loader: 'neoforge', mcVersion: '1.20.6',
-    neoForgeVersion: '20.6.132', modDevGradleVersion: '2.0.147',
+    // REFRESH: neoForgeVersion 20.6.132 → 20.6.144
+    neoForgeVersion: '20.6.144', modDevGradleVersion: '2.0.147',
     gradleVersion: '8.10.2', jdk: 21
   },
   '1.21.1': {
     loader: 'neoforge', mcVersion: '1.21.1',
-    neoForgeVersion: '21.1.250', modDevGradleVersion: '2.0.147',
+    // REFRESH: neoForgeVersion 21.1.250 → 21.1.265
+    neoForgeVersion: '21.1.265', modDevGradleVersion: '2.0.147',
     gradleVersion: '8.10.2', jdk: 21
   },
   '1.21.3': {
     loader: 'neoforge', mcVersion: '1.21.3',
-    neoForgeVersion: '21.3.97', modDevGradleVersion: '2.0.147',
+    // REFRESH: neoForgeVersion 21.3.97 → 21.3.100
+    neoForgeVersion: '21.3.100', modDevGradleVersion: '2.0.147',
     gradleVersion: '8.10.2', jdk: 21
   },
   // V-01：NeoForge 版本取 Prism Launcher meta（镜像官方 maven metadata）
@@ -308,12 +340,14 @@ const NEOFORGE_MATRIX: Record<string, NeoForgeToolchain> = {
   // 官方 maven.neoforged.net 在本机网络不可达，真机构建验证待补（指纹 health=unknown）。
   '1.21.4': {
     loader: 'neoforge', mcVersion: '1.21.4',
-    neoForgeVersion: '21.4.158', modDevGradleVersion: '2.0.147',
+    // REFRESH: neoForgeVersion 21.4.158 → 21.4.161
+    neoForgeVersion: '21.4.161', modDevGradleVersion: '2.0.147',
     gradleVersion: '8.10.2', jdk: 21
   },
   '1.21.5': {
     loader: 'neoforge', mcVersion: '1.21.5',
-    neoForgeVersion: '21.5.98', modDevGradleVersion: '2.0.147',
+    // REFRESH: neoForgeVersion 21.5.98 → 21.5.101
+    neoForgeVersion: '21.5.101', modDevGradleVersion: '2.0.147',
     gradleVersion: '8.10.2', jdk: 21
   },
   // NeoForge 1.21.6~1.21.11 各线最新构建（BMCLAPI 镜像官方
@@ -334,7 +368,8 @@ const NEOFORGE_MATRIX: Record<string, NeoForgeToolchain> = {
   },
   '1.21.8': {
     loader: 'neoforge', mcVersion: '1.21.8',
-    neoForgeVersion: '21.8.54', modDevGradleVersion: '2.0.147',
+    // REFRESH: neoForgeVersion 21.8.54 → 21.8.57
+    neoForgeVersion: '21.8.57', modDevGradleVersion: '2.0.147',
     gradleVersion: '8.10.2', jdk: 21
   },
   '1.21.9': {
@@ -350,18 +385,20 @@ const NEOFORGE_MATRIX: Record<string, NeoForgeToolchain> = {
   },
   '1.21.11': {
     loader: 'neoforge', mcVersion: '1.21.11',
-    neoForgeVersion: '21.11.45', modDevGradleVersion: '2.0.147',
+    // REFRESH: neoForgeVersion 21.11.45 → 21.11.48
+    neoForgeVersion: '21.11.48', modDevGradleVersion: '2.0.147',
     gradleVersion: '8.10.2', jdk: 21
   },
-  // MC 26.3：NeoForge 官方仍将该线标记为 Beta（BMCLAPI 镜像官方 maven-metadata 核实，
-  // 26.3.0.0-beta ~ 26.3.0.75-beta 全部带 -beta 后缀；26.3.0.76 虽去后缀，
-  // 但用户决策时点按官方 Beta 口径处理）。用户明确指示：标 beta 且禁用，暂不支持使用，
-  // 待官方稳定后再解除——stability='beta' 使 isSupportedCombo 返回 false，
-  // 脚手架/整合包/CI/探针全部拒绝；MDG/Gradle 坐标待 GA 后从官方 MDK 落证，暂留空串。
+  // MC 26.3：NeoForge 已转正（26.3.0.76 起去除 -beta 后缀，当前 26.3.0.101），
+  // 解除此前「按官方 Beta 口径禁用」的限制，组合可被脚手架/整合包/CI/探针选用。
+  // MDG 沿用全矩阵统一的 2.0.147，Gradle 取 26.3 线通用的 9.7.1（与 fabric/forge 26.3 一致）；
+  // 该组合尚未做真机构建验证，状态以 manifest 指纹 health=unknown 表达。
   '26.3': {
     loader: 'neoforge', mcVersion: '26.3',
-    neoForgeVersion: '26.3.0.75-beta', modDevGradleVersion: '',
-    gradleVersion: '', jdk: 25, stability: 'beta'
+    // REFRESH: neoForgeVersion 26.3.0.75-beta → 26.3.0.101
+    neoForgeVersion: '26.3.0.101', modDevGradleVersion: '2.0.147',
+    // REFRESH: stability beta → 移除（上游已取消该标记）
+    gradleVersion: '9.7.1', jdk: 25
   }
 }
 
