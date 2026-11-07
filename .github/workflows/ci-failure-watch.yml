@@ -1,0 +1,86 @@
+name: CI 失败守夜
+
+# 0 star 项目没人订阅 Actions 通知：CI 红了会一直红，没人知道。
+# 这里每天检查 master 上最近 3 个自然日（北京时间）的 CI 结论，
+# 连续 3 天都是失败就在 issue 里留痕；已有同名 open issue 时改为追加评论，避免刷屏。
+# CI 恢复后不会自动关闭 issue，需人工确认后手动关闭。
+on:
+  schedule:
+    # 每天 01:00 UTC（北京时间 09:00）
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+
+jobs:
+  watch:
+    name: 检查 CI 连续失败
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # gh run list 走 Actions API，必须显式给 actions: read（未声明的作用域一律为 none）
+      actions: read
+      issues: write
+    steps:
+      - name: 统计最近 3 个自然日的 CI 结论
+        id: check
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # 只取 master 上的运行：PR 触发的运行 head 分支是特性分支，天然被 --branch 过滤掉
+          gh run list --workflow=ci.yml --branch=master --limit=100 \
+            --json createdAt,conclusion,url > /tmp/runs.json
+
+          # 按北京时间（UTC+8）切日，每天取最近一次运行的结论
+          STATS=$(jq -c '
+            map({ day: (.createdAt | fromdateiso8601 + 28800 | strftime("%Y-%m-%d")), createdAt, conclusion, url })
+            | sort_by(.createdAt)
+            | group_by(.day)
+            | map(sort_by(.createdAt) | { day: .[0].day, conclusion: .[-1].conclusion, url: .[-1].url })
+            | sort_by(.day)
+            | .[-3:]
+          ' /tmp/runs.json)
+
+          # 命中条件：恰好 3 天、三天全 failure、且首尾日期相差正好 2 天（中间无断档）
+          HIT=$(echo "$STATS" | jq -r '
+            if length == 3
+               and (map(select(.conclusion == "failure")) | length) == 3
+               and ((((.[2].day + "T00:00:00Z") | fromdateiso8601) - ((.[0].day + "T00:00:00Z") | fromdateiso8601)) == 172800)
+            then "true" else "false" end
+          ')
+
+          echo "$STATS" | jq -r '.[] | "- \(.day)：\(.conclusion)（\(.url)）"' > /tmp/detail.md
+          cat /tmp/detail.md
+          echo "连续 3 天失败：$HIT"
+          echo "hit=$HIT" >> "$GITHUB_OUTPUT"
+
+      - name: 连续失败自动开 issue
+        if: steps.check.outputs.hit == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          TITLE='[自动化] CI 连续 3 天失败'
+          BODY=$(printf '%s\n' \
+            "master 上的 CI 已经连续 **3 个自然日**（北京时间）失败，请尽快排查。" \
+            "" \
+            "$(cat /tmp/detail.md)" \
+            "" \
+            "常见排查顺序：" \
+            "- 三平台质量门禁：typecheck（node/web）/ lint / 单测 / 产物新鲜度，先看失败 job 的日志" \
+            "- Windows 专属：CRLF 换行、路径分隔符、覆盖率门槛" \
+            "- 矩阵门禁：compileJava / processResources / jar" \
+            "" \
+            "本次检查：$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            "" \
+            "CI 恢复后请关闭本 issue；本工作流不会自动关闭。")
+          EXISTING=$(gh issue list --state open --search "CI 连续 3 天失败 in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "$BODY"
+            echo "已在 issue #$EXISTING 追加评论"
+          else
+            gh issue create --title "$TITLE" --body "$BODY"
+            echo "已新建 issue"
+          fi

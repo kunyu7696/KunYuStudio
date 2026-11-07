@@ -1,0 +1,84 @@
+name: 依赖自动升级
+
+# dependabot 已下线（bot 会作为贡献者挂在仓库页，且大版本 PR 必然被 peer 锁死而失败）。
+# 这里用定时工作流等价替代它的「自动提依赖升级 PR」能力：
+#   - 每周一检查 npm 依赖的 minor/patch 升级，大版本一律不动（与旧 dependabot 策略一致）
+#   - 有变更 → 开 PR，交给常规 CI 门禁（三平台 typecheck / lint / 单测）验证
+#   - 提交身份固定为 kunyu-ci-bot：该邮箱不对应任何 GitHub 账号，不会出现在贡献者列表
+#
+# GitHub Actions 自身不需要这条通道：workflow 里写的是 @v4 这类浮动主版本标签，
+# minor/patch 由 GitHub 解析 tag 时自动跟随；大版本跳跃需人工核对 breaking changes。
+on:
+  schedule:
+    # 每周一 04:00 UTC（北京时间 12:00），与加载器矩阵刷新（03:00 UTC）错峰
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+jobs:
+  bump:
+    name: 升级 minor/patch 依赖并开 PR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: 生成升级清单
+        id: bump
+        shell: bash
+        run: |
+          # --target minor：只升 minor/patch，major 保持原样（等价旧 dependabot 的 ignore 策略）
+          npx --yes npm-check-updates@latest -u --target minor
+          if git diff --quiet -- package.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "依赖已是可用的最高 minor/patch 版本，无需升级"
+            exit 0
+          fi
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          git --no-pager diff -- package.json
+
+      - name: 同步 lockfile
+        if: steps.bump.outputs.changed == 'true'
+        run: npm install --no-audit --no-fund
+
+      - name: 收集变更摘要
+        if: steps.bump.outputs.changed == 'true'
+        shell: bash
+        run: |
+          {
+            echo "## 自动依赖升级（minor / patch）"
+            echo ""
+            echo "工具：\`npm-check-updates --target minor\`（大版本不升，由人工统一处理）"
+            echo ""
+            echo "### 变更内容"
+            echo '```diff'
+            git --no-pager diff -- package.json
+            echo '```'
+            echo ""
+            echo "### 验证状态"
+            echo "- 本 PR 会触发常规 CI 门禁：三平台 typecheck / lint / 单测 / 产物新鲜度"
+            echo "- \`vitest\` 与 \`@vitest/coverage-v8\` 版本严格联动，若二者不同步请手工对齐"
+          } > /tmp/pr-body.md
+          cat /tmp/pr-body.md
+
+      - name: 开 PR
+        if: steps.bump.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: chore/deps-auto-update
+          title: 'chore(deps): 自动升级 minor/patch 依赖'
+          labels: automation
+          body-path: /tmp/pr-body.md
+          add-paths: |
+            package.json
+            package-lock.json
+          commit-message: 'chore(deps): 自动升级 minor/patch 依赖'
+          author: 'kunyu-ci-bot <actions@users.noreply.github.com>'
+          committer: 'kunyu-ci-bot <actions@users.noreply.github.com>'
+          delete-branch: true
