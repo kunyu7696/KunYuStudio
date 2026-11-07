@@ -190,7 +190,7 @@ AI 参考包 manifest 登记 13 种内容类型。
 用户一句话（右侧 AI 助手）
   → 意图识别 + 档位选择（五档预算）
   → understand：项目事实层 + kb_search 检索命中模板/知识
-  → generate：模型经 66 个内置工具循环（检索/写文件/校验/贴图/模型）
+  → generate：模型经内置工具循环（检索/写文件/校验/贴图/模型；数量见 TOOLS-INVENTORY.json）
   → build：Gradle 构建；失败读日志归因 → 修复 → 重建（档位限轮）
   → test：observer mod 启动游戏，GameTest + 截图断言（自愈 ≤10 轮）
   → export：jar / 资源包产物归档，三态结论如实呈现

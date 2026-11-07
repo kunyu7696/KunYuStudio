@@ -93,7 +93,9 @@ export function generateSystemPrompt(
   /** P5 playbook 段（playbooks/index.ts 渲染；空串即不注入） */
   playbookSection?: string,
   /** 全局自由编码：true 时跳过【双轨硬约束】与【实体自由代码模式】段，AI 完全自由 */
-  globalFreeformEnabled = false
+  globalFreeformEnabled = false,
+  /** 用户技能索引段（runSkills.renderSkillSection；只有元数据，空串即不注入） */
+  skillsSection = ''
 ): ChatMessage {
   const tierCfg = TIER_CONFIGS[tier]
   // DSH 社区插件注入的提示段（如 web-search-pro 的工具使用指引）
@@ -154,6 +156,7 @@ export function generateSystemPrompt(
       '已通过 write_project_file 提交的文件不要在 files 里重复；若全部文件都已用工具提交或通过 content_upsert 保存，files 可为 []，并在 notes 说明。\n' +
       '验收契约（contract）：可选，缺省即不验收。建议为本次生成列出 2-4 条断言——file-exists（文件存在）、texture-ready（PNG 存在且尺寸合规，可省 expectedSize 仅校验合法 PNG）、registry-entry（注册类文件至少 min 次 regex 匹配，省略 min/regex 等同 file-exists）、build-pass（Gradle 构建通过，expected 留空串）、gametest-runtime（GameTest 无头用例，expected 为测试方法名）、user-confirmation（视觉/手感等人眼才能判断的效果：expected 写一句给用户看的核对点描述，测试阶段会自动抓真机截图挂到卡片，由用户人工确认，AI 不得把纯视觉效果伪装成可自动通过的断言）。除 build-pass/gametest-runtime/user-confirmation 外，expected 必须为相对项目根的 POSIX 相对路径。' +
       (playbookSection ? `\n${playbookSection}\n` : '') +
+      (skillsSection ? `\n${skillsSection}\n` : '') +
       (dshPrompt ? `\n\n${dshPrompt}` : '')
   }
 }

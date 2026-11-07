@@ -52,6 +52,7 @@ import { builtinTodoTools } from './fcTools/todoTools'
 import { builtinWebTools } from './fcTools/webTools'
 import { builtinIdeTools } from './fcTools/ideTools'
 import { builtinMemoryTools } from './fcTools/memoryTools'
+import { builtinSkillTools } from './fcTools/skills'
 import { builtinSubAgentTools } from './fcTools/subAgentTools'
 import { builtinModelerTools } from './fcTools/modelerTools'
 import { builtinDecompileTools } from './fcTools/decompileTools'
@@ -238,6 +239,11 @@ export interface ToolRegistryDeps {
     ctx: ToolExecContext
     onToolActivity?: import('./subAgentRunner').SubAgentRunInput['onToolActivity']
   }) => Promise<import('./subAgentRunner').SubAgentRunResult>
+  /**
+   * 本轮用户技能快照根（`.kunyu/user-skills/<runId>/`，orchestrator per-run 注入）。
+   * 未注入/无项目时 skills_list / skills_read 不可见。
+   */
+  skillsDir?: () => string | null
 }
 
 export interface ToolRegistry {
@@ -312,6 +318,8 @@ export function createToolRegistry(deps: ToolRegistryDeps = {}): ToolRegistry {
   for (const t of builtinIdeTools(deps)) put(t)
   // B3 Agent 地基（agent_memory_*：项目级持久记忆，跨会话留存，需项目上下文）
   for (const t of builtinMemoryTools(deps)) put(t)
+  // 用户技能包（skills_list/skills_read：只读本轮快照索引与正文，需项目上下文）
+  for (const t of builtinSkillTools(deps)) put(t)
   // M1 多代理（agent_delegate：子代理委派；visibility 由设置 ai.subAgentEnabled 门控）
   for (const t of builtinSubAgentTools(deps)) put(t)
   // M12 语义资产工具（造匠 Agent：直接读写 .kunyu/content JSON，表单/生成器同源）

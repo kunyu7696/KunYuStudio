@@ -250,6 +250,14 @@ export const IpcChannels = {
   AI_STREAM_EVENT: 'ai:stream-event',
   /** KunYuStudio 应用能力清单（AI 助手自我认知语料，main 读参考包 kunyu_capabilities.md） */
   AI_KUNYU_CAPABILITIES: 'ai:kunyu-capabilities',
+  // 用户技能包（Agent Skills 标准 SKILL.md；全局安装、run 级快照、只读工具）
+  SKILL_LIST: 'skill:list',
+  SKILL_IMPORT_FILE: 'skill:import-file',
+  SKILL_IMPORT_DIR: 'skill:import-dir',
+  SKILL_SET_ENABLED: 'skill:set-enabled',
+  SKILL_REMOVE: 'skill:remove',
+  SKILL_READ: 'skill:read',
+  SKILL_RELOAD: 'skill:reload',
   /** 知识库语料包状态：指纹一致性、登记版本、过期天数 */
   KNOWLEDGE_PACK_STATUS: 'knowledge:pack-status',
   /** kbRag 索引完整状态（知识库状态面板） */
@@ -333,6 +341,11 @@ export const IpcChannels = {
   MODLIB_REVEAL: 'modlib:reveal',
   /** 补齐旧版条目的平台图标（返回是否有更新） */
   MODLIB_ENRICH_ICONS: 'modlib:enrich-icons',
+  // 构建依赖（Maven 坐标）管理：幂等改写模组项目 build.gradle
+  DEPENDENCY_STATE: 'dependency:state',
+  DEPENDENCY_ADD: 'dependency:add',
+  DEPENDENCY_REMOVE: 'dependency:remove',
+  DEPENDENCY_REMOVE_REPOSITORY: 'dependency:remove-repository',
   /** M16 en→zh 自动翻译（市场结果/社区页内文本批量翻译） */
   TRANSLATE_BATCH: 'translate:batch',
   /** M17 KunYu 创作社区：跨项目创作聚合 + .kyshare.json 分享包导出/导入 */
@@ -1373,6 +1386,26 @@ export interface IpcApi {
       error: string
     }>
   }
+  /** 用户技能包（Agent Skills 标准 SKILL.md；安装/启停/删除只能由用户在此操作） */
+  skill: {
+    /** 扫描全局技能根（含被拒绝技能的问题列表与根路径） */
+    list(): Promise<import('./skill').SkillListResult>
+    /** 导入单个 SKILL.md（path 来自 dialog.selectFile） */
+    importFile(path: string): Promise<import('./skill').SkillMutationResult>
+    /** 导入技能包目录（path 来自 dialog.selectDirectory） */
+    importDirectory(path: string): Promise<import('./skill').SkillMutationResult>
+    /** 启用/禁用（按磁盘目录名定位，运行中的快照不受影响） */
+    setEnabled(dirName: string, enabled: boolean): Promise<import('./skill').SkillMutationResult>
+    /** 删除技能目录 */
+    remove(dirName: string): Promise<import('./skill').SkillMutationResult>
+    /** 读取技能包内文本文件（默认 SKILL.md；≤256 KiB） */
+    read(
+      dirName: string,
+      file?: string
+    ): Promise<{ ok: true; text: string; path: string } | { ok: false; error: string }>
+    /** 清空扫描缓存（外部手动改动技能包后使用） */
+    reload(): Promise<void>
+  }
   /** M7 AI 参考包（manifest 与单模板内容） */
   aiRef: {
     getManifest(): Promise<import('./aiReference').ReferenceManifest | null>
@@ -1557,6 +1590,16 @@ export interface IpcApi {
     reveal(fileName: string): Promise<boolean>
     /** 补齐旧版条目的平台图标；返回是否有更新（离线时静默为 false） */
     enrichIcons(): Promise<boolean>
+  }
+  /** 构建依赖（Maven 坐标）：只管理带 kunyu 标记的行，用户手写内容零触碰 */
+  dependency: {
+    state(projectPath: string): Promise<import('./dependency').DependencyFileState>
+    add(
+      projectPath: string,
+      input: import('./dependency').DependencyAddInput
+    ): Promise<import('./dependency').DependencyOpResult>
+    remove(projectPath: string, notation: string): Promise<import('./dependency').DependencyOpResult>
+    removeRepository(projectPath: string, url: string): Promise<import('./dependency').DependencyOpResult>
   }
   /** M16 en→zh 自动翻译：AI 优先、免费接口兜底、命中缓存零开销；null 表示该条展示原文 */
   translate: {

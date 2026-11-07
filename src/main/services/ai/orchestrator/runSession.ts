@@ -4,10 +4,11 @@
  * 导出（jar/zip）已从流水线分离为手动操作（AGENT_EXPORT_NOW），不再自动执行。
  * 原方法闭包捕获的依赖改经 RunSessionContext 显式传入；方法体逐行原样搬迁，零行为变更。
  */
-import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import type { AsyncLocalStorage } from 'node:async_hooks'
+import { app } from 'electron'
 
 import {
   type AcceptanceContract,
@@ -80,12 +81,23 @@ import {
 import { mergeGeneratedIntoFiles, runGeneratePipeline } from './generatePipeline'
 import { hasGradlew, isComboActive, runBuildLoop } from './buildLoop'
 import { createWriteThrough, type WriteThroughPort } from './writeThrough'
+import { createSkillSnapshot, emptySkillSnapshot } from '../skills/runSkills'
+import { skillRootFromUserData } from '../skills/store'
+import type { SkillIndexEntry } from '../../../../shared/types/skill'
 import { buildArtifact } from './exportStage'
 import { mergeFileChanges, parsePlanJson, sanitizePlan } from './planParse'
 import { intentLabel, mcpCapabilitySection, understandMessages } from './prompts'
 import { composeReply } from './reply'
 import { deriveRunOutcome } from './runOutcome'
 import { findModelAssetPaths, runVisualReview } from './visualReview'
+import { resolveModelProfile } from '../../../../shared/types/modelProfile'
+import { resolveRunBudget } from '../../../../shared/services/runBudget'
+import {
+  formatReviewIssues,
+  runIndependentReview,
+  type IndependentReviewOutcome,
+  type ReviewFileInput
+} from './independentReview'
 import { renderModelSnapshot } from '../modelSnapshot'
 import { detectComboMismatch } from './comboCheck'
 
@@ -111,6 +123,10 @@ export interface RunScope {
    * 无项目 run 为 null（工具退回攒批模式）。
    */
   writeThrough: WriteThroughPort | null
+  /** 本轮用户技能快照根（无项目时为 null，skills_* 工具随之不可见） */
+  skillsDir: string | null
+  /** 本轮启用的技能索引（仅元数据，注入 generate system prompt；不含正文） */
+  skillsIndex: SkillIndexEntry[]
 }
 
 export const emptyScope = (): RunScope => ({
@@ -119,8 +135,22 @@ export const emptyScope = (): RunScope => ({
   projectLoader: null,
   referenceImages: [],
   budget: null,
-  writeThrough: null
+  writeThrough: null,
+  skillsDir: null,
+  skillsIndex: []
 })
+
+/**
+ * 全局技能根：`<userData>/workbench-skills`。
+ * 单测/非 Electron 环境取不到 userData 时返回 null（技能功能整体降级，不影响主流程）。
+ */
+function resolveSkillStoreRoot(): string | null {
+  try {
+    return skillRootFromUserData(app.getPath('userData'))
+  } catch {
+    return null
+  }
+}
 
 /**
  * runOrchestratorSession 的显式上下文：createOrchestrator 组装一次（成员均为稳定引用），
@@ -365,25 +395,8 @@ export async function runOrchestratorSession(
   }
   const tierCfg = TIER_CONFIGS[route.tier]
 
-  // run 级预算熔断：模型调用/Gradle 构建/墙钟三维硬上限，超限即停止并如实告知。
-  // onExceeded 先 emit 错误事件（UI 时间轴可见熔断原因），再抛 BudgetExceededError。
-  budget = createRunBudget(route.tier, now, (message) => {
-    emit(state.stage, { type: 'error', detail: message })
-  })
-  scope.budget = budget
-  /** 计入预算的模型调用入口：understand/generate/构建修复/测试自愈/视觉自审全部走此通道 */
-  const budgetedChat = async (req: Parameters<typeof chat>[0]): ReturnType<typeof chat> => {
-    budget!.consumeModel()
-    const response = await chat(req)
-    // 解析 usage 累计到 run 级，收尾统一落库（token/成本可查）
-    accumulateUsage(response.usage)
-    return response
-  }
-  /** 计入预算的 Gradle 构建入口：build 阶段与测试自愈重建全部走此通道 */
-  const budgetedRunGradle: typeof runGradle = (input, sink) => {
-    budget!.consumeBuild()
-    return runGradle(input, sink)
-  }
+  // run 级预算在模型解析之后创建：预算由「档位深度 × 模型真实价格」推导
+  // （见 shared/services/runBudget.ts），不再使用硬编码的五档常量。
 
   // 以下流水线主体整体包在 try 中：预算熔断异常在末尾统一转为「已熔断停止」失败回复。
   // （不重排缩进：try 的唯一职责是兜住 BudgetExceededError）
@@ -432,6 +445,42 @@ export async function runOrchestratorSession(
 
   // 单次请求显式 model 优先于档位配置
   const effectiveModel = request.model ?? tierModel
+
+  // run 级预算熔断：由档位深度 × 模型真实价格推导（模型调用/构建/墙钟/成本四维上限）。
+  // onExceeded 先 emit 错误事件（UI 时间轴可见熔断原因），再抛 BudgetExceededError。
+  const aiCfg = getSection('ai')
+  const providerCfg = aiCfg.providers.find((p) => p.id === pid)
+  const modelProfile = providerCfg ? resolveModelProfile(providerCfg, effectiveModel ?? '') : null
+  const resolvedBudget = resolveRunBudget(route.tier, modelProfile, {
+    maxRunCostUsd: aiCfg.maxRunCostUsd
+  })
+  budget = createRunBudget(resolvedBudget, now, (message) => {
+    emit(state.stage, { type: 'error', detail: message })
+  })
+  scope.budget = budget
+  emit('understand', {
+    type: 'log',
+    detail:
+      `预算（${resolvedBudget.source === 'pricing' ? '按模型价格推导' : resolvedBudget.source === 'unlimited' ? '本地/零价不限量' : '未识别价格回退'}）：` +
+      `${resolvedBudget.maxModelCalls} 次模型调用 / ${resolvedBudget.maxGradleBuilds} 次构建 / ${resolvedBudget.maxWallMinutes} 分钟` +
+      (resolvedBudget.maxCostUsd !== null ? ` · 成本上限 $${resolvedBudget.maxCostUsd}` : '')
+  })
+  for (const note of resolvedBudget.notes) {
+    emit('understand', { type: 'log', detail: `预算说明：${note}` })
+  }
+  /** 计入预算的模型调用入口：understand/generate/构建修复/测试自愈/视觉自审/独立审查全部走此通道 */
+  const budgetedChat = async (req: Parameters<typeof chat>[0]): ReturnType<typeof chat> => {
+    budget!.consumeModel()
+    const response = await chat(req)
+    // 解析 usage 累计到 run 级，收尾统一落库（token/成本可查）
+    accumulateUsage(response.usage)
+    return response
+  }
+  /** 计入预算的 Gradle 构建入口：build 阶段与测试自愈重建全部走此通道 */
+  const budgetedRunGradle: typeof runGradle = (input, sink) => {
+    budget!.consumeBuild()
+    return runGradle(input, sink)
+  }
 
   const ask = async (
     messages: ChatMessage[],
@@ -591,6 +640,25 @@ export async function runOrchestratorSession(
       })
     : null
   scope.writeThrough = writeThrough
+  // 用户技能快照：每轮把全局启用技能复制到项目内 run 级目录（运行中改技能不影响本轮）。
+  // 无项目 / 取不到 userData（单测环境）时为空快照 → skills_* 调用软失败且不注入索引。
+  const skillStoreRoot = resolveSkillStoreRoot()
+  const skillSnapshot =
+    project && skillStoreRoot
+      ? createSkillSnapshot({
+          storeRoot: skillStoreRoot,
+          projectRoot: project.path,
+          runId
+        })
+      : emptySkillSnapshot()
+  scope.skillsDir = skillSnapshot.root
+  scope.skillsIndex = skillSnapshot.entries
+  if (skillSnapshot.entries.length > 0) {
+    emit('understand', {
+      type: 'log',
+      detail: `用户技能：本轮快照索引 ${skillSnapshot.entries.length} 个（正文由 skills_read 按需读取）`
+    })
+  }
   // 端口按 runId 登记到实例级表——run 结束后「对比/单文件回滚」仍可用
   if (writeThrough) registerWriteThrough(runId, writeThrough)
   // 请求组合与工程实际组合不一致时提示（不拒绝，17 个组合全激活）
@@ -623,6 +691,8 @@ export async function runOrchestratorSession(
   let genAssetSaves = 0
   /** generate 阶段上报的静态缺口（缺 Java/贴图/被拒文件）；非空则封顶 partial 并可续跑 */
   let genGaps: string[] = []
+  /** 终点写盘前的原文快照（独立审查据此生成真实 diff；write-through 路径由其自身快照提供） */
+  const preWriteOriginals = new Map<string, string | null>()
   if (plan.stages.includes('generate')) {
     await enter('generate', 'generating')
     if (state.canceled) return finishCanceled({ intent: plan.intent, tier: route.tier, tierMatched: route.matched })
@@ -674,6 +744,7 @@ export async function runOrchestratorSession(
         emit,
         budget,
         resumeFrom,
+        skillsIndex: scope.skillsIndex,
         onSubtaskCheckpoint: (p) =>
           persistCheckpoint({
             completedStage: checkpoint.completedStage,
@@ -731,6 +802,7 @@ export async function runOrchestratorSession(
       budget,
       writeThrough,
       resumeFrom,
+      skillsIndex: scope.skillsIndex,
       onSubtaskCheckpoint: (p) =>
         persistCheckpoint({
           completedStage: checkpoint.completedStage,
@@ -763,6 +835,11 @@ export async function runOrchestratorSession(
         if (!change.accepted) continue
         if (alreadyWritten?.has(change.path)) continue
         const abs = resolve(project.path, change.path)
+        // 独立审查要「变更前 vs 变更后」真实 diff：写盘前留底（write-through 路径已有快照）
+        preWriteOriginals.set(
+          change.path,
+          existsSync(abs) ? readFileSync(abs, 'utf8') : null
+        )
         try {
           writeFileSafe(abs, change.content)
           emit('generate', {
@@ -893,6 +970,180 @@ export async function runOrchestratorSession(
         type: 'artifact',
         artifact: buildContractArtifact(`${runId}-contract`, evaluated)
       })
+    }
+
+    // ---------------- 独立审查：只看 diff + 验收条件，不看生成过程 ----------------
+    // 生成者自审的缺陷是「同一上下文里自己给自己打分」；这里把审查者做成只读
+    // diff 的角色：不传计划、推理、工具轨迹与自述，只传真实变更前后的 unified diff、
+    // 验收条件与项目类型。审查者明确 fail 时回滚本次写入并阻断 build/test。
+    const reviewCfg = aiCfg.independentReview ?? {
+      enabled: false,
+      providerId: null,
+      model: null
+    }
+    if (
+      project &&
+      produced &&
+      (plan.intent === 'code' || plan.intent === 'fix') &&
+      reviewCfg.enabled &&
+      !state.canceled
+    ) {
+      const reviewFiles: ReviewFileInput[] = []
+      for (const change of files) {
+        if (!change.accepted) continue
+        const snap = writeThrough?.snapshotOf(change.path)
+        // 变更前内容必须是真实的：write-through 快照 / 写盘前留底 / 明确的新建
+        const knownBefore =
+          snap !== undefined || preWriteOriginals.has(change.path) || change.action === 'create'
+        if (!knownBefore) continue
+        const before = snap !== undefined ? snap : (preWriteOriginals.get(change.path) ?? null)
+        const abs = resolve(project.path, change.path)
+        let after = change.content
+        try {
+          if (existsSync(abs)) after = readFileSync(abs, 'utf8')
+        } catch {
+          /* 读不到落盘内容时退回内存中的变更内容 */
+        }
+        reviewFiles.push({ path: change.path, before, after, action: change.action })
+      }
+
+      if (reviewFiles.length > 0) {
+        emit('generate', {
+          type: 'phase',
+          phase: 'running',
+          action: `独立审查：只审 diff（${reviewFiles.length} 个文件）+ 验收条件，隔离生成过程…`
+        })
+        const reviewPid = reviewCfg.providerId ?? pid
+        const reviewProvider = aiCfg.providers.find((p) => p.id === reviewPid)
+        const reviewModel =
+          reviewCfg.model ?? (reviewCfg.providerId ? reviewProvider?.model : effectiveModel) ?? undefined
+        const projectType =
+          `${project.type}（${project.loader ?? 'unknown'} / ${project.mcVersion}）`
+        let reviewOutcome: IndependentReviewOutcome
+        try {
+          reviewOutcome = await runIndependentReview(
+            {
+              ask: async (messages) => {
+                const resp = await budgetedChat({
+                  providerId: reviewPid,
+                  messages,
+                  ...(reviewModel ? { model: reviewModel } : {}),
+                  maxTokens: 1500,
+                  temperature: 0.1,
+                  toolChoice: 'none'
+                })
+                return resp.content ?? ''
+              },
+              log: (detail) => emit('generate', { type: 'log', detail })
+            },
+            {
+              projectType,
+              acceptance: (contract?.assertions ?? []).map(
+                (a) => a.description || `${a.kind}: ${a.expected}`
+              ),
+              files: reviewFiles
+            }
+          )
+        } catch (err) {
+          // 预算熔断必须上抛（外层统一转失败回复），不能降级为 skipped
+          if (err instanceof BudgetExceededError) throw err
+          reviewOutcome = {
+            status: 'skipped' as const,
+            summary: `独立审查不可用：${(err as Error).message}`,
+            issues: [],
+            reviewedFiles: reviewFiles.length,
+            diffChars: 0
+          }
+        }
+
+        emit('generate', {
+          type: 'log',
+          detail:
+            reviewOutcome.status === 'skipped'
+              ? `独立审查跳过：${reviewOutcome.summary}`
+              : `独立审查${reviewOutcome.status === 'pass' ? '通过' : '未通过'}：${reviewOutcome.summary}` +
+                `（审查 ${reviewOutcome.reviewedFiles} 个文件 / ${reviewOutcome.diffChars} 字符 diff）`
+        })
+
+        if (reviewOutcome.status === 'fail') {
+          /* 阻断 apply：回滚本次写入（write-through 走快照，其余按写盘前留底恢复/删除） */
+          for (const f of reviewFiles) {
+            if (writeThrough?.snapshotOf(f.path) !== undefined) continue
+            const abs = resolve(project.path, f.path)
+            try {
+              if (f.before === null) rmSync(abs, { force: true })
+              else writeFileSafe(abs, f.before)
+            } catch {
+              /* 回滚失败不阻断失败报告 */
+            }
+          }
+          writeThrough?.rollback(reviewFiles.map((f) => f.path))
+          const reviewedPaths = new Set(reviewFiles.map((f) => f.path))
+          for (const f of files) {
+            if (!reviewedPaths.has(f.path)) continue
+            f.accepted = false
+            f.reason = '独立审查未通过，已回滚'
+          }
+
+          const blockers = reviewOutcome.issues.filter((i) => i.severity === 'blocker')
+          const issueText = formatReviewIssues(reviewOutcome.issues)
+          const failReply =
+            `**独立审查未通过**（${tierCfg.name}档） —— 审查者只读取变更后的 diff 与验收条件，` +
+            `发现 ${blockers.length} 个阻断问题；本次变更已回滚，未进入构建。\n\n` +
+            `阻断问题：\n${issueText}\n\n` +
+            `审查结论：${reviewOutcome.summary}\n\n` +
+            `处理建议：按上述「文件:行」修正后回复「继续」；若认为审查误判，可关闭「设置 → AI 助手 → 独立审查」后重试。`
+          emit('generate', {
+            type: 'artifact',
+            artifact: {
+              id: `${runId}-independent-review`,
+              kind: 'error',
+              title: '独立审查（未通过，已回滚）',
+              body: [reviewOutcome.summary, issueText].filter(Boolean).join('\n\n')
+            }
+          })
+          for (const s of ['build', 'test', 'export'] as StageId[]) {
+            if (!skippedStages.includes(s)) skippedStages.push(s)
+          }
+          emit('understand', { type: 'reply', reply: failReply })
+          runs.delete(runId)
+          persistFinish('failed', failReply, {
+            ...checkpoint,
+            completedStage: 'generate',
+            plan,
+            files,
+            templates,
+            contract,
+            generateNotes,
+            skippedStages: [...skippedStages]
+          })
+          return {
+            runId,
+            intent: plan.intent,
+            tier: route.tier,
+            tierMatched: route.matched,
+            reply: failReply,
+            files,
+            build: null,
+            test: null,
+            export: null,
+            skippedStages,
+            canceled: false
+          }
+        }
+
+        emit('generate', {
+          type: 'artifact',
+          artifact: {
+            id: `${runId}-independent-review`,
+            kind: 'contract',
+            title: '独立审查（通过）',
+            body: [reviewOutcome.summary, ...reviewOutcome.issues.map((i) => `- ${i.file}: ${i.reason}`)]
+              .filter(Boolean)
+              .join('\n')
+          }
+        })
+      }
     }
 
     // 反幻觉硬门：code/fix 意图在有项目时必须有真实落盘（文件写入或语义资产）。

@@ -21,6 +21,8 @@
     "build:linux": "node scripts/build-observer-agent.cjs && node scripts/run-electron-vite.cjs build && node scripts/assert-out-fresh.cjs && electron-builder --linux --publish never && node scripts/verify-dist-freshness.cjs",
     "release:linux": "node scripts/build-observer-agent.cjs && node scripts/run-electron-vite.cjs build && node scripts/assert-out-fresh.cjs && electron-builder --linux --publish always && node scripts/verify-dist-freshness.cjs",
     "fetch-models": "node scripts/fetch-models.mjs",
+    "tools:inventory": "vite-node scripts/tools-inventory.ts",
+    "models:refresh": "node scripts/refresh-model-catalog.mjs",
     "kb:manifest": "node scripts/build-knowledge-manifest.mjs",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:web": "vue-tsc --noEmit -p tsconfig.web.json --composite false",

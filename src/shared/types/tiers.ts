@@ -76,13 +76,12 @@ export interface TierRunBudget {
   maxWallMinutes: number
 }
 
-export const TIER_RUN_BUDGETS: Record<TierId, TierRunBudget> = {
-  sprinter: { maxModelCalls: 24, maxGradleBuilds: 3, maxWallMinutes: 30 },
-  artisan: { maxModelCalls: 48, maxGradleBuilds: 6, maxWallMinutes: 60 },
-  master: { maxModelCalls: 72, maxGradleBuilds: 10, maxWallMinutes: 90 },
-  bridge: { maxModelCalls: 96, maxGradleBuilds: 12, maxWallMinutes: 120 },
-  weaver: { maxModelCalls: 144, maxGradleBuilds: 14, maxWallMinutes: 150 }
-}
+/**
+ * 注意：这里不再维护五档硬编码预算。实际预算由
+ * `shared/services/runBudget.ts` 的 `resolveRunBudget(tier, profile)` 按
+ * 「档位深度 × 模型真实价格」推导；未知价格的模型才回退到该文件里的
+ * `FALLBACK_TIER_RUN_BUDGETS`。本接口只描述预算形状。
+ */
 
 export const TIER_CONFIGS: Record<TierId, TierConfig> = {
   sprinter: {

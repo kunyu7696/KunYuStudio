@@ -31,6 +31,7 @@ import { builtinTodoTools } from '../fcTools/todoTools'
 import { builtinWebTools } from '../fcTools/webTools'
 import { builtinIdeTools } from '../fcTools/ideTools'
 import { builtinMemoryTools } from '../fcTools/memoryTools'
+import { builtinSkillTools } from '../fcTools/skills'
 import { builtinSubAgentTools } from '../fcTools/subAgentTools'
 import { builtinContentTools } from '../fcTools/contentTools'
 import { builtinSchedulingTools } from '../fcTools/schedulingTools'
@@ -186,6 +187,7 @@ describe('命名纪律（P6）', () => {
       ...builtinWebTools(),
       ...builtinIdeTools(d),
       ...builtinMemoryTools(d),
+      ...builtinSkillTools(d),
       ...builtinSubAgentTools(d),
       ...builtinContentTools(d),
       ...builtinSchedulingTools(d),

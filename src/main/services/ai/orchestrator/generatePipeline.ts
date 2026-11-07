@@ -29,6 +29,7 @@ import { gatePaused, BudgetExceededError, type GenerateOutcome, type GeneratePip
 import { mergeFileChanges, parseCoderJson, validateFileChanges } from './planParse'
 import { generateSystemPrompt, mcpCapabilitySection } from './prompts'
 import { renderPlaybookSection, selectPlaybooks } from '../playbooks/index'
+import { renderSkillSection } from '../skills/runSkills'
 import { clip } from './reply'
 import { ToolLoopGuard, WRITE_TOOL_NAMES, clipToolResult } from './toolGuards'
 import {
@@ -829,6 +830,8 @@ async function runToolLoop(
     })
   )
   let fcUnsupported = false
+  // 用户技能索引：只注入元数据（正文由 skills_read 按需读取）；空列表不注入
+  const skillsSection = renderSkillSection(input.skillsIndex ?? [])
 
   // 领域事实层——项目事实槽压成一行注入头部，长任务中「加载器/版本/ID/构建状态」不衰减
   const factsLine = factsToPromptLine(readFacts(project?.path))
@@ -838,7 +841,7 @@ async function runToolLoop(
   const entityMode = aiSettings.entityFreeformEnabled ? input.plan.entityMode : 'schema'
 
   const messages: ChatMessage[] = [
-    generateSystemPrompt(request, tier, input.ctx, project, toolDesc, entityMode, playbookSection, aiSettings.globalFreeformEnabled),
+    generateSystemPrompt(request, tier, input.ctx, project, toolDesc, entityMode, playbookSection, aiSettings.globalFreeformEnabled, skillsSection),
     ...(factsLine
       ? [{ role: 'system' as const, content: `项目事实（全轮有效，不得违背）：${factsLine}` } satisfies ChatMessage]
       : []),
@@ -992,10 +995,12 @@ async function runToolLoop(
       messages.push({
         role: 'tool',
         toolCallId: tc.id,
-        // 单文件直读放宽到 40K（工具自身已限 30K）；其他工具保持 8K 防上下文爆炸
+        // 单文件直读 / 技能正文放宽到 40K（工具自身已限 30K / 256KiB）；其他工具保持 8K 防上下文爆炸
         content: clipToolResult(
           toolText,
-          tc.function.name === 'read_project_file' ? 40_000 : TOOL_RESULT_CLIP
+          tc.function.name === 'read_project_file' || tc.function.name === 'skills_read'
+            ? 40_000
+            : TOOL_RESULT_CLIP
         )
       })
     }

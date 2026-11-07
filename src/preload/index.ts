@@ -401,6 +401,16 @@ const api: IpcApi = {
     /** KunYuStudio 应用能力清单（自我认知语料）；参考包缺失时返回 null */
     kunyuCapabilities: () => ipcRenderer.invoke(IpcChannels.AI_KUNYU_CAPABILITIES)
   },
+  skill: {
+    list: () => ipcRenderer.invoke(IpcChannels.SKILL_LIST),
+    importFile: (path) => ipcRenderer.invoke(IpcChannels.SKILL_IMPORT_FILE, path),
+    importDirectory: (path) => ipcRenderer.invoke(IpcChannels.SKILL_IMPORT_DIR, path),
+    setEnabled: (dirName, enabled) =>
+      ipcRenderer.invoke(IpcChannels.SKILL_SET_ENABLED, dirName, enabled),
+    remove: (dirName) => ipcRenderer.invoke(IpcChannels.SKILL_REMOVE, dirName),
+    read: (dirName, file) => ipcRenderer.invoke(IpcChannels.SKILL_READ, dirName, file),
+    reload: () => ipcRenderer.invoke(IpcChannels.SKILL_RELOAD)
+  },
   aiRef: {
     getManifest: () => ipcRenderer.invoke(IpcChannels.REF_GET_MANIFEST),
     getTemplate: (id) => ipcRenderer.invoke(IpcChannels.REF_GET_TEMPLATE, id)
@@ -472,6 +482,13 @@ const api: IpcApi = {
     root: () => ipcRenderer.invoke(IpcChannels.MODLIB_ROOT),
     reveal: (fileName) => ipcRenderer.invoke(IpcChannels.MODLIB_REVEAL, fileName),
     enrichIcons: () => ipcRenderer.invoke(IpcChannels.MODLIB_ENRICH_ICONS)
+  },
+  dependency: {
+    state: (projectPath) => ipcRenderer.invoke(IpcChannels.DEPENDENCY_STATE, projectPath),
+    add: (projectPath, input) => ipcRenderer.invoke(IpcChannels.DEPENDENCY_ADD, projectPath, input),
+    remove: (projectPath, notation) => ipcRenderer.invoke(IpcChannels.DEPENDENCY_REMOVE, projectPath, notation),
+    removeRepository: (projectPath, url) =>
+      ipcRenderer.invoke(IpcChannels.DEPENDENCY_REMOVE_REPOSITORY, projectPath, url)
   },
   translate: {
     toZh: (texts) => ipcRenderer.invoke(IpcChannels.TRANSLATE_BATCH, texts)

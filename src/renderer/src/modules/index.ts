@@ -10,6 +10,7 @@ import {
   Grid,
   Headset,
   Menu,
+  Paperclip,
   Picture,
   Reading,
   Search,
@@ -83,6 +84,18 @@ export function registerBuiltinModules(): void {
     projectTypes: ['mod'],
     requireProject: true,
     loader: () => import('./unified/UnifiedEditorView.vue')
+  })
+
+  // 构建依赖：模组项目的编译期依赖管理（Maven 坐标幂等注入 build.gradle）
+  // 与整合包的「运行期 jar 管理」（资源库 → run/mods）是两条独立链路
+  moduleRegistry.register({
+    id: 'dependencies',
+    name: '构建依赖',
+    icon: Paperclip,
+    description: '按 Maven 坐标管理编译期依赖：幂等注入 build.gradle 的仓库与依赖声明，可逐条撤销',
+    projectTypes: ['mod'],
+    requireProject: true,
+    loader: () => import('./dependencies/DependencyView.vue')
   })
 
   // 模型工坊：通用建模器（ModelDocument 原生文档 + 撤销栈），P0 只读视口骨架

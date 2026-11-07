@@ -145,7 +145,7 @@ docs/         设计文档（见下）
 | --- | --- |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 进程模型、目录结构、IPC、数据流、安全模型 |
 | [docs/FEATURES.md](docs/FEATURES.md) | 23 个活动栏模块与工程链路能力清单 |
-| [docs/AI-PIPELINE.md](docs/AI-PIPELINE.md) | AI 子系统：五档编排、93 个内置工具、上下文管理、RAG、三态验收 |
+| [docs/AI-PIPELINE.md](docs/AI-PIPELINE.md) | AI 子系统：五档编排、内置工具（数量见 [TOOLS-INVENTORY.json](docs/TOOLS-INVENTORY.json)）、上下文管理、RAG、三态验收 |
 | [docs/MODELER.md](docs/MODELER.md) | 建模器：架构、文档模型、格式矩阵、操作说明 |
 | [docs/PLUGINS.md](docs/PLUGINS.md) | 插件体系：清单格式、权限模型、语言插件与 DSH 兼容宿主 |
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | 开发环境、脚本、测试策略、代码约定 |

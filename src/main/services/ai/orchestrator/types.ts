@@ -12,7 +12,8 @@ import type {
 } from '../../../../shared/types/agent'
 import type { AgentRunStore } from '../../agentRunStore'
 import type { GradleEvent, GradleRunInput } from '../../../../shared/types/build'
-import { TIER_RUN_BUDGETS, type StageId, type TierId } from '../../../../shared/types/tiers'
+import type { StageId, TierId } from '../../../../shared/types/tiers'
+import type { ResolvedRunBudget } from '../../../../shared/services/runBudget'
 import type { AiChatRequest, AiChatResponse } from '../../../../shared/types/ai'
 import type { ModLoader, ProjectType } from '../../../../shared/types/project'
 import type { ModpackAssembleResult } from '../../../../shared/types/modpack'
@@ -156,6 +157,11 @@ export interface GeneratePipelineInput {
   writeThrough?: import('./writeThrough').WriteThroughPort | null
   /** 断点续跑：历史快照（织星档据此恢复子任务级进度，跳过已完成子任务） */
   resumeFrom?: AgentRunCheckpoint
+  /**
+   * 本轮启用的用户技能索引（只有元数据，无正文）。
+   * generate 首轮注入 system prompt；正文由 skills_read 按需读取。
+   */
+  skillsIndex?: import('../../../../shared/types/skill').SkillIndexEntry[]
   /** 织星档子任务级断点回调：每完成一个子任务由 generatePipeline 回调一次 */
   onSubtaskCheckpoint?: (progress: WeaverSubtaskProgress) => void
   /**
@@ -236,20 +242,21 @@ export interface RunBudgetTracker {
 }
 
 /**
- * 创建 run 级预算追踪器。onExceeded 在熔断前回调一次（用于先 emit 错误事件再抛出，
+ * 创建 run 级预算追踪器。预算由 `resolveRunBudget(tier, profile)` 按模型价格推导，
+ * 这里只负责记账与熔断；onExceeded 在熔断前回调一次（用于先 emit 错误事件再抛出，
  * 保证 UI 时间轴能看到熔断原因）。
  */
 export function createRunBudget(
-  tier: TierId,
+  cfg: ResolvedRunBudget,
   now: () => Date,
   onExceeded?: (message: string) => void
 ): RunBudgetTracker {
-  const cfg = TIER_RUN_BUDGETS[tier]
   const startMs = now().getTime()
   const startedAt = new Date(startMs).toISOString()
   const wallMaxMs = cfg.maxWallMinutes * 60_000
   let modelCalls = 0
   let gradleBuilds = 0
+  let spentCostUsd = 0
   const fail = (message: string): never => {
     onExceeded?.(message)
     throw new BudgetExceededError(message)
@@ -268,8 +275,16 @@ export function createRunBudget(
       modelCalls += 1
       if (modelCalls > cfg.maxModelCalls) {
         fail(
-          `本次运行模型调用已达 ${cfg.maxModelCalls} 次上限（当前档位的预算熔断），已停止以防继续消耗 API 额度；` +
-            '可换更低档位、拆分需求后重试，或查看日志手动介入。'
+          `本次运行模型调用已达 ${cfg.maxModelCalls} 次上限（${cfg.modelLabel} 按档位深度/价格推导），` +
+            '已停止以防继续消耗 API 额度；可换更低档位、拆分需求后重试，或查看日志手动介入。'
+        )
+      }
+      const perCall = cfg.estimatedCostPerCallUsd
+      if (perCall !== null) spentCostUsd += perCall
+      if (cfg.maxCostUsd !== null && spentCostUsd > cfg.maxCostUsd) {
+        fail(
+          `本次运行估算成本已达 $${spentCostUsd.toFixed(4)}，超过单次任务上限 $${cfg.maxCostUsd.toFixed(4)}` +
+            `（${cfg.modelLabel}），已熔断停止；可换更便宜的模型或调高「单次任务成本上限」。`
         )
       }
     },
@@ -278,7 +293,7 @@ export function createRunBudget(
       gradleBuilds += 1
       if (gradleBuilds > cfg.maxGradleBuilds) {
         fail(
-          `本次运行 Gradle 构建已达 ${cfg.maxGradleBuilds} 次上限（当前档位的预算熔断），已停止；` +
+          `本次运行 Gradle 构建已达 ${cfg.maxGradleBuilds} 次上限（当前档位推导），已停止；` +
             '请查看构建日志与命中模式手动介入。'
         )
       }
@@ -290,7 +305,11 @@ export function createRunBudget(
         gradleBuildsUsed: gradleBuilds,
         gradleBuildsMax: cfg.maxGradleBuilds,
         startedAt,
-        wallMaxMs
+        wallMaxMs,
+        estimatedCostUsd: Number(spentCostUsd.toFixed(6)),
+        costMaxUsd: cfg.maxCostUsd,
+        budgetSource: cfg.source,
+        modelLabel: cfg.modelLabel
       }
     }
   }

@@ -4,6 +4,13 @@
 
 ### 新增
 
+- **构建依赖（Maven 坐标）管理**：模组项目新增「构建依赖」模块，按 `group:artifact:version` 把编译期依赖写进项目 `build.gradle` 的 `repositories` / `dependencies`。
+  - 只认自己写的行（行尾 `// kunyu:dep:<group>:<artifact>` / `// kunyu:maven:<url>` 标记），用户手写的仓库与依赖不读取、不修改、不展示
+  - 幂等：重复添加同一坐标不产生重复行，改版本原地更新；撤销依赖/仓库即删对应标记行
+  - 坐标与仓库名做白名单校验（仓库仅接受 https、拒绝内嵌凭证与查询串），防止把引号/换行注入构建脚本
+  - 默认配置按加载器区分：Fabric 用 `modImplementation`，Forge/NeoForge 用 `implementation`
+  - 真机验证：对演示项目写入 GeckoLib 坐标 → 落到正确的两个块内 → 撤销后 `build.gradle` 与原文件 SHA256 完全一致
+  - 缺口如实说明：这是**编译期**依赖链路，与资源库「下载 jar 到 `run/mods`」的运行期链路互相独立；不解析传递依赖，也不做版本冲突仲裁
 - **设置项「启动动画」开关**：关闭后启动直接进入主界面，运行中关闭也会立刻收起当前启动层
 - **生成任务的上下文交接**：AI 生成流水线压缩历史时，摘要同样写入项目记忆（`.kunyu/agent-memory.md`，`[上下文交接]` 标记），与聊天链路一致；此前长任务被压缩掉的结论下一次会话就没了
 - **加载器版本矩阵定时自动刷新**：新增 `scripts/refresh-loader-matrix.mjs`，配合 `.github/workflows/matrix-refresh.yml` 每天 UTC 03:00 拉取上游元数据，有变化自动开 PR。
@@ -16,6 +23,9 @@
 
 ### 修复
 
+- **五档预算与模型价格脱钩**：此前 `TIER_RUN_BUDGETS` 是硬编码常量（24/48/72/96/144 次），换贵模型照样跑满、换本地无限量模型也不会放宽，用户无法知道「哪个模型贵、哪个不限流」。新增 `src/shared/types/modelProfile.ts` 作为模型价格/上下文/能力/计费类型的单一数据源，数据来自 OpenRouter 公开模型 API 的真实价格快照（`src/shared/data/modelCatalog.json`，`npm run models:refresh` 刷新，运行时离线读取）；`resolveRunBudget(tier, profile)` 按「单次成本上限 × 档位份额 / 每次调用估算成本」推导调用次数，并在估算成本超限时熔断。零价/本地模型记为 `unlimited`，目录未收录的模型不猜价、回退固定上限并标注 `unknown`。设置页新增「单次任务成本上限」，运行日志逐条说明预算来源。
+- **自审不可信（生成者自己判断自己）**：此前 generate 后由同一模型、同一上下文复核自己的产出，看到的是自己的推理与自述，容易顺着结论打勾。新增独立审查阶段（`src/main/services/ai/orchestrator/independentReview.ts`）：审查者只接收变更前后的 unified diff、验收条件与项目类型，不接收生成过程/工具轨迹/模型自述；输出结构化「verdict + 问题清单（文件:行 + 理由）」。存在 blocker 时回滚本次写入并在 build 之前阻断，审查结论以 artifact 呈现；应答不可解析时降级为 skipped，不因审查自身不稳定误伤运行。设置页可指定独立审查模型（默认沿用生成模型但上下文完全隔离）或关闭该阶段。
+- **工具数量文档失真（无单一数据源）**：README 写「93 个」、AI-PIPELINE / ARCHITECTURE / FEATURES 写「66 个」，而注册表实测为 **35（无项目）/ 88（模组项目）/ 91（整合包项目）**——工具是按上下文门控动态暴露的，任何单一数字只对某个场景成立。新增 `src/main/services/ai/toolInventory.ts` 作为唯一口径，`npm run tools:inventory` 生成 `docs/TOOLS-INVENTORY.json`，`toolInventory.spec.ts` 守门（已注入错误计数验证会红）；四处文档改为引用该产物，不再手写数字
 - **「版本矩阵健康度」刷新按钮无效**：按钮此前只重读本地 overlay，而 overlay 对已存在的组合一旦写入就永不更新（`seedFromBaseline` 只补缺失项），所以参考包里更新的门禁结论永远进不来——实测本机 34 个组合的基线数据都比本地新。新增 `monitor:refresh` 通道：重读参考包基线，按 `lastVerifiedAt` 把更新的 `matrixHealth` 统计并入 overlay（不动灯色，避免旧基线把探针红灯刷回绿灯），并提示本次同步条数
 - **模型工坊保存写坏文档**：`serializeDocument` 本身已返回 JSON 字符串，调用处又 `JSON.stringify` 了一次，导致落盘的是被转义的字符串；主进程读回后 `format` 恒为 `undefined`，资源包/应用实体编译 100% 失败。自动保存与手动保存两处均已修正
 - **glTF 导入多轴旋转错误**：导入端自带的四元数转欧拉公式与导出端 `quatFromEulerXYZDeg` 不是同一旋转序，多轴旋转解出的角度完全对不上（如 `[30,40,50]` 解成 `[48.42,-1.44,60.49]`）；改为复用 `shared/modeler/quat.ts` 的 `eulerXYZDegFromQuat`

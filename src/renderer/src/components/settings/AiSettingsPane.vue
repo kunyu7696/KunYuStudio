@@ -735,6 +735,150 @@
       </p>
     </section>
 
+    <!-- 独立审查：只看 diff + 验收条件，隔离生成过程 -->
+    <section class="ext-card">
+      <div class="ext-top" data-setting-id="ai-independent-review">
+        <div class="ext-title">
+          <span class="ext-name">{{ t('settings.ai.independentReviewSection') }}</span>
+          <el-tag size="small" effect="plain">{{ t('settings.ai.independentReviewTag') }}</el-tag>
+        </div>
+        <el-switch
+          :model-value="settings.ai.independentReview.enabled"
+          @change="(v) => patchReview({ enabled: v === true })"
+        />
+      </div>
+      <p class="ext-desc">
+        {{ t('settings.ai.independentReviewDesc') }}
+      </p>
+      <div class="tier-model-row">
+        <span class="tier-model-name">{{ t('settings.ai.reviewProvider') }}</span>
+        <el-select
+          :model-value="settings.ai.independentReview.providerId ?? ''"
+          :placeholder="t('settings.ai.followGenerationModel')"
+          clearable
+          size="small"
+          class="tier-model-provider"
+          @change="(v) => patchReview({ providerId: (v as string | null) || null })"
+        >
+          <el-option
+            v-for="p in providers"
+            :key="p.id"
+            :label="p.name || p.id"
+            :value="p.id"
+          />
+        </el-select>
+        <el-input
+          :model-value="settings.ai.independentReview.model ?? ''"
+          :placeholder="t('settings.ai.reviewModelPlaceholder')"
+          size="small"
+          class="tier-model-model"
+          @change="(v) => patchReview({ model: (v as string).trim() || null })"
+        />
+      </div>
+    </section>
+
+    <!-- 单次任务成本上限：预算按模型真实价格推导，超限熔断 -->
+    <section class="ext-card">
+      <div class="ext-top" data-setting-id="ai-run-cost-cap">
+        <div class="ext-title">
+          <span class="ext-name">{{ t('settings.ai.budgetSection') }}</span>
+          <el-tag size="small" effect="plain">{{ t('settings.ai.budgetTag') }}</el-tag>
+        </div>
+        <el-input-number
+          :model-value="settings.ai.maxRunCostUsd"
+          :min="0"
+          :max="1000"
+          :step="0.1"
+          :precision="2"
+          size="small"
+          @change="(v) => settings.patchSection('ai', { maxRunCostUsd: typeof v === 'number' ? v : 0 })"
+        />
+      </div>
+      <p class="ext-desc">
+        {{ t('settings.ai.budgetDesc') }}
+      </p>
+    </section>
+
+    <!-- 用户技能包：Agent Skills 标准 SKILL.md；AI 只读索引 + 按需读正文 -->
+    <section class="ext-card">
+      <div class="ext-top" data-setting-id="ai-user-skills">
+        <div class="ext-title">
+          <span class="ext-name">{{ t('settings.ai.skills.section') }}</span>
+          <el-tag size="small" effect="plain">{{ t('settings.ai.skills.tag') }}</el-tag>
+        </div>
+        <div class="skill-actions">
+          <el-button size="small" :loading="skillLoading" @click="refreshSkills">
+            {{ t('settings.ai.skills.reload') }}
+          </el-button>
+          <el-button size="small" :disabled="!skillRoot" @click="openSkillRoot">
+            {{ t('settings.ai.skills.openDir') }}
+          </el-button>
+          <el-button size="small" @click="importSkillDirectory">
+            {{ t('settings.ai.skills.importDir') }}
+          </el-button>
+          <el-button size="small" type="primary" @click="importSkillFile">
+            {{ t('settings.ai.skills.importFile') }}
+          </el-button>
+        </div>
+      </div>
+      <p class="ext-desc">
+        {{ t('settings.ai.skills.desc') }}
+      </p>
+
+      <div v-if="skillIssues.length > 0" class="skill-issues">
+        <div
+          v-for="issue in skillIssues"
+          :key="`${issue.dirName}:${issue.message}`"
+          class="skill-issue"
+        >
+          {{ issue.dirName || '-' }}：{{ issue.message }}
+        </div>
+      </div>
+
+      <div v-if="skillLoading && skills.length === 0" class="ext-empty">
+        {{ t('settings.ai.skills.loading') }}
+      </div>
+      <div v-else-if="skills.length === 0" class="ext-empty">
+        {{ t('settings.ai.skills.empty') }}
+      </div>
+      <div v-for="skill in skills" :key="skill.dirName" class="skill-row">
+        <div class="skill-row-main">
+          <div class="skill-row-head">
+            <span class="skill-name">{{ skill.name }}</span>
+            <el-tag size="small" effect="plain" type="info">v{{ skill.version }}</el-tag>
+            <el-tag size="small" effect="plain">
+              {{ t(`settings.ai.skills.source.${skill.source}`) }}
+            </el-tag>
+          </div>
+          <p class="skill-desc">{{ skill.description }}</p>
+          <div class="skill-meta">
+            {{
+              t('settings.ai.skills.meta', {
+                files: skill.entryCount,
+                kb: Math.max(1, Math.round(skill.sizeBytes / 1024))
+              })
+            }}
+          </div>
+        </div>
+        <div class="skill-row-side">
+          <el-switch
+            :model-value="skill.enabled"
+            @change="(v) => toggleSkill(skill, v === true)"
+          />
+          <el-button size="small" text @click="previewSkill(skill)">
+            {{ t('settings.ai.skills.view') }}
+          </el-button>
+          <el-button size="small" text type="danger" @click="removeSkill(skill)">
+            {{ t('settings.ai.skills.remove') }}
+          </el-button>
+        </div>
+      </div>
+
+      <el-dialog v-model="skillPreviewVisible" :title="skillPreviewTitle" width="680px">
+        <pre class="skill-preview">{{ skillPreviewText }}</pre>
+      </el-dialog>
+    </section>
+
     <!-- A3：开发者自定义 MCP server -->
     <section class="ext-card">
       <div class="ext-top" data-setting-id="ai-custom-mcp-servers">
@@ -856,7 +1000,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { Plus } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useSettingsStore } from '../../stores/settings'
 import { useI18n } from '../../i18n'
 import { useAiMonitorStore } from '../../stores/aiMonitor'
@@ -874,11 +1018,119 @@ import type { MatrixHealthRow, ProviderDraft } from './ai/types'
 import type { CueSettings } from '../../../../shared/types/settings'
 import type { KnowledgePackStatus } from '../../../../shared/types/ai'
 import type { KbRagStatus } from '../../../../shared/types/models'
+import type { SkillIssue, SkillMeta, SkillMutationResult } from '../../../../shared/types/skill'
 
 const settings = useSettingsStore()
 const { t } = useI18n()
 const monitor = useAiMonitorStore()
 const projectStore = useProjectStore()
+
+// ---------------------------------------------------------------------------
+// 用户技能包（Agent Skills）：全局安装 + run 级快照，AI 侧只读
+// ---------------------------------------------------------------------------
+const skills = ref<SkillMeta[]>([])
+const skillIssues = ref<SkillIssue[]>([])
+const skillRoot = ref('')
+const skillLoading = ref(false)
+const skillPreviewVisible = ref(false)
+const skillPreviewTitle = ref('')
+const skillPreviewText = ref('')
+
+/** 拉取全局技能清单（含被拒绝技能的问题列表） */
+async function refreshSkills(): Promise<void> {
+  skillLoading.value = true
+  try {
+    const res = await window.api.skill.list()
+    skillRoot.value = res.root
+    skills.value = res.skills
+    skillIssues.value = res.issues
+  } catch (err) {
+    ElMessage.error(
+      t('settings.ai.skills.loadFailed', { error: (err as Error).message })
+    )
+  } finally {
+    skillLoading.value = false
+  }
+}
+
+/** 统一的安装结果提示：成功刷新列表，失败展示主进程给出的中文原因 */
+async function applySkillResult(
+  res: SkillMutationResult,
+  successKey: string
+): Promise<void> {
+  if (res.ok) {
+    ElMessage.success(t(successKey, { name: res.name ?? '' }))
+    await refreshSkills()
+  } else {
+    ElMessage.error(res.error ?? t('settings.ai.skills.opFailed'))
+  }
+}
+
+/** 导入单个 SKILL.md */
+async function importSkillFile(): Promise<void> {
+  const path = await window.api.dialog.selectFile({
+    title: t('settings.ai.skills.importFileTitle'),
+    extensions: ['md']
+  })
+  if (!path) return
+  await applySkillResult(
+    await window.api.skill.importFile(path),
+    'settings.ai.skills.imported'
+  )
+}
+
+/** 导入整个技能包目录（可带 references/scripts/assets） */
+async function importSkillDirectory(): Promise<void> {
+  const path = await window.api.dialog.selectDirectory()
+  if (!path) return
+  await applySkillResult(
+    await window.api.skill.importDirectory(path),
+    'settings.ai.skills.imported'
+  )
+}
+
+/** 启停：默认启用；禁用后不注入也不进后续 run 快照 */
+async function toggleSkill(skill: SkillMeta, enabled: boolean): Promise<void> {
+  const res = await window.api.skill.setEnabled(skill.dirName, enabled)
+  if (!res.ok) {
+    ElMessage.error(res.error ?? t('settings.ai.skills.opFailed'))
+  }
+  await refreshSkills()
+}
+
+/** 删除技能目录（二次确认；不可恢复） */
+async function removeSkill(skill: SkillMeta): Promise<void> {
+  try {
+    await ElMessageBox.confirm(
+      t('settings.ai.skills.removeConfirm', { name: skill.name }),
+      t('settings.ai.skills.remove'),
+      { type: 'warning' }
+    )
+  } catch {
+    return
+  }
+  const res = await window.api.skill.remove(skill.dirName)
+  if (res.ok) ElMessage.success(t('settings.ai.skills.removed', { name: skill.name }))
+  else ElMessage.error(res.error ?? t('settings.ai.skills.opFailed'))
+  await refreshSkills()
+}
+
+/** 预览技能正文（只读，便于用户确认内容） */
+async function previewSkill(skill: SkillMeta): Promise<void> {
+  const res = await window.api.skill.read(skill.dirName)
+  if (!res.ok) {
+    ElMessage.error(res.error)
+    return
+  }
+  skillPreviewTitle.value = `${skill.name} · v${skill.version}`
+  skillPreviewText.value = res.text
+  skillPreviewVisible.value = true
+}
+
+/** 在系统文件管理器中打开全局技能根 */
+function openSkillRoot(): void {
+  if (skillRoot.value) void window.api.shell.showItemInFolder(skillRoot.value)
+}
 
 /** 知识库语料指纹状态：进入设置页扫一次，「重新检测」可再扫 */
 const knowledgeStatus = ref<KnowledgePackStatus | null>(null)
@@ -1030,6 +1282,13 @@ const customDraftView = computed<ProviderDraft>(() => customDraft.value as Provi
 // 档位模型
 const { onTierProviderChange, onTierModelChange } = useTierModels()
 
+/** 独立审查：patchSection 是浅合并，需整对象回写 */
+function patchReview(patch: Partial<typeof settings.ai.independentReview>): void {
+  settings.patchSection('ai', {
+    independentReview: { ...settings.ai.independentReview, ...patch }
+  })
+}
+
 // Observer-agent 状态
 const { observerStatus, refreshObserverStatus } = useObserverInject()
 
@@ -1091,6 +1350,7 @@ onMounted(() => {
   autoFetchModels()
   void refreshKnowledgeStatus()
   void refreshRagStatus()
+  void refreshSkills()
   void monitor.init()
   // 自定义 MCP：进入设置页时同步一次 + 定时刷新状态（便于看到连接中→就绪的变化）
   void syncCustomMcpServers()
@@ -1686,5 +1946,77 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+/* 用户技能包 */
+.skill-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.skill-issues {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--el-color-warning-light-5);
+  background: var(--el-color-warning-light-9);
+}
+.skill-issue {
+  font-size: 12px;
+  color: var(--el-color-warning-dark-2);
+  word-break: break-all;
+}
+.skill-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px dashed var(--ky-border);
+  padding: 10px 0 6px;
+}
+.skill-row-main {
+  min-width: 0;
+  flex: 1;
+}
+.skill-row-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.skill-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ky-text);
+}
+.skill-desc {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ky-text-sub);
+}
+.skill-meta {
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--ky-text-dim);
+}
+.skill-row-side {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.skill-preview {
+  margin: 0;
+  max-height: 60vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+  line-height: 1.6;
+  font-family: var(--ky-mono, ui-monospace, SFMono-Regular, Consolas, monospace);
+  color: var(--ky-text);
 }
 </style>

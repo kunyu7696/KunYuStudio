@@ -13,11 +13,13 @@ import { registerContentHandlers } from './handlers/contentHandlers'
 import { registerBuildHandlers } from './handlers/buildHandlers'
 import { registerMcHandlers } from './handlers/mcHandlers'
 import { registerAiChatHandlers } from './handlers/aiChatHandlers'
+import { registerSkillHandlers } from './handlers/skillHandlers'
 import { registerKnowledgePackHandlers } from './handlers/knowledgePackHandlers'
 import { registerAiRuntimeHandlers } from './handlers/aiRuntimeHandlers'
 import { registerObserverHandlers } from './handlers/observerHandlers'
 import { registerMarketHandlers } from './handlers/marketHandlers'
 import { registerModLibraryHandlers } from './handlers/modLibraryHandlers'
+import { registerDependencyHandlers } from './handlers/dependencyHandlers'
 import { registerProfileHandlers } from './handlers/profileHandlers'
 import { registerLauncherHandlers } from './handlers/launcherHandlers'
 import { registerEditorPackHandlers } from './handlers/editorPackHandlers'
@@ -80,11 +82,13 @@ export function registerIpcHandlers(win: BrowserWindow): void {
   registerBuildHandlers(ctx)
   registerMcHandlers(ctx)
   registerAiChatHandlers(ctx)
+  registerSkillHandlers()
   registerKnowledgePackHandlers()
   registerAiRuntimeHandlers(ctx)
   registerObserverHandlers(ctx)
   registerMarketHandlers(ctx)
   registerModLibraryHandlers(ctx)
+  registerDependencyHandlers(ctx)
   registerProfileHandlers(ctx)
   registerLauncherHandlers(ctx)
   registerEditorPackHandlers(ctx)

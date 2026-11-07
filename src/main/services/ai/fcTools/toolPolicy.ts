@@ -226,6 +226,9 @@ export const TOOL_BEHAVIORS: Record<string, ToolBehavior> = {
   agent_memory_read: 'readonly',
   agent_memory_append: 'project-write',
   agent_memory_clear: 'project-write',
+  // —— 用户技能包（skills，只读；安装/启停/删除只能由用户在设置页操作）
+  skills_list: 'readonly',
+  skills_read: 'readonly',
   // —— M1 多代理（subAgentTools）
   agent_delegate: 'external-effect',
   agent_delegate_batch: 'external-effect',
@@ -331,6 +334,8 @@ export const TOOL_ROUTING: Record<string, string> = {
   agent_memory_read: '写入新记忆→agent_memory_append',
   agent_memory_append: '先看已有记忆避免重复→agent_memory_read；记忆大面积过期→agent_memory_clear',
   agent_memory_clear: '只想补充一条→agent_memory_append',
+  skills_list: '已知技能名→skills_read 读正文；安装/启停/删除→用户在设置页操作（工具只读）',
+  skills_read: '不确定有哪些技能或技能名→skills_list',
   agent_delegate: '简单问题直接答；单页联网→web_fetch；本地检索→kb_search/template_search',
   agent_delegate_batch: '单个任务→agent_delegate；任务间有依赖→串行 agent_delegate',
   decompile_list_workspaces: '按类名找→decompile_search；反编译新 jar→decompile_start',

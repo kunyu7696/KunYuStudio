@@ -689,6 +689,39 @@ const zhCN = {
       visualReviewSection: '真机视觉自审',
       visualReviewTag: '视觉模型',
       visualReviewDesc: '生成武器/方块等模型资产后，构建与游戏测试通过时自动截取真机画面送视觉模型评分（0-100）；不达标时按反馈回写模型坐标/display 并复评（最多 2 轮）。仅在 Agent 执行 code 意图且产出模型文件时触发；观察通道离线或模型不支持图片时自动跳过，不阻塞流水线。',
+      independentReviewSection: '独立审查',
+      independentReviewTag: '隔离上下文',
+      independentReviewDesc: '生成完成后由审查者复核：只接收变更后的 unified diff、验收条件与项目类型，不接收生成过程、工具轨迹或模型自述。发现阻断问题（编译错误、逻辑错误、缺注册、破坏既有行为）时回滚本次变更并停止构建。默认沿用当前生成模型但上下文完全隔离，也可指定独立审查模型。',
+      reviewProvider: '审查模型',
+      followGenerationModel: '沿用生成模型',
+      reviewModelPlaceholder: '审查模型（留空沿用该提供商默认模型）',
+      budgetSection: '单次任务成本上限',
+      budgetTag: '价格联动预算',
+      budgetDesc: '预算不再固定：按模型真实价格（OpenRouter 目录快照）× 档位份额推导可用调用次数，并实时累计估算成本，超限即熔断。0 表示不限（仅建议用于本地/零价模型）。目录未收录的模型会回退固定上限，并在运行日志中如实提示。',
+      skills: {
+        section: '用户技能包',
+        tag: '按需加载',
+        desc: '按 Agent Skills 标准安装 SKILL.md（目录可带 references/scripts/assets）。AI 只收到技能索引（名称/描述/版本），任务相关时再用 skills_read 读取正文；AI 不能安装、启停或删除技能，也不会执行技能内脚本。',
+        reload: '重载',
+        openDir: '打开目录',
+        importDir: '导入目录',
+        importFile: '导入 SKILL.md',
+        importFileTitle: '选择 SKILL.md',
+        loading: '正在扫描技能包…',
+        empty: '尚未安装技能。可导入单个 SKILL.md，或导入包含 SKILL.md 的整个目录。',
+        source: {
+          file: '单文件',
+          directory: '目录'
+        },
+        meta: '{files} 个文件 · {kb} KB',
+        view: '查看',
+        remove: '删除',
+        removeConfirm: '确定删除技能「{name}」？该目录将被永久移除。',
+        removed: '已删除技能：{name}',
+        imported: '已安装技能：{name}',
+        opFailed: '操作失败',
+        loadFailed: '读取技能列表失败：{error}'
+      },
       customMcp: {
         section: '自定义 MCP 服务',
         tag: '开发者',
@@ -3707,6 +3740,30 @@ const zhCN = {
       }
     }
   },
+  dependency: {
+    title: '构建依赖',
+    desc: '按 Maven 坐标向 build.gradle 注入编译期依赖。只修改本工具写入的行（行尾带 kunyu 标记），你自己手写的仓库与依赖不会被改动，也不会出现在下方列表里。',
+    refresh: '刷新',
+    noBuildGradle: '当前项目根目录没有 build.gradle，无法管理构建依赖',
+    addTitle: '添加依赖',
+    coordinatePh: 'group:artifact:version，如 software.bernie.geckolib:geckolib-fabric-1.20.1:4.4.9',
+    repositoryPh: '可选：该依赖所在的 Maven 仓库（https，留空则不声明）',
+    add: '添加',
+    hintFabric: 'Fabric 项目的模组依赖用 modImplementation；纯 Java 库用 implementation。',
+    hintOther: '{loader} 加载器的模组依赖用 implementation（Loom 的 modImplementation 不适用）。',
+    managedDeps: '已管理依赖（{n}）',
+    managedRepos: '已管理仓库（{n}）',
+    emptyDeps: '还没有由本工具管理的依赖',
+    emptyRepos: '还没有由本工具声明的仓库。添加依赖时可一并填写仓库地址。',
+    colNotation: '坐标',
+    colConfig: '配置',
+    colAction: '操作',
+    added: '已写入 {notation}',
+    unchanged: '{notation} 已存在，内容未变化',
+    removed: '已移除 {notation}',
+    repoRemoved: '已移除该仓库声明',
+    needNotation: '请填写 group:artifact:version'
+  },
   modules: {
     'project-manager': { name: '项目管理', description: '新建、打开、导入项目' },
     datapack: {
@@ -3773,6 +3830,10 @@ const zhCN = {
     'ci-cd': {
       name: 'CI/CD 集成',
       description: '生成 GitHub Actions 工作流：build 矩阵 + release 手动确认发布 + gametest 无头测试'
+    },
+    dependencies: {
+      name: '构建依赖',
+      description: '按 Maven 坐标管理编译期依赖：幂等注入 build.gradle 的仓库与依赖声明，可逐条撤销'
     },
     plugins: { name: '插件库与商城', description: '管理已安装插件，浏览下载第三方扩展' },
     'dsh-plugins': {

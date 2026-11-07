@@ -145,6 +145,8 @@ export function createOrchestrator(deps: OrchestratorDeps = {}): Orchestrator {
       referenceImages: () => scopeOf().referenceImages,
       // T1 write-through：write_project_file 即时落盘端口按当前 run scope 读取（无项目 run 为 null）
       writeThrough: () => scopeOf().writeThrough,
+      // 用户技能：只读本轮 run 快照（无项目 / 无快照时工具不可见）
+      skillsDir: () => scopeOf().skillsDir,
       kbRag: () => getKbRag(),
       mcData: () => getMcDataService(),
       // M1 子代理委派：成本闸门 = 设置 ai.subAgentEnabled（默认关）

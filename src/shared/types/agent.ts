@@ -516,6 +516,14 @@ export interface AgentRunBudget {
   startedAt: string
   /** 墙钟上限（毫秒） */
   wallMaxMs: number
+  /** 估算已花成本（USD）；按模型价格推导预算时才有意义 */
+  estimatedCostUsd?: number
+  /** 单次任务成本上限（USD）；null = 不设成本上限 */
+  costMaxUsd?: number | null
+  /** 预算来源：pricing=价格推导 / unlimited=本地零价 / unknown=未识别回退 */
+  budgetSource?: 'pricing' | 'unlimited' | 'unknown'
+  /** 本次预算对应的模型 */
+  modelLabel?: string
 }
 
 export interface AgentEvent {

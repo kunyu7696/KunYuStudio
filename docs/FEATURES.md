@@ -1,8 +1,8 @@
 # KunYu 功能模块清单
 
 > 按代码实际实现盘点：21 个活动栏模块 + 工程链路能力（表中 3 项已下线/并入，仅作记录）。
-> 架构见 [ARCHITECTURE.md](ARCHITECTURE.md)，AI 子系统（五档 Agent、66 个
-> 内置工具、上下文管理）见 [AI-PIPELINE.md](AI-PIPELINE.md)。
+> 架构见 [ARCHITECTURE.md](ARCHITECTURE.md)，AI 子系统（五档 Agent、内置工具
+> 数量见 [TOOLS-INVENTORY.json](TOOLS-INVENTORY.json)、上下文管理）见 [AI-PIPELINE.md](AI-PIPELINE.md)。
 
 ---
 

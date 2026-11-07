@@ -14,7 +14,7 @@
         ↓
 编排器 orchestrator（understand → generate → build → test → export）
         ↓
-工具注册表 ToolRegistry（66 个内置工具 + MCP 桥接 + DSH 插件工具 + 子代理）
+工具注册表 ToolRegistry（内置工具按上下文门控动态暴露，数量见 [TOOLS-INVENTORY.json](TOOLS-INVENTORY.json) + MCP 桥接 + DSH 插件工具 + 子代理）
         ↓
 主进程服务（AI HTTP、Gradle、MC 运行时、游戏控制、知识库、参考包）
 ```
@@ -26,21 +26,35 @@ AI 助手非常驻：打开项目时主动开启，避免不同项目任务混�
 
 ## 二、五档 Agent
 
-同一条全链路跑五种预算档位（定义于 `src/shared/types/tiers.ts`）：
+同一条全链路跑五种预算档位（深度定义于 `src/shared/types/tiers.ts`，预算由
+`src/shared/services/runBudget.ts` 的 `resolveRunBudget(tier, profile)` 推导）。
 
-| 档位 | id | 模型调用上限 | Gradle 构建上限 | 构建自动修复轮次 | 墙钟上限 |
+预算**不再硬编码**：档位只决定「能跑多深」，实际次数由模型真实价格折算。
+
+| 档位 | id | 深度天花板（模型调用） | Gradle 构建上限 | 构建自动修复轮次 | 成本份额 |
 | --- | --- | --- | --- | --- | --- |
-| 迅工 | sprinter | 24 | 3 | 0 | 30 分钟 |
-| 匠造 | artisan | 48 | 6 | 1 | 60 分钟 |
-| 大师 | master | 72 | 10 | 3 | 90 分钟 |
-| 桥接 | bridge | 96 | 12 | 4 | 120 分钟 |
-| 织星 | weaver | 144 | 14 | 5 | 150 分钟 |
+| 迅工 | sprinter | 20 | 4 | 0 | 25% |
+| 匠造 | artisan | 29 | 5 | 1 | 50% |
+| 大师 | master | 44 | 7 | 3 | 75% |
+| 桥接 | bridge | 55 | 8 | 4 | 90% |
+| 织星 | weaver | 70 | 9 | 5 | 100% |
+
+- **价格来源**：`src/shared/data/modelCatalog.json` 是 OpenRouter 公开模型 API 的
+  USD/百万 token 真实价格快照，`npm run models:refresh` 刷新；运行时离线读取。
+- **换算**：`可用调用次数 = 单次成本上限 × 档位份额 / 每次调用估算成本`，再与深度
+  天花板取小；贵模型调用次数更少，便宜模型可跑满深度。
+- **兜底**：目录未收录的模型不猜价格，回退固定上限并在运行日志中标注
+  `unknown`；本地 Ollama / 零价模型记为 `unlimited`，不设成本上限。
+- **熔断**：模型调用、估算成本、Gradle 构建、墙钟任一超限即收尾停止，如实说明
+  未完成部分，不无限重试。
+
+**独立审查**：generate 结束后、build 之前，由隔离上下文的审查者只读取
+「unified diff + 验收条件 + 项目类型」，不接收生成过程/工具轨迹/自述；输出
+`verdict + 问题清单（文件:行 + 理由）`。存在 blocker 时回滚本次写入并阻断
+build/test（`src/main/services/ai/orchestrator/independentReview.ts`）。
 
 五阶段轨道：**understand → generate → build → test → export**
 （理解 → 生成 → 构建 → 测试 → 导出）。
-
-资源熔断：模型调用、Gradle 构建、墙钟任一超限即收尾停止，如实说明未完成部分，
-不无限重试。
 
 ---
 
@@ -62,11 +76,15 @@ AI 助手非常驻：打开项目时主动开启，避免不同项目任务混�
 
 ---
 
-## 四、内置工具（66 个，按域）
+## 四、内置工具（按域）
 
 工具定义集中在 `src/main/services/ai/fcTools/` 按域分文件。全部软失败
 （`ok:false` + 文本说明），不阻断流水线。分级：`chat` 级在 generate FC 循环
 暴露给模型；`scheduling` 级（如 `gradle_build`）仅编排调度代码直接调用。
+
+**数量不写死在文档里**：工具按上下文门控（无项目 / 模组项目 / 整合包项目各自不同），
+真实数字由 `npm run tools:inventory` 从注册表实测写入 [TOOLS-INVENTORY.json](TOOLS-INVENTORY.json)，
+`toolInventory.spec.ts` 负责在「加了工具但没更新清单」时让 CI 变红。
 
 | 域（文件） | 工具 |
 | --- | --- |

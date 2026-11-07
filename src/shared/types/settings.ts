@@ -193,6 +193,19 @@ export interface TierModelOverride {
   model: string | null
 }
 
+/**
+ * 独立审查：审查者只接收「生成后的 unified diff + 验收条件 + 项目类型」，
+ * 不接收生成过程/工具轨迹/模型自述，避免自审被生成者推理带偏。
+ */
+export interface IndependentReviewSettings {
+  /** 是否启用（默认开）；关闭后退回仅构建/测试验证 */
+  enabled: boolean
+  /** 审查模型提供商；null = 沿用本次运行的生成模型（上下文仍完全隔离） */
+  providerId: string | null
+  /** 审查模型；null = 跟随该提供商配置的 model */
+  model: string | null
+}
+
 /** 人工档位锁定（TR-10.1）：null 字段 = 未锁定 */
 export interface ManualLock {
   /** 锁定档位；null = 未锁定 */
@@ -245,6 +258,14 @@ export interface AiSettings {
   tierModels: Record<TierId, TierModelOverride>
   /** 人工档位锁定（默认未锁定） */
   manualLock: ManualLock
+  /**
+   * 单次任务成本上限（USD；0 = 不限）。
+   * 预算不再硬编码：`resolveRunBudget(tier, profile)` 用模型真实价格 × 档位份额
+   * 折算允许的调用次数，并在估算成本超限时熔断。仅对按 token 计费的模型生效。
+   */
+  maxRunCostUsd: number
+  /** 独立审查（只看 diff + 验收条件，不看生成过程） */
+  independentReview: IndependentReviewSettings
   /** mcdev-mcp 静态检索是否启用（M7：包已内置，启用后自动初始化索引） */
   mcpEnabled: boolean
   /** P1 真机视觉自审：构建+测试通过后截图送视觉模型评分并回写模型（默认开） */
@@ -436,6 +457,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
       weaver: { providerId: 'preset-deepseek', model: null }
     },
     manualLock: { tier: null, source: null, lockedAt: null },
+    // 单次任务成本上限 1 USD：Sprinter 0.25 / Artisan 0.5 / Master 0.75 / Bridge 0.9 / Weaver 1.0
+    maxRunCostUsd: 1,
+    independentReview: { enabled: true, providerId: null, model: null },
     // mcdev-mcp 已内置：默认自动连接，首次使用自动初始化索引；用户可在设置中手动关闭
     mcpEnabled: true,
     visualReviewEnabled: true,
@@ -753,6 +777,13 @@ function parseAi(raw: unknown): AiSettings {
   const entityFreeformEnabled = bool(r['entityFreeformEnabled'], d.entityFreeformEnabled)
   const globalFreeformEnabled = bool(r['globalFreeformEnabled'], d.globalFreeformEnabled)
   const strictReview = bool(r['strictReview'], d.strictReview)
+  // 单次任务成本上限：0 = 不限；上限 1000 USD（防止误填天文数字失去熔断意义）
+  const maxRunCostUsd = Math.round(num(r['maxRunCostUsd'], 0, 1000, d.maxRunCostUsd) * 100) / 100
+  const independentReview = parseIndependentReview(
+    r['independentReview'],
+    providers,
+    d.independentReview
+  )
   // enabledAgents 已废弃（M8 五档制）：仅透传合法字符串，保持旧数据可读，不再有任何行为
   const rawAgents = Array.isArray(r['enabledAgents']) ? r['enabledAgents'] : []
   const enabledAgents = rawAgents.filter((v): v is string => typeof v === 'string')
@@ -799,6 +830,8 @@ function parseAi(raw: unknown): AiSettings {
     defaultProviderId: defaultId,
     tierModels: parseTierModels(r['tierModels'], providers),
     manualLock: parseManualLock(r['manualLock']),
+    maxRunCostUsd,
+    independentReview,
     mcpEnabled,
     visualReviewEnabled,
     autoLaunchGameOnTest,
@@ -890,6 +923,23 @@ function parseTierModels(raw: unknown, providers: AiProviderConfig[]): Record<Ti
     result[tierId] = { providerId, model }
   }
   return result
+}
+
+/** 独立审查白名单：providerId 必须存在于提供商列表（否则回退沿用生成模型）；model 限长 */
+function parseIndependentReview(
+  raw: unknown,
+  providers: AiProviderConfig[],
+  fallback: IndependentReviewSettings
+): IndependentReviewSettings {
+  if (!isRecord(raw)) return { ...fallback }
+  const providerIds = new Set(providers.map((p) => p.id))
+  const providerId =
+    typeof raw['providerId'] === 'string' && providerIds.has(raw['providerId'])
+      ? raw['providerId']
+      : null
+  const model =
+    typeof raw['model'] === 'string' && raw['model'] ? str(raw['model'], '', 200) : null
+  return { enabled: bool(raw['enabled'], fallback.enabled), providerId, model }
 }
 
 /** 人工锁定白名单：tier 必须是合法 TierId；source/lockedAt 限长字符串 */

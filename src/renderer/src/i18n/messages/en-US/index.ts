@@ -714,6 +714,41 @@ const enUS: Messages = {
       visualReviewTag: 'Vision model',
       visualReviewDesc:
         'After generating model assets such as weapons/blocks, once the build and in-game tests pass, a real-device screenshot is automatically sent to the vision model for scoring (0-100); below par, model coordinates/display are rewritten per feedback and re-scored (up to 2 rounds). Triggered only when the Agent runs a code intent and produced model files; skipped automatically when the observation channel is offline or the model does not support images, never blocking the pipeline.',
+      independentReviewSection: 'Independent review',
+      independentReviewTag: 'Isolated context',
+      independentReviewDesc:
+        'After generation, a reviewer checks the result with only the unified diff, acceptance criteria and project type — never the generation process, tool traces or model self-justification. Blocking issues (compile errors, logic errors, missing registration, broken behavior) roll back this run and stop the build. Reuses the generating model by default with a fully isolated context; you may also pick a dedicated reviewer model.',
+      reviewProvider: 'Reviewer model',
+      followGenerationModel: 'Follow generating model',
+      reviewModelPlaceholder: 'Reviewer model (empty = provider default)',
+      budgetSection: 'Per-run cost cap',
+      budgetTag: 'Price-linked budget',
+      budgetDesc:
+        'Budgets are no longer fixed: allowed model calls are derived from real model pricing (OpenRouter catalog snapshot) × the tier share, with estimated cost accumulated live and a circuit breaker on overrun. 0 means unlimited (recommended only for local/zero-price models). Models missing from the catalog fall back to fixed caps and say so in the run log.',
+      skills: {
+        section: 'User skill packs',
+        tag: 'Loaded on demand',
+        desc: 'Install SKILL.md following the Agent Skills standard (a pack may include references/scripts/assets). The AI receives only the skill index (name/description/version) and reads the body via skills_read when a task matches; the AI cannot install, enable/disable or delete skills, and never executes scripts inside a pack.',
+        reload: 'Reload',
+        openDir: 'Open folder',
+        importDir: 'Import folder',
+        importFile: 'Import SKILL.md',
+        importFileTitle: 'Select SKILL.md',
+        loading: 'Scanning skill packs…',
+        empty: 'No skills installed yet. Import a single SKILL.md or a folder containing one.',
+        source: {
+          file: 'Single file',
+          directory: 'Folder'
+        },
+        meta: '{files} files · {kb} KB',
+        view: 'View',
+        remove: 'Remove',
+        removeConfirm: 'Remove skill "{name}"? Its folder will be permanently deleted.',
+        removed: 'Removed skill: {name}',
+        imported: 'Installed skill: {name}',
+        opFailed: 'Operation failed',
+        loadFailed: 'Failed to list skills: {error}'
+      },
       customMcp: {
         section: 'Custom MCP servers',
         tag: 'Developer',
@@ -3843,6 +3878,30 @@ const enUS: Messages = {
       }
     }
   },
+  dependency: {
+    title: 'Build dependencies',
+    desc: 'Inject compile-time dependencies into build.gradle by Maven coordinate. Only the lines this tool wrote (marked with a trailing kunyu comment) are touched — your own repositories and dependencies are left alone and never listed below.',
+    refresh: 'Refresh',
+    noBuildGradle: 'This project has no build.gradle at its root, so build dependencies cannot be managed',
+    addTitle: 'Add dependency',
+    coordinatePh: 'group:artifact:version, e.g. software.bernie.geckolib:geckolib-fabric-1.20.1:4.4.9',
+    repositoryPh: 'Optional: Maven repository hosting it (https, leave empty to skip)',
+    add: 'Add',
+    hintFabric: 'Fabric mod dependencies use modImplementation; plain Java libraries use implementation.',
+    hintOther: 'For {loader}, mod dependencies use implementation (Loom\'s modImplementation does not apply).',
+    managedDeps: 'Managed dependencies ({n})',
+    managedRepos: 'Managed repositories ({n})',
+    emptyDeps: 'No dependencies are managed by this tool yet',
+    emptyRepos: 'No repositories declared by this tool yet. You can fill one in when adding a dependency.',
+    colNotation: 'Coordinate',
+    colConfig: 'Configuration',
+    colAction: 'Actions',
+    added: 'Wrote {notation}',
+    unchanged: '{notation} already exists; nothing changed',
+    removed: 'Removed {notation}',
+    repoRemoved: 'Repository declaration removed',
+    needNotation: 'Enter group:artifact:version'
+  },
   modules: {
     'project-manager': { name: 'Projects', description: 'Create, open and import projects' },
     datapack: {
@@ -3909,6 +3968,10 @@ const enUS: Messages = {
     'ci-cd': {
       name: 'CI/CD integration',
       description: 'Generate GitHub Actions workflows: build matrix + manual release approval + headless gametest'
+    },
+    dependencies: {
+      name: 'Build dependencies',
+      description: 'Manage compile-time dependencies by Maven coordinate: idempotently inject repositories and dependency declarations into build.gradle, removable one by one'
     },
     plugins: { name: 'Plugins & marketplace', description: 'Manage installed plugins and browse third-party extensions' },
     'dsh-plugins': {
