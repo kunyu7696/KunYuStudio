@@ -16,7 +16,9 @@ const INVENTORY_PATH = resolve(process.cwd(), 'docs/TOOLS-INVENTORY.json')
 describe('内置工具清单单一数据源', () => {
   it('docs/TOOLS-INVENTORY.json 与注册表实测完全一致', () => {
     const actual = serializeInventory(collectToolInventory())
-    const committed = readFileSync(INVENTORY_PATH, 'utf8')
+    // 换行归一化：Windows checkout 时 git autocrlf 会把文件转成 CRLF，
+    // 而 serializeInventory 始终产出 LF。这里统一成 LF 再比较，避免平台差异误报。
+    const committed = readFileSync(INVENTORY_PATH, 'utf8').replace(/\r\n/g, '\n')
     expect(
       committed,
       '工具清单已过期：请运行 npm run tools:inventory 重新生成 docs/TOOLS-INVENTORY.json'
