@@ -32,6 +32,11 @@ function tool(name: string, deps: ToolRegistryDeps): RegisteredTool {
   return found
 }
 
+/** 工具执行需要 ctx；本 spec 只验证参数/结果，传空上下文即可 */
+function run(name: string, args: Record<string, unknown>, deps: ToolRegistryDeps) {
+  return tool(name, deps).execute(args, {} as never)
+}
+
 describe('skills_* 只读工具', () => {
   let snapshotRoot: string
 
@@ -48,7 +53,7 @@ describe('skills_* 只读工具', () => {
   const deps = (): ToolRegistryDeps => ({ skillsDir: () => snapshotRoot })
 
   it('skills_list 只给元数据，不给正文', async () => {
-    const res = await tool('skills_list', deps()).execute({})
+    const res = await run('skills_list', {}, deps())
     expect(res.ok).toBe(true)
     expect(res.text).toContain('demo-skill')
     expect(res.text).toContain('2.0.0')
@@ -56,7 +61,7 @@ describe('skills_* 只读工具', () => {
   })
 
   it('skills_read 读取 SKILL.md 正文', async () => {
-    const res = await tool('skills_read', deps()).execute({ name: 'demo-skill' })
+    const res = await run('skills_read', { name: 'demo-skill' }, deps())
     expect(res.ok).toBe(true)
     expect(res.text).toContain(BODY)
   })
@@ -66,17 +71,15 @@ describe('skills_* 只读工具', () => {
     writeFileSync(join(snapshotRoot, 'demo-skill', 'references', 'style.md'), '# STYLE')
     writeFileSync(join(snapshotRoot, 'demo-skill', 'references', 'icon.png'), Buffer.from([1, 2]))
 
-    const read = tool('skills_read', deps())
-    expect((await read.execute({ name: 'demo-skill', file: 'references/style.md' })).ok).toBe(true)
-    expect((await read.execute({ name: 'demo-skill', file: 'references/icon.png' })).ok).toBe(false)
-    expect((await read.execute({ name: 'demo-skill', file: '../outside.md' })).ok).toBe(false)
+    expect((await run('skills_read', { name: 'demo-skill', file: 'references/style.md' }, deps())).ok).toBe(true)
+    expect((await run('skills_read', { name: 'demo-skill', file: 'references/icon.png' }, deps())).ok).toBe(false)
+    expect((await run('skills_read', { name: 'demo-skill', file: '../outside.md' }, deps())).ok).toBe(false)
   })
 
   it('拒绝未知技能名与非法技能名', async () => {
-    const read = tool('skills_read', deps())
-    expect((await read.execute({ name: 'not-installed' })).ok).toBe(false)
-    expect((await read.execute({ name: 'Bad Name' })).ok).toBe(false)
-    expect((await read.execute({})).ok).toBe(false)
+    expect((await run('skills_read', { name: 'not-installed' }, deps())).ok).toBe(false)
+    expect((await run('skills_read', { name: 'Bad Name' }, deps())).ok).toBe(false)
+    expect((await run('skills_read', {}, deps())).ok).toBe(false)
   })
 
   it('单次读取超过 256 KiB 软失败', async () => {
@@ -84,13 +87,13 @@ describe('skills_* 只读工具', () => {
       join(snapshotRoot, 'demo-skill', 'huge.md'),
       'a'.repeat(SKILL_LIMITS.maxReadBytes + 1)
     )
-    const res = await tool('skills_read', deps()).execute({ name: 'demo-skill', file: 'huge.md' })
+    const res = await run('skills_read', { name: 'demo-skill', file: 'huge.md' }, deps())
     expect(res.ok).toBe(false)
     if (!res.ok) expect(res.error).toContain('超长')
   })
 
   it('无快照时软失败（不抛异常）', async () => {
-    const res = await tool('skills_list', { skillsDir: () => null }).execute({})
+    const res = await run('skills_list', {}, { skillsDir: () => null })
     expect(res.ok).toBe(false)
   })
 })
