@@ -36,7 +36,10 @@ jobs:
         with:
           node-version: 22
 
-      - run: npm ci
+      # 定时运行曾在此步因 registry 抖动失败（同一 commit 的 CI 与自检均通过），补一次重试
+      - name: 安装依赖
+        run: |
+          npm ci --no-audit --no-fund || (echo "首次 npm ci 失败，5s 后重试一次" && sleep 5 && npm ci --no-audit --no-fund)
 
       - name: 运行刷新脚本
         id: refresh
