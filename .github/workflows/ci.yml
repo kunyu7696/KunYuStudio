@@ -87,6 +87,18 @@ jobs:
             21
             25
 
+      # Gradle 发行包 + 依赖的冷下载是本门禁唯一的抖动源（neoforge 还要从
+      # maven.neoforged.net 拉 NeoForm runtime，单次失败实测 13 分钟连接超时）。
+      # 缓存按 MDK 快照做 key：工具链坐标不变就不重下。
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('src/main/templates/mdkSnapshot.json') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
       - run: npm ci
 
       - name: PR/push 轻量矩阵（compileJava + processResources + jar，不写回 manifest）
@@ -146,6 +158,15 @@ jobs:
             17
             21
             25
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('src/main/templates/mdkSnapshot.json') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
 
       - run: npm ci
 

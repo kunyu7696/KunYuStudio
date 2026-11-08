@@ -1,11 +1,15 @@
 name: Nightly 真机回归
 
-# 真机档（Gradle 构建 / observer mod / 打包冒烟）：不进 PR 门禁，避免 flaky 阻塞。
+# 真机档（Minecraft 真实 Gradle 构建 / observer mod / 打包冒烟）：不进 PR 门禁，避免 flaky 阻塞。
 # 每天 UTC 16:00（北京时间 00:00）跑 main；也可在 Actions 页手动触发。
 on:
   schedule:
     - cron: '0 16 * * *'
   workflow_dispatch:
+  # 自检：本文件改动后立即执行，改完当天就能验证真机构建是否通电
+  push:
+    paths:
+      - '.github/workflows/nightly.yml'
 
 jobs:
   observer-build:
@@ -34,6 +38,46 @@ jobs:
           $zip.Dispose()
           if ($names -notcontains 'fabric.mod.json') { throw 'jar 缺 fabric.mod.json' }
           Write-Host "OK: $($jar.Name)（$($names.Count) entries）"
+
+  matrix-real:
+    name: 真机构建（core 组合，创建 → 生成 → gradlew build）
+    # 本 job 才是「真机回归」：走产品真实链路生成工程并跑完整 build，
+    # 覆盖 observer / 打包冒烟验证不到的模板与工具链问题。
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: |
+            17
+            21
+            25
+
+      # 冷下载是唯一抖动源（neoforge 需从 maven.neoforged.net 拉 NeoForm runtime）
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('src/main/templates/mdkSnapshot.json') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - run: npm ci
+
+      - name: 真机构建 core 组合
+        run: npm run test:matrix
+        env:
+          KY_MATRIX_TIERS: core
+          # 夜间结果不落仓库：overlay 写 runner 临时目录，随 job 丢弃，避免每日自动提交
+          KY_MATRIX_HEALTH_PATH: ${{ runner.temp }}/nightly-matrix-overlay.json
 
   package-smoke:
     name: 打包冒烟（electron-vite build）
