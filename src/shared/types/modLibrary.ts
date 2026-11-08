@@ -73,9 +73,11 @@ export interface ModLibraryDownloadInput {
   versionId: string
   /** 平台项目类型（入库时写入 resourceType；缺省按文件扩展名/zip 结构识别） */
   projectType?: MarketProjectType
+  /** 一并把 required 前置模组下载入库（默认 false，保持旧调用方行为不变） */
+  includeDependencies?: boolean
 }
 
 /** 通用操作结果（加入项目/下载等） */
 export type ModLibraryOpResult =
-  | { ok: true; fileName: string; message?: string }
+  | { ok: true; fileName: string; message?: string; dependenciesInstalled?: string[] }
   | { ok: false; error: string; conflict?: { existingFile: string } }

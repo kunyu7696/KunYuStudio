@@ -176,6 +176,13 @@
                 <span class="ml-file-ver">{{ f.versionNumber }}</span>
                 <span class="ml-file-tags">
                   {{ f.loaders.join('/') || '?' }} · {{ f.gameVersions.slice(0, 2).join('/') }}
+                  <span
+                    v-if="requiredDepCount(f) > 0"
+                    class="ml-file-deps"
+                    :title="t('modlib.depBadgeTip')"
+                  >
+                    {{ t('modlib.depBadge', { n: requiredDepCount(f) }) }}
+                  </span>
                 </span>
               </div>
               <el-button
@@ -403,17 +410,80 @@ async function toggleDetail(m: MarketModSummary): Promise<void> {
   }
 }
 
+/** 该版本声明的 required 前置数量（版本行上的「前置 N」标记） */
+function requiredDepCount(file: MarketModFile): number {
+  return file.dependencies.filter((d) => d.relationType === 'required').length
+}
+
+function escHtml(s: string): string {
+  return s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] as string)
+}
+
+/**
+ * 下载前解析前置模组（名称 + 是否有适配当前整合包的版本）。
+ * 解析失败返回空数组——提醒失效不能阻断本体下载。
+ */
+async function resolveRequiredDeps(
+  m: MarketModSummary,
+  file: MarketModFile
+): Promise<{ name: string; hasFile: boolean }[]> {
+  if (requiredDepCount(file) === 0) return []
+  try {
+    const preview = await window.api.market.dependencies(m.platform, m.id, file.id, {
+      projectType: m.projectType ?? 'mod',
+      loader: loaderFilter.value || file.loaders[0],
+      gameVersion: mcFilter.value || file.gameVersions[0]
+    })
+    if (!preview.ok) return []
+    return preview.items
+      .filter((i) => i.relationType === 'required')
+      .map((i) => ({ name: i.name, hasFile: i.file !== null }))
+  } catch {
+    return []
+  }
+}
+
 async function onDownload(m: MarketModSummary, file: MarketModFile): Promise<void> {
   downloadingId.value = file.id
   try {
+    let includeDependencies = true
+    const deps = await resolveRequiredDeps(m, file)
+    if (deps.length > 0) {
+      const list = deps
+        .map((d) => `· ${escHtml(d.name)}${d.hasFile ? '' : escHtml(t('modlib.depNoFile'))}`)
+        .join('<br>')
+      try {
+        await ElMessageBox.confirm(
+          t('modlib.depPrompt', { name: escHtml(file.versionNumber || file.fileName), list }),
+          t('modlib.depPromptTitle'),
+          {
+            type: 'warning',
+            dangerouslyUseHTMLString: true,
+            confirmButtonText: t('modlib.depInstallAll', { n: deps.length }),
+            cancelButtonText: t('modlib.depMainOnly'),
+            distinguishCancelAndClose: true
+          }
+        )
+      } catch (action) {
+        // cancel = 仅下载本体；close = 放弃本次下载
+        if (action === 'cancel') includeDependencies = false
+        else return
+      }
+    }
     const result = await window.api.modlib.download({
       platform: m.platform,
       projectId: m.id,
       versionId: file.id,
-      projectType: m.projectType ?? 'mod'
+      projectType: m.projectType ?? 'mod',
+      includeDependencies
     })
     if (result.ok) {
-      ElMessage.success(t('modlib.downloaded', { name: file.versionNumber || file.fileName }))
+      const extra = result.dependenciesInstalled?.length ?? 0
+      ElMessage.success(
+        extra > 0
+          ? t('modlib.downloadedWithDeps', { name: file.versionNumber || file.fileName, n: extra })
+          : t('modlib.downloaded', { name: file.versionNumber || file.fileName })
+      )
       await reloadLibrary()
     } else {
       ElMessage.error(result.error ?? t('modlib.downloadFailed'))
@@ -872,5 +942,16 @@ function onLibraryChanged(): void {
 .ml-file-tags {
   font-size: 9.5px;
   color: var(--ky-text-dim);
+}
+
+/* 前置模组标记：与加载器/版本同行，弱提示不抢下载按钮 */
+.ml-file-deps {
+  margin-left: 4px;
+  padding: 0 4px;
+  border-radius: 3px;
+  font-size: 9px;
+  color: var(--ky-warning, #e6a23c);
+  background: color-mix(in srgb, var(--ky-warning, #e6a23c) 14%, transparent);
+  cursor: help;
 }
 </style>

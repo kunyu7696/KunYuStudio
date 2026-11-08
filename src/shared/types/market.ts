@@ -102,6 +102,29 @@ export interface MarketModFile {
   dependencies: MarketDependency[]
 }
 
+/**
+ * 依赖项解析结果（下载前的「前置模组」提示用）。
+ * 平台只返回依赖的 project id，名称/图标/可下载版本需二次解析。
+ */
+export interface MarketResolvedDependency {
+  platform: ModPlatform
+  /** 依赖的平台 project id */
+  id: string
+  slug: string
+  name: string
+  iconUrl: string | null
+  relationType: MarketDependency['relationType']
+  /** 与本项目 loader/mcVersion 匹配的最新版本；无适配版本时为 null */
+  file: MarketModFile | null
+}
+
+/** 依赖解析结果 */
+export interface MarketDependencyPreview {
+  ok: boolean
+  error?: string
+  items: MarketResolvedDependency[]
+}
+
 /** 模组详情 */
 export interface MarketModDetail extends MarketModSummary {
   description: string

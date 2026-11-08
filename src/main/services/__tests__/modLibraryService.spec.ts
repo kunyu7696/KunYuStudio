@@ -295,6 +295,91 @@ describe('downloadEntry 市场下载入库', () => {
     expect(second.message).toBe('已在资源库中')
     expect(listEntries(libraryRoot)).toHaveLength(1)
   })
+
+  it('includeDependencies：required 前置按本体 loader 选版入库', async () => {
+    const depDetail: MarketModDetail = {
+      ...detail,
+      id: 'dep-1',
+      slug: 'fabric-api',
+      name: 'Fabric API',
+      files: [
+        {
+          ...detail.files[0],
+          id: 'dep-forge',
+          fileName: 'fabric-api-forge.jar',
+          downloadUrl: 'https://example/fa-forge.jar',
+          loaders: ['forge']
+        },
+        {
+          ...detail.files[0],
+          id: 'dep-fabric',
+          fileName: 'fabric-api-fabric.jar',
+          downloadUrl: 'https://example/fa.jar',
+          loaders: ['fabric']
+        }
+      ]
+    }
+    vi.mocked(getModDetail).mockImplementation(async (_platform, modId) => {
+      if (modId === 'dep-1') return depDetail
+      return {
+        ...detail,
+        files: [
+          {
+            ...detail.files[0],
+            dependencies: [{ platform: 'curseforge', modId: 'dep-1', relationType: 'required' }]
+          }
+        ]
+      }
+    })
+
+    const result = await downloadEntry(
+      libraryRoot,
+      { platform: 'curseforge', projectId: '123', versionId: 'f-1', includeDependencies: true },
+      'test-key'
+    )
+    expect(result.ok).toBe(true)
+    if (!result.ok) throw new Error('unexpected')
+    // 只装 required，且命中 fabric 版而非所列第一个 forge 版
+    expect(result.dependenciesInstalled).toEqual(['fabric-api-fabric.jar'])
+    expect(listEntries(libraryRoot).map((e) => e.fileName).sort()).toEqual([
+      'fabric-api-fabric.jar',
+      'sodium-fabric-1.0.0.jar'
+    ])
+  })
+
+  it('includeDependencies：optional 前置不自动入库', async () => {
+    vi.mocked(getModDetail).mockResolvedValue({
+      ...detail,
+      files: [
+        {
+          ...detail.files[0],
+          dependencies: [{ platform: 'curseforge', modId: 'dep-9', relationType: 'optional' }]
+        }
+      ]
+    })
+    const result = await downloadEntry(
+      libraryRoot,
+      { platform: 'curseforge', projectId: '123', versionId: 'f-1', includeDependencies: true },
+      'test-key'
+    )
+    expect(result.ok).toBe(true)
+    if (!result.ok) throw new Error('unexpected')
+    expect(result.dependenciesInstalled).toBeUndefined()
+    expect(listEntries(libraryRoot)).toHaveLength(1)
+  })
+
+  it('默认不下载前置（includeDependencies 缺省）', async () => {
+    vi.mocked(getModDetail).mockResolvedValue(detail)
+    const result = await downloadEntry(
+      libraryRoot,
+      { platform: 'curseforge', projectId: '123', versionId: 'f-1' },
+      'test-key'
+    )
+    expect(result.ok).toBe(true)
+    if (!result.ok) throw new Error('unexpected')
+    expect(result.dependenciesInstalled).toBeUndefined()
+    expect(listEntries(libraryRoot)).toHaveLength(1)
+  })
 })
 
 describe('importLocalFiles 本地导入与类型识别', () => {

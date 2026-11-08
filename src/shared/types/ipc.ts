@@ -321,6 +321,7 @@ export const IpcChannels = {
   MARKET_SEARCH: 'market:search',
   MARKET_GET_DETAIL: 'market:get-detail',
   MARKET_GET_VERSIONS: 'market:get-versions',
+  MARKET_DEPENDENCIES: 'market:dependencies',
   MARKET_INSTALL: 'market:install',
   MARKET_TEST_CF: 'market:test-cf',
   // 用户级 Mod 库（整合包组装：存储社区模组，拖入 run/mods）
@@ -1564,6 +1565,17 @@ export interface IpcApi {
       modId: string,
       projectType?: import('./market').MarketProjectType
     ): Promise<import('./market').MarketModFile[]>
+    /** 下载前解析某版本的前置模组（名称/图标/可下载版本）；只解析不落盘 */
+    dependencies(
+      platform: import('./market').ModPlatform,
+      modId: string,
+      versionId: string,
+      opts?: {
+        projectType?: import('./market').MarketProjectType
+        loader?: string
+        gameVersion?: string
+      }
+    ): Promise<import('./market').MarketDependencyPreview>
     install(input: import('./market').MarketInstallInput): Promise<import('./market').MarketInstallResult>
     /** 测试 CurseForge API Key 是否有效，返回延迟与错误信息 */
     testCf(apiKey: string): Promise<{ ok: boolean; latencyMs: number; error?: string }>

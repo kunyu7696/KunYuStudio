@@ -467,6 +467,8 @@ const api: IpcApi = {
     search: (query) => ipcRenderer.invoke(IpcChannels.MARKET_SEARCH, query),
     getDetail: (platform, modId, projectType) => ipcRenderer.invoke(IpcChannels.MARKET_GET_DETAIL, platform, modId, projectType),
     getVersions: (platform, modId, projectType) => ipcRenderer.invoke(IpcChannels.MARKET_GET_VERSIONS, platform, modId, projectType),
+    dependencies: (platform, modId, versionId, opts) =>
+      ipcRenderer.invoke(IpcChannels.MARKET_DEPENDENCIES, platform, modId, versionId, opts),
     install: (input) => ipcRenderer.invoke(IpcChannels.MARKET_INSTALL, input),
     testCf: (apiKey) => ipcRenderer.invoke(IpcChannels.MARKET_TEST_CF, apiKey)
   },

@@ -1,6 +1,13 @@
 import { ipcMain } from 'electron'
 import { IpcChannels } from '../../../shared/types/ipc'
-import { getModDetail, getModVersions, installMod, searchMods, testCurseforgeConnection } from '../../services/marketService'
+import {
+  getModDetail,
+  getModVersions,
+  installMod,
+  resolveDependencies,
+  searchMods,
+  testCurseforgeConnection
+} from '../../services/marketService'
 import { translateToZh } from '../../services/translateService'
 import { createProvenanceRecorder } from '../../services/modpack/provenance'
 import { createPostInstallHook } from '../../services/performance/pipelineService'
@@ -18,6 +25,12 @@ export function registerMarketHandlers(ctx: IpcContext): void {
   )
   ipcMain.handle(IpcChannels.MARKET_GET_VERSIONS, (_event, platform, modId, projectType) =>
     getModVersions(platform, modId, cfKey(), projectType)
+  )
+  // 下载前的前置模组解析（名称/图标/可下载版本）；只解析，不落盘
+  ipcMain.handle(
+    IpcChannels.MARKET_DEPENDENCIES,
+    (_event, platform, modId, versionId, opts) =>
+      resolveDependencies(platform, modId, versionId, cfKey(), opts)
   )
   // 安装来源记录只在整合包项目里写：组装器据此判定模组进哪个平台清单，其余项目零变化
   ipcMain.handle(IpcChannels.MARKET_INSTALL, (_event, input: MarketInstallInput) => {

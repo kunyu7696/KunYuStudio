@@ -19,12 +19,14 @@ import {
   PROJECT_TYPE_META,
   type CrossPlatformCandidate,
   type MarketDependency,
+  type MarketDependencyPreview,
   type MarketInstallInput,
   type MarketInstallResult,
   type MarketModDetail,
   type MarketModFile,
   type MarketModSummary,
   type MarketProjectType,
+  type MarketResolvedDependency,
   type MarketSearchQuery,
   type MarketSearchResult,
   type ModPlatform
@@ -911,6 +913,65 @@ async function installDependencies(
       // 单个依赖失败不阻断主模组安装
     }
   }
+}
+
+/**
+ * 解析某版本文件的依赖为「可展示的前置模组」列表（下载前提醒用）。
+ *
+ * 平台只给依赖的 project id，这里逐条二次查询补齐名称/图标/可下载版本；
+ * 单个依赖查询失败不阻断整体——退化为展示平台 id，避免一个网络抖动让提醒失效。
+ * 仅解析，不判定「是否已安装」（由调用方按库/项目现状比对）。
+ */
+export async function resolveDependencies(
+  platform: ModPlatform,
+  modId: string,
+  versionId: string,
+  curseforgeApiKey: string,
+  opts: { projectType?: MarketProjectType; loader?: string; gameVersion?: string } = {}
+): Promise<MarketDependencyPreview> {
+  try {
+    const detail = await getModDetail(platform, modId, curseforgeApiKey, opts.projectType ?? 'mod')
+    const file = detail.files.find((f) => f.id === versionId) ?? detail.files[0]
+    if (!file) return { ok: false, error: '未找到版本文件', items: [] }
+    const items: MarketResolvedDependency[] = []
+    for (const dep of file.dependencies) {
+      let depDetail: MarketModDetail | null = null
+      try {
+        depDetail = await getModDetail(dep.platform, dep.modId, curseforgeApiKey)
+      } catch {
+        // 单条失败：保留 id 占位，不让整份前置清单消失
+      }
+      items.push({
+        platform: dep.platform,
+        id: dep.modId,
+        slug: depDetail?.slug ?? dep.modId,
+        name: depDetail?.name ?? dep.modId,
+        iconUrl: depDetail?.iconUrl ?? null,
+        relationType: dep.relationType,
+        file: depDetail ? pickDependencyFile(depDetail.files, opts) : null
+      })
+    }
+    return { ok: true, items }
+  } catch (err) {
+    return { ok: false, error: (err as Error).message, items: [] }
+  }
+}
+
+/** 依赖版本挑选：优先与本项目 loader/mcVersion 同时匹配的最新版，无匹配时回退平台最新 */
+function pickDependencyFile(
+  files: MarketModFile[],
+  opts: { loader?: string; gameVersion?: string }
+): MarketModFile | null {
+  const loader = opts.loader?.toLowerCase()
+  if (loader || opts.gameVersion) {
+    const hit = files.find(
+      (f) =>
+        (!loader || f.loaders.some((l) => l.toLowerCase() === loader)) &&
+        (!opts.gameVersion || f.gameVersions.includes(opts.gameVersion))
+    )
+    if (hit) return hit
+  }
+  return files[0] ?? null
 }
 
 /** 测试连接：有 Key 时验证官方 API；无 Key 且允许镜像时验证 MCIM 可达性（Modrinth 始终可达） */

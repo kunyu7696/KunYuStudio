@@ -35,6 +35,7 @@ import {
   getModDetail,
   installMod,
   listModFiles,
+  resolveDependencies,
   searchMods
 } from '../marketService'
 import { createProvenanceRecorder, writeSources } from '../modpack/provenance'
@@ -270,6 +271,54 @@ describe('marketService — Modrinth', () => {
     expect(detail.files).toHaveLength(2)
     expect(detail.files[0].id).toBe('new') // 倒序
     expect(detail.files[0].downloadUrl).toBe('https://cdn/new.jar')
+  })
+})
+
+describe('marketService — resolveDependencies 前置解析', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('补齐前置名称，并按本项目 loader/mc 挑版本（非最新但适配的优先）', async () => {
+    const project = {
+      id: 'AANobbMI', slug: 'sodium', title: 'Sodium', description: '',
+      icon_url: null, downloads: 0, updated: '', categories: [], loaders: [], game_versions: []
+    }
+    const mainVersion = {
+      id: 'v-main', name: '0.5', version_number: '0.5.0', date_published: '2024-01-01T00:00:00Z',
+      loaders: ['fabric'], game_versions: ['1.20.1'],
+      dependencies: [{ project_id: 'P7dR8mSH', dependency_type: 'required' }],
+      files: [{ url: 'https://cdn/sodium.jar', filename: 'sodium.jar', size: 10, primary: true }]
+    }
+    const depProject = { ...project, id: 'P7dR8mSH', slug: 'fabric-api', title: 'Fabric API' }
+    const depVersions = [
+      {
+        id: 'd-forge', name: '0.9', version_number: '0.9.0', date_published: '2024-02-01T00:00:00Z',
+        loaders: ['forge'], game_versions: ['1.20.1'], dependencies: [],
+        files: [{ url: 'https://cdn/fa-forge.jar', filename: 'fabric-api-forge.jar', size: 10, primary: true }]
+      },
+      {
+        id: 'd-fabric', name: '0.8', version_number: '0.8.0', date_published: '2024-01-01T00:00:00Z',
+        loaders: ['fabric'], game_versions: ['1.20.1'], dependencies: [],
+        files: [{ url: 'https://cdn/fa.jar', filename: 'fabric-api.jar', size: 10, primary: true }]
+      }
+    ]
+    vi.mocked(httpGetJson)
+      .mockResolvedValueOnce({ status: 200, data: project })
+      .mockResolvedValueOnce({ status: 200, data: [mainVersion] })
+      .mockResolvedValueOnce({ status: 200, data: depProject })
+      .mockResolvedValueOnce({ status: 200, data: depVersions })
+
+    const res = await resolveDependencies('modrinth', 'AANobbMI', 'v-main', '', {
+      loader: 'fabric',
+      gameVersion: '1.20.1'
+    })
+    expect(res.ok).toBe(true)
+    expect(res.items).toHaveLength(1)
+    expect(res.items[0].name).toBe('Fabric API')
+    expect(res.items[0].relationType).toBe('required')
+    // 排序后最新的是 forge 版，但按本项目 loader 命中 fabric 版
+    expect(res.items[0].file?.fileName).toBe('fabric-api.jar')
   })
 })
 

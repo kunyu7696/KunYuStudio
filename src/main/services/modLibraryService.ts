@@ -23,6 +23,7 @@ import { join, resolve, sep } from 'node:path'
 import { listZipEntries } from './archiveExtract'
 import { fetchToFile, getModDetail } from './marketService'
 import { createProvenanceRecorder } from './modpack/provenance'
+import type { MarketModFile } from '../../shared/types/market'
 import type { ModSourceEntry } from '../../shared/types/modpack'
 import type {
   ModLibraryEntry,
@@ -150,47 +151,143 @@ export async function downloadEntry(
     const detail = await getModDetail(input.platform, input.projectId, curseforgeApiKey, input.projectType ?? 'mod')
     const file = detail.files.find((f) => f.id === input.versionId) ?? detail.files[0]
     if (!file) return { ok: false, error: '未找到可下载的版本文件' }
-    if (existing.some((e) => e.fileName === file.fileName)) {
-      return { ok: true, fileName: file.fileName, message: '已在资源库中' }
+    const mainAlready = existing.some((e) => e.fileName === file.fileName)
+    if (!mainAlready) {
+      mkdirSync(libraryRoot, { recursive: true })
+      const destFile = join(libraryRoot, file.fileName)
+      // modlib 下载补平台哈希校验（与 installMod 路径对齐），
+      // 之前缺失导致同一份篡改文件 installMod 拒绝、modlib 接受。
+      await fetchToFile(file.downloadUrl, input.platform, destFile, {
+        sha512: file.hashes?.sha512,
+        sha1: file.hashes?.sha1,
+        size: file.size
+      }, signal)
+
+      // 资源类型：平台项目类型优先；拿不到时按扩展名/zip 结构识别
+      const resourceType: ResourceLibraryType =
+        input.projectType && RESOURCE_TYPES.includes(input.projectType)
+          ? input.projectType
+          : detectResourceType(file.fileName, destFile)
+
+      const entry: ModLibraryEntry = {
+        fileName: file.fileName,
+        resourceType,
+        name: detail.name,
+        platform: input.platform,
+        projectId: input.projectId,
+        versionId: file.id,
+        slug: detail.slug,
+        versionNumber: file.versionNumber || file.name,
+        loaders: file.loaders,
+        gameVersions: file.gameVersions,
+        size: statSync(destFile).size,
+        downloadUrl: file.downloadUrl || null,
+        iconUrl: detail.iconUrl ?? null,
+        addedAt: new Date().toISOString()
+      }
+      existing.push(entry)
+      writeLibrary(libraryRoot, existing)
     }
-    mkdirSync(libraryRoot, { recursive: true })
-    const destFile = join(libraryRoot, file.fileName)
-    // modlib 下载补平台哈希校验（与 installMod 路径对齐），
-    // 之前缺失导致同一份篡改文件 installMod 拒绝、modlib 接受。
-    await fetchToFile(file.downloadUrl, input.platform, destFile, {
-      sha512: file.hashes?.sha512,
-      sha1: file.hashes?.sha1,
-      size: file.size
-    }, signal)
 
-    // 资源类型：平台项目类型优先；拿不到时按扩展名/zip 结构识别
-    const resourceType: ResourceLibraryType =
-      input.projectType && RESOURCE_TYPES.includes(input.projectType)
-        ? input.projectType
-        : detectResourceType(file.fileName, destFile)
+    // 前置模组：与本体同加载器/同 MC 线递归入库；单个失败不阻断本体
+    const depsInstalled =
+      input.includeDependencies === true && (input.projectType ?? 'mod') === 'mod'
+        ? await downloadDependencies(
+            libraryRoot,
+            file,
+            curseforgeApiKey,
+            new Set([`${input.platform}:${input.projectId}`]),
+            1,
+            signal
+          )
+        : []
 
-    const entry: ModLibraryEntry = {
+    return {
+      ok: true,
       fileName: file.fileName,
-      resourceType,
-      name: detail.name,
-      platform: input.platform,
-      projectId: input.projectId,
-      versionId: file.id,
-      slug: detail.slug,
-      versionNumber: file.versionNumber || file.name,
-      loaders: file.loaders,
-      gameVersions: file.gameVersions,
-      size: statSync(destFile).size,
-      downloadUrl: file.downloadUrl || null,
-      iconUrl: detail.iconUrl ?? null,
-      addedAt: new Date().toISOString()
+      ...(mainAlready ? { message: '已在资源库中' } : {}),
+      ...(depsInstalled.length > 0 ? { dependenciesInstalled: depsInstalled } : {})
     }
-    existing.push(entry)
-    writeLibrary(libraryRoot, existing)
-    return { ok: true, fileName: file.fileName }
   } catch (err) {
     return { ok: false, error: (err as Error).message }
   }
+}
+
+/**
+ * 递归下载 required 前置模组入 Mod 库。
+ *
+ * - 只处理 required：optional 不自动装（避免给整合包塞用户没要的模组）
+ * - 版本按本体的 loader/gameVersions 取交集，避免把 Fabric 版前置塞进 Forge 包
+ * - visited 去重 + 深度上限 5，防止依赖环
+ * - 单个前置失败静默跳过，本体已入库成功不回滚
+ */
+async function downloadDependencies(
+  libraryRoot: string,
+  file: MarketModFile,
+  curseforgeApiKey: string,
+  visited: Set<string>,
+  depth: number,
+  signal?: AbortSignal
+): Promise<string[]> {
+  if (depth > 5) return []
+  const installed: string[] = []
+  for (const dep of file.dependencies) {
+    if (dep.relationType !== 'required') continue
+    const key = `${dep.platform}:${dep.modId}`
+    if (visited.has(key)) continue
+    visited.add(key)
+    try {
+      const detail = await getModDetail(dep.platform, dep.modId, curseforgeApiKey)
+      const candidate =
+        detail.files.find(
+          (f) =>
+            f.loaders.some((l) => file.loaders.includes(l)) &&
+            f.gameVersions.some((v) => file.gameVersions.includes(v))
+        ) ?? detail.files[0]
+      if (!candidate?.downloadUrl) continue
+      const entries = readLibrary(libraryRoot)
+      if (
+        entries.some(
+          (e) =>
+            e.fileName === candidate.fileName ||
+            (e.projectId === dep.modId && e.platform === dep.platform)
+        )
+      ) {
+        continue
+      }
+      mkdirSync(libraryRoot, { recursive: true })
+      const destFile = join(libraryRoot, candidate.fileName)
+      await fetchToFile(candidate.downloadUrl, dep.platform, destFile, {
+        sha512: candidate.hashes?.sha512,
+        sha1: candidate.hashes?.sha1,
+        size: candidate.size
+      }, signal)
+      entries.push({
+        fileName: candidate.fileName,
+        resourceType: 'mod',
+        name: detail.name,
+        platform: dep.platform,
+        projectId: dep.modId,
+        versionId: candidate.id,
+        slug: detail.slug,
+        versionNumber: candidate.versionNumber || candidate.name,
+        loaders: candidate.loaders,
+        gameVersions: candidate.gameVersions,
+        size: statSync(destFile).size,
+        downloadUrl: candidate.downloadUrl || null,
+        iconUrl: detail.iconUrl ?? null,
+        addedAt: new Date().toISOString()
+      })
+      writeLibrary(libraryRoot, entries)
+      installed.push(candidate.fileName)
+      installed.push(
+        ...(await downloadDependencies(libraryRoot, candidate, curseforgeApiKey, visited, depth + 1, signal))
+      )
+    } catch {
+      // 单个前置失败不阻断本体下载
+    }
+  }
+  return installed
 }
 
 /**
