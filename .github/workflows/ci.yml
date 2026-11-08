@@ -90,9 +90,33 @@ jobs:
       - run: npm ci
 
       - name: PR/push 轻量矩阵（compileJava + processResources + jar，不写回 manifest）
-        run: npm run test:matrix-pr
+        shell: pwsh
         env:
           KY_MATRIX_TIERS: ${{ github.event_name == 'push' && 'core' || 'core,extended' }}
+        run: |
+          # 同一 commit 出现过一绿一红（下载链抖动），失败自动重试一次；两次都红才判失败。
+          # 失败组合写进步骤摘要：无需下载日志即可定位是哪条组合挂了。
+          function Invoke-Gate([string]$log) {
+            # 末尾 Write-Host 把管道输出交给宿主，避免混进函数返回值导致 $ec 变成数组
+            npm run test:matrix-pr *>&1 | Tee-Object -FilePath $log | Write-Host
+            return $LASTEXITCODE
+          }
+          $log1 = Join-Path $env:RUNNER_TEMP 'matrix-pr-1.log'
+          $ec = Invoke-Gate $log1
+          $log = $log1
+          if ($ec -ne 0) {
+            Write-Host "::warning::首次矩阵门禁失败（exit $ec），重试一次"
+            $log2 = Join-Path $env:RUNNER_TEMP 'matrix-pr-2.log'
+            $ec = Invoke-Gate $log2
+            if (Test-Path $log2) { $log = $log2 }
+          }
+          if ($ec -ne 0) {
+            '## 矩阵门禁失败组合' | Add-Content -Path $env:GITHUB_STEP_SUMMARY -Encoding utf8
+            Select-String -Path $log -Pattern '×.*@' |
+              ForEach-Object { '- ' + $_.Line.Trim() } |
+              Add-Content -Path $env:GITHUB_STEP_SUMMARY -Encoding utf8
+          }
+          exit $ec
 
   matrix-gate:
     name: 矩阵门禁（core/extended/legacy 真机构建）
