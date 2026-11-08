@@ -32,6 +32,9 @@ jobs:
       - name: 统计最近 3 个自然日的 CI 结论
         id: check
         shell: bash
+        env:
+          # push 自检：强制命中，用来演练「开 issue」分支（该分支只做只读查询，不落 issue）
+          FORCE_HIT: ${{ github.event_name == 'push' }}
         run: |
           set -euo pipefail
 
@@ -59,11 +62,24 @@ jobs:
 
           echo "$STATS" | jq -r '.[] | "- \(.day)：\(.conclusion)（\(.url)）"' > /tmp/detail.md
           cat /tmp/detail.md
+          if [ "$FORCE_HIT" = "true" ]; then HIT=true; fi
           echo "连续 3 天失败：$HIT"
           echo "hit=$HIT" >> "$GITHUB_OUTPUT"
 
+      # 自检：强制命中后走一遍正文渲染 + issue 查询，但不创建/评论，避免污染真实 issue
+      - name: 自检演练（强制命中，只读）
+        if: steps.check.outputs.hit == 'true' && github.event_name == 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "=== 自检：命中分支演练（不会创建/评论 issue）==="
+          cat /tmp/detail.md
+          echo "--- 现有同名 open issue（只读查询）---"
+          gh issue list --state open --search "CI 连续 3 天失败 in:title" --json number,title
+          echo "自检通过：命中判定、正文渲染、issue 查询均可用。"
+
       - name: 连续失败自动开 issue
-        if: steps.check.outputs.hit == 'true'
+        if: steps.check.outputs.hit == 'true' && github.event_name != 'push'
         shell: bash
         run: |
           set -euo pipefail

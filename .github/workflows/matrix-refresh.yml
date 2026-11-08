@@ -15,6 +15,11 @@ on:
   schedule:
     - cron: '0 3 * * *'
   workflow_dispatch:
+  # 自检：本文件改动后用 dry-run 跑一次脚本，确认上游可达、脚本可执行；
+  # 不写文件、不开 PR，避免把自检变成一次真实的矩阵变更。
+  push:
+    paths:
+      - '.github/workflows/matrix-refresh.yml'
 
 jobs:
   refresh-matrix:
@@ -36,10 +41,25 @@ jobs:
       - name: 运行刷新脚本
         id: refresh
         shell: bash
+        env:
+          # push 自检走 dry-run：只验证脚本能跑通路径，不写文件
+          SELF_TEST: ${{ github.event_name == 'push' }}
         run: |
           # 脚本 exit code: 0=无变化，1=有变化，2=致命错误。
           # 必须 set +e，否则 Actions 默认的 -e 会在 exit 1（有变化）时直接终止整个 job。
           set +e
+          if [ "$SELF_TEST" = "true" ]; then
+            node scripts/refresh-loader-matrix.mjs
+            EC=$?
+            set -e
+            echo "自检（dry-run）exit=$EC（0=上游无变化，1=有变化未写入）"
+            if [ "$EC" -eq 2 ]; then
+              echo "summary=自检失败（exit 2）：上游元数据不可达或脚本异常" >> "$GITHUB_OUTPUT"
+              exit 2
+            fi
+            echo "summary=自检通过（dry-run exit $EC；未写入、未开 PR）" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           node scripts/refresh-loader-matrix.mjs --write
           EC=$?
           set -e
@@ -96,7 +116,7 @@ jobs:
 
       # 无人订阅 CI 时"job 红"等于静默：连续 3 天失败就开一条 issue 留痕
       - name: 连续失败自动开 issue
-        if: failure()
+        if: failure() && github.event_name != 'push'
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -13,6 +13,10 @@ on:
     # 每周一 04:00 UTC（北京时间 12:00），与加载器矩阵刷新（03:00 UTC）错峰
     - cron: '0 4 * * 1'
   workflow_dispatch:
+  # 自检：本文件改动后只做「可升级项检查」，不修改 package.json、不开 PR
+  push:
+    paths:
+      - '.github/workflows/deps-refresh.yml'
 
 jobs:
   bump:
@@ -32,7 +36,17 @@ jobs:
       - name: 生成升级清单
         id: bump
         shell: bash
+        env:
+          # push 自检：只列可升级项，不写 package.json
+          SELF_TEST: ${{ github.event_name == 'push' }}
         run: |
+          if [ "$SELF_TEST" = "true" ]; then
+            echo "=== 自检：仅检查可升级项（不修改 package.json、不开 PR）==="
+            npx --yes npm-check-updates@latest --target minor
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "自检通过：registry 可达、ncu 可执行。"
+            exit 0
+          fi
           # --target minor：只升 minor/patch，major 保持原样（等价旧 dependabot 的 ignore 策略）
           npx --yes npm-check-updates@latest -u --target minor
           if git diff --quiet -- package.json; then
