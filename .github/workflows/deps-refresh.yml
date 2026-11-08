@@ -40,8 +40,11 @@ jobs:
           # push 自检：只列可升级项，不写 package.json
           SELF_TEST: ${{ github.event_name == 'push' }}
           # three / @types/three 当前是 0.x：编号上的 minor（0.186→0.187）允许破坏性变更，
-          # 类型检查拦得住 API 破坏、拦不住渲染表现变化，故排除，由人工按版本升级
-          REJECT: three,@types/three
+          # 类型检查拦得住 API 破坏、拦不住渲染表现变化，故排除，由人工按版本升级。
+          # vue-tsc 3.3.14 是回归版本：会把 Pinia store 在 SFC 模板里的访问误报成
+          # “Property 'value' does not exist on type 'Store<...>'”（30+ 误报），
+          # 回退 3.3.13 即恢复，先跳过，等上游修复后手动解除。
+          REJECT: three,@types/three,vue-tsc
         run: |
           if [ "$SELF_TEST" = "true" ]; then
             echo "=== 自检：仅检查可升级项（不修改 package.json、不开 PR）==="
