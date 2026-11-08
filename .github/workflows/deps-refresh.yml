@@ -39,16 +39,19 @@ jobs:
         env:
           # push 自检：只列可升级项，不写 package.json
           SELF_TEST: ${{ github.event_name == 'push' }}
+          # three / @types/three 当前是 0.x：编号上的 minor（0.186→0.187）允许破坏性变更，
+          # 类型检查拦得住 API 破坏、拦不住渲染表现变化，故排除，由人工按版本升级
+          REJECT: three,@types/three
         run: |
           if [ "$SELF_TEST" = "true" ]; then
             echo "=== 自检：仅检查可升级项（不修改 package.json、不开 PR）==="
-            npx --yes npm-check-updates@latest --target minor
+            npx --yes npm-check-updates@latest --target minor --reject "$REJECT"
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "自检通过：registry 可达、ncu 可执行。"
             exit 0
           fi
           # --target minor：只升 minor/patch，major 保持原样（等价旧 dependabot 的 ignore 策略）
-          npx --yes npm-check-updates@latest -u --target minor
+          npx --yes npm-check-updates@latest -u --target minor --reject "$REJECT"
           if git diff --quiet -- package.json; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "依赖已是可用的最高 minor/patch 版本，无需升级"
