@@ -4,7 +4,7 @@
  * 导出（jar/zip）已从流水线分离为手动操作（AGENT_EXPORT_NOW），不再自动执行。
  * 原方法闭包捕获的依赖改经 RunSessionContext 显式传入；方法体逐行原样搬迁，零行为变更。
  */
-import { existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import type { AsyncLocalStorage } from 'node:async_hooks'
@@ -94,6 +94,7 @@ import { resolveModelProfile } from '../../../../shared/types/modelProfile'
 import { resolveRunBudget } from '../../../../shared/services/runBudget'
 import {
   formatReviewIssues,
+  rollbackReviewedChanges,
   runIndependentReview,
   type IndependentReviewOutcome,
   type ReviewFileInput
@@ -1067,17 +1068,12 @@ export async function runOrchestratorSession(
 
         if (reviewOutcome.status === 'fail') {
           /* 阻断 apply：回滚本次写入（write-through 走快照，其余按写盘前留底恢复/删除） */
-          for (const f of reviewFiles) {
-            if (writeThrough?.snapshotOf(f.path) !== undefined) continue
-            const abs = resolve(project.path, f.path)
-            try {
-              if (f.before === null) rmSync(abs, { force: true })
-              else writeFileSafe(abs, f.before)
-            } catch {
-              /* 回滚失败不阻断失败报告 */
-            }
-          }
-          writeThrough?.rollback(reviewFiles.map((f) => f.path))
+          rollbackReviewedChanges({
+            projectPath: project.path,
+            reviewFiles,
+            writeThrough,
+            writeFile: writeFileSafe
+          })
           const reviewedPaths = new Set(reviewFiles.map((f) => f.path))
           for (const f of files) {
             if (!reviewedPaths.has(f.path)) continue

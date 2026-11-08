@@ -5,11 +5,15 @@
  * - 应答不可解析 → skipped，绝不因为审查自身不稳定误伤运行
  */
 import { describe, expect, it, vi } from 'vitest'
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import {
   buildReviewDiff,
   buildReviewMessages,
   buildUnifiedDiff,
   parseReviewReply,
+  rollbackReviewedChanges,
   runIndependentReview,
   type IndependentReviewInput
 } from '../independentReview'
@@ -137,5 +141,72 @@ describe('runIndependentReview', () => {
     )
     expect(out.status).toBe('skipped')
     expect(ask).not.toHaveBeenCalled()
+  })
+})
+
+describe('rollbackReviewedChanges：审查未通过后的数据恢复', () => {
+  function makeRoot(): string {
+    return mkdtempSync(join(tmpdir(), 'kunyu-review-rollback-'))
+  }
+
+  it('modify：按变更前原文恢复；create：删除新建文件', () => {
+    const root = makeRoot()
+    try {
+      writeFileSync(join(root, 'A.java'), 'after-A')
+      writeFileSync(join(root, 'B.java'), 'after-B')
+      const rolled = rollbackReviewedChanges({
+        projectPath: root,
+        reviewFiles: [
+          { path: 'A.java', before: 'before-A', after: 'after-A', action: 'modify' },
+          { path: 'B.java', before: null, after: 'after-B', action: 'create' }
+        ],
+        writeThrough: null,
+        writeFile: writeFileSync
+      })
+      expect(rolled).toEqual(['A.java', 'B.java'])
+      expect(readFileSync(join(root, 'A.java'), 'utf8')).toBe('before-A')
+      expect(existsSync(join(root, 'B.java'))).toBe(false)
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  it('write-through 托管路径不手工恢复，交给 port.rollback 统一处理', () => {
+    const root = makeRoot()
+    const rollback = vi.fn()
+    try {
+      writeFileSync(join(root, 'A.java'), 'after-A')
+      rollbackReviewedChanges({
+        projectPath: root,
+        reviewFiles: [{ path: 'A.java', before: 'before-A', after: 'after-A', action: 'modify' }],
+        writeThrough: { snapshotOf: () => 'before-A', rollback },
+        writeFile: writeFileSync
+      })
+      // 手工恢复被跳过（文件仍是变更后内容），回滚职责在 port 内
+      expect(readFileSync(join(root, 'A.java'), 'utf8')).toBe('after-A')
+      expect(rollback).toHaveBeenCalledWith(['A.java'])
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+
+  it('单文件恢复抛错不中断整体回滚（失败报告不能因回滚异常丢失）', () => {
+    const root = makeRoot()
+    try {
+      const rolled = rollbackReviewedChanges({
+        projectPath: root,
+        reviewFiles: [
+          { path: 'A.java', before: 'x', after: 'y', action: 'modify' },
+          { path: 'B.java', before: 'x', after: 'y', action: 'modify' }
+        ],
+        writeThrough: null,
+        writeFile: () => {
+          throw new Error('EPERM')
+        }
+      })
+      expect(rolled).toEqual(['A.java', 'B.java'])
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
   })
 })

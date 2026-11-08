@@ -14,6 +14,9 @@
  * 容错：应答无法解析 → skipped（不阻断），避免审查环节自身成为不稳定源；
  * 只有审查者明确给出 verdict=fail 才阻断。
  */
+import { rmSync } from 'node:fs'
+import { resolve } from 'node:path'
+
 import type { ChatMessage } from '../../../../shared/types/ai'
 
 /** 单个送审文件：变更前快照可为 null（新建） */
@@ -311,4 +314,40 @@ export function formatReviewIssues(issues: ReviewIssue[]): string {
     .filter((i) => i.severity === 'blocker')
     .map((i) => `- \`${i.file}${i.line ? `:${i.line}` : ''}\` —— ${i.reason}`)
     .join('\n')
+}
+
+/** 回滚所需的 write-through 能力（只取用到的两个方法，便于测试替身） */
+export interface ReviewRollbackPort {
+  snapshotOf(relPath: string): string | null | undefined
+  rollback(relPaths: string[]): void
+}
+
+/**
+ * 审查未通过后的回滚：把本次送审文件恢复到变更前状态。
+ *
+ * - write-through 已托管的路径交给 port.rollback（它持有首次写入前快照）
+ * - 其余路径按 ReviewFileInput.before 恢复：null = 新建 → 删除
+ * - 单个文件回滚失败不抛出：失败报告仍要以审查结论为准，不能因回滚异常丢失
+ *
+ * @returns 实际尝试回滚的路径（审计/日志用）
+ */
+export function rollbackReviewedChanges(opts: {
+  projectPath: string
+  reviewFiles: ReviewFileInput[]
+  writeThrough: ReviewRollbackPort | null
+  writeFile: (absPath: string, content: string) => void
+}): string[] {
+  const { projectPath, reviewFiles, writeThrough, writeFile } = opts
+  for (const f of reviewFiles) {
+    if (writeThrough?.snapshotOf(f.path) !== undefined) continue
+    const abs = resolve(projectPath, f.path)
+    try {
+      if (f.before === null) rmSync(abs, { force: true })
+      else writeFile(abs, f.before)
+    } catch {
+      /* 回滚失败不阻断失败报告 */
+    }
+  }
+  writeThrough?.rollback(reviewFiles.map((f) => f.path))
+  return reviewFiles.map((f) => f.path)
 }
