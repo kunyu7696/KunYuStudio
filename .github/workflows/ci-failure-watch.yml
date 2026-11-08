@@ -9,6 +9,10 @@ on:
     # 每天 01:00 UTC（北京时间 09:00）
     - cron: '0 1 * * *'
   workflow_dispatch:
+  # 自检：本文件改动后立刻跑一次，改完当天就能确认通不通，不必等次日 01:00
+  push:
+    paths:
+      - '.github/workflows/ci-failure-watch.yml'
 
 jobs:
   watch:
@@ -19,12 +23,15 @@ jobs:
       # gh run list 走 Actions API，必须显式给 actions: read（未声明的作用域一律为 none）
       actions: read
       issues: write
+    # 本 job 不 checkout，工作区没有 .git，gh 无法自行推断仓库；
+    # 不显式给 GH_REPO 时 gh run list 会直接以「not a git repository」失败。
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
     steps:
       - name: 统计最近 3 个自然日的 CI 结论
         id: check
         shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
 
@@ -58,8 +65,6 @@ jobs:
       - name: 连续失败自动开 issue
         if: steps.check.outputs.hit == 'true'
         shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           TITLE='[自动化] CI 连续 3 天失败'
