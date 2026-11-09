@@ -525,3 +525,70 @@ public class TestmodMod {
   })
   })
 }
+
+/* ------------------------------------------------------------------ */
+/* NeoForge 26.3（1.21.2+ EntityRenderState 体系，MobRenderer 三泛型）   */
+/* ------------------------------------------------------------------ */
+describe('Mojmap 实体生成（NeoForge 26.3，RenderState 体系）', () => {
+  let root: string
+
+  function scaffold(): void {
+    const resources = join(root, 'src', 'main', 'resources')
+    mkdirSync(join(root, 'src', 'main', 'java', 'com', 'kunyu', 'testmod'), { recursive: true })
+    mkdirSync(join(resources, 'META-INF'), { recursive: true })
+    writeFileSync(
+      join(resources, 'META-INF', 'neoforge.mods.toml'),
+      'modLoader="javafml"\nloaderVersion="[2,)"\n\n[[mods]]\nmodId="testmod"\n'
+    )
+    writeFileSync(
+      join(root, 'gradle.properties'),
+      'maven_group=com.kunyu.testmod\nminecraft_version=26.3\n'
+    )
+  }
+
+  function readRel(relPath: string): string {
+    return readFileSync(join(root, relPath), 'utf-8')
+  }
+
+  beforeEach(() => {
+    root = mkdtempSync(join(tmpdir(), 'ky-mojmap-entity-neoforge-263-'))
+    registerProjectRoot(root)
+    scaffold()
+  })
+  afterEach(() => {
+    unregisterProjectRoot(root)
+    rmSync(root, { recursive: true, force: true })
+  })
+
+  it('渲染器/模型/渲染状态：三泛型 + Identifier + createRenderState', () => {
+    generateContent(root, [passiveSprite()])
+
+    const state = readRel('src/main/java/com/kunyu/testmod/entity/SpriteRenderState.java')
+    expect(state).toContain('extends LivingEntityRenderState')
+
+    const model = readRel('src/main/java/com/kunyu/testmod/entity/SpriteModel.java')
+    expect(model).toContain('extends EntityModel<SpriteRenderState>')
+    expect(model).toContain('public void setupAnim(SpriteRenderState state)')
+
+    const renderer = readRel('src/main/java/com/kunyu/testmod/entity/SpriteRenderer.java')
+    // 26.x 官方映射：ResourceLocation 改名 Identifier
+    expect(renderer).toContain('import net.minecraft.resources.Identifier;')
+    expect(renderer).toContain(
+      'extends MobRenderer<SpriteEntity, SpriteRenderState, SpriteModel>'
+    )
+    expect(renderer).toContain(
+      'Identifier.fromNamespaceAndPath("testmod", "textures/entity/sprite.png")'
+    )
+    expect(renderer).toContain('public SpriteRenderState createRenderState()')
+    expect(renderer).not.toContain('ResourceLocation')
+  })
+
+  it('注册仍走 DeferredRegister/DeferredHolder（仅渲染产物切 RenderState）', () => {
+    generateContent(root, [passiveSprite()])
+    const java = readRel('src/main/java/com/kunyu/testmod/registry/ModEntities.java')
+    expect(java).toContain('DeferredRegister.create(Registries.ENTITY_TYPE, TestmodMod.MOD_ID)')
+    expect(java).toContain(
+      'public static final DeferredHolder<EntityType<?>, EntityType<SpriteEntity>> SPRITE'
+    )
+  })
+})

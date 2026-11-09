@@ -69,6 +69,21 @@ export function isMojangEra(mcVersion: string): boolean {
 }
 
 /**
+ * 1.21.2 起实体渲染与实体实例解耦（EntityRenderState 体系）：
+ * EntityModel<S> 单泛型 + MobRenderer<T, S, M> 三泛型，渲染器需实现 createRenderState()。
+ * 该断点与加载器无关（Fabric Mojmap / Forge / NeoForge 同一年份版本一致），
+ * 覆盖 1.21.2+ 与 26.x。
+ */
+export function isEntityRenderStateEra(mcVersion: string): boolean {
+  if (isMojangEra(mcVersion)) return true
+  const m = /^1\.(\d+)\.(\d+)$/.exec(mcVersion)
+  if (!m) return false
+  const minor = Number(m[1])
+  const patch = Number(m[2])
+  return minor > 21 || (minor === 21 && patch >= 2)
+}
+
+/**
  * Fabric 1.21.6+ 的 Mojang 映射时代（含 26.x）。
  *
  * 官方 fabric-example-mod 自 1.21.6 分支起改用

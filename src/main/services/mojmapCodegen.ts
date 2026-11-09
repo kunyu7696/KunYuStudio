@@ -20,6 +20,8 @@ import {
   type ArmorSlot,
   type ToolKind
 } from '../../shared/schemas/item.schema'
+// 资源位置类名与 Fabric 模板同源：1.21.11 / 26.x 官方映射把 ResourceLocation 改名为 Identifier
+import { fabricIdentifierClass } from '../templates/loaderVersionMatrix'
 
 /**
  * 盔甲耐久 multiplier 表（Mojmap 1.20.5+：ArmorItem.Type.getDurability(multiplier)；
@@ -118,8 +120,10 @@ export function resolveMojmapFlavor(loader: 'forge' | 'neoforge', mcVersion: str
   // 1.21.2~1.21.4 过渡时代：Tiers 删除、ToolMaterial record 上位，ArmorMaterials 迁 equipment 包
   const toolMaterialEra =
     compareMcVersions(mcVersion, '1.21.2') >= 0 && compareMcVersions(mcVersion, '1.21.5') < 0
-  // 1.21 起资源位置构造器私有化，AttributeModifier 标识从 String 改为 ResourceLocation
+  // 1.21 起资源位置构造器私有化，AttributeModifier 标识从 String 改为 ResourceLocation；
+  // 1.21.11 / 26.x 官方映射将类改名为 Identifier
   const gte121 = compareMcVersions(mcVersion, '1.21') >= 0
+  const locCls = fabricIdentifierClass(mcVersion)
   const saturation = itemComponentRefactor ? 'saturationModifier' : 'saturationMod'
   if (loader === 'forge') {
     return {
@@ -137,8 +141,8 @@ export function resolveMojmapFlavor(loader: 'forge' | 'neoforge', mcVersion: str
       // Forge 侧刷怪蛋类（ForgeSpawnEggItem）26.x 变迁待门禁定位，暂保留旧路径
       spawnEggVanilla: false,
       attributeModifierId: (name) =>
-        gte121 ? `ResourceLocation.withDefaultNamespace("${name}")` : `"${name}"`,
-      attributeModifierIdImport: gte121 ? 'net.minecraft.resources.ResourceLocation' : null,
+        gte121 ? `${locCls}.withDefaultNamespace("${name}")` : `"${name}"`,
+      attributeModifierIdImport: gte121 ? `net.minecraft.resources.${locCls}` : null,
       registriesImport: [
         'net.minecraftforge.registries.DeferredRegister',
         'net.minecraftforge.registries.ForgeRegistries'
@@ -183,8 +187,8 @@ export function resolveMojmapFlavor(loader: 'forge' | 'neoforge', mcVersion: str
     // NeoForge 21.5+ 移除 DeferredSpawnEggItem（universal jar 实证无此类），回归原版 SpawnEggItem
     spawnEggVanilla: compareMcVersions(mcVersion, '1.21.5') >= 0,
     attributeModifierId: (name) =>
-      gte121 ? `ResourceLocation.withDefaultNamespace("${name}")` : `"${name}"`,
-    attributeModifierIdImport: gte121 ? 'net.minecraft.resources.ResourceLocation' : null,
+      gte121 ? `${locCls}.withDefaultNamespace("${name}")` : `"${name}"`,
+    attributeModifierIdImport: gte121 ? `net.minecraft.resources.${locCls}` : null,
     registriesImport: [
       'net.minecraft.core.registries.Registries',
       'net.neoforged.neoforge.registries.DeferredRegister'

@@ -64,7 +64,7 @@ import {
   synthesizeBlockTexture,
   synthesizeItemTexture
 } from '../../templates/textureSynthesizer'
-import { isMojmapFabric } from '../../templates/loaderVersionMatrix'
+import { isEntityRenderStateEra, isMojmapFabric } from '../../templates/loaderVersionMatrix'
 import { getCustomMcpManager } from '../ai/mcpClient'
 import { generateGameTestClasses, gameTestJavaRelPath } from '../gameTestGenerator'
 import { assertWithinRoot } from '../fsService'
@@ -626,7 +626,10 @@ function runGeneration(
     syncFabricModJson(ctx, [], sink)
     syncFabricGeckolib(root, [], sink)
   } else if (modeledEntities.length > 0) {
-    // Mojmap（Forge/NeoForge）实体分支：DeferredRegister + 注解驱动 Setup 织入
+    // Mojmap（Forge/NeoForge）实体分支：DeferredRegister + 注解驱动 Setup 织入。
+    // 1.21.2 起 MC 将渲染与实体实例解耦（EntityRenderState + MobRenderer 三泛型），
+    // 与 Fabric Mojmap 分支共用同一套 model/renderer/renderState 产物。
+    const renderStateEra = isEntityRenderStateEra(ctx.mcVersion)
     for (const e of modeledEntities) {
       const geoInfo = resolveEntityGeo(e)
       const cube = resolveEntityCube(e, modelMap)
@@ -644,12 +647,20 @@ function runGeneration(
       )
       sink.text(
         join(ctx.javaDir, 'entity', `${mojmapEntityModelClassName(e)}.java`),
-        mojmapEntityModelJava(ctx, e, cubeData)
+        renderStateEra
+          ? fabricMojmapEntityModelJava(ctx, e, cubeData)
+          : mojmapEntityModelJava(ctx, e, cubeData)
       )
       sink.text(
         join(ctx.javaDir, 'entity', `${mojmapEntityRendererClassName(e)}.java`),
-        mojmapEntityRendererJava(ctx, e)
+        renderStateEra ? fabricMojmapEntityRendererJava(ctx, e) : mojmapEntityRendererJava(ctx, e)
       )
+      if (renderStateEra) {
+        sink.text(
+          join(ctx.javaDir, 'entity', `${mojmapEntityRenderStateClassName(e)}.java`),
+          fabricMojmapEntityRenderStateJava(ctx, e)
+        )
+      }
       const mojmapTexPath = join(ctx.assetsDir, 'textures', 'entity', `${e.id}.png`)
       const mojmapTexAnim = resolveEntityTextureAnimation(root, e, modelMap)
       writePixelsPng(sink, mojmapTexPath, cubeData, mojmapTexAnim)
