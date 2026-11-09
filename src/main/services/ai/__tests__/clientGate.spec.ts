@@ -127,6 +127,9 @@ const CLIENT_OPTIONS = [
   'maxFps:60',
   'enableVsync:false',
   'pauseOnLostFocus:false',
+  // 无声卡环境一律关掉旁白（1.20.1 有该键；更高版本忽略未知键）：
+  // narrator 初始化要加载 TTS 原生库，headless 下可能长时间阻塞在设备探测
+  'narrator:0',
   'fullscreen:false'
 ].join('\n')
 
@@ -358,13 +361,11 @@ function dumpClientDiagnostics(runDir: string, comboId: string): string {
   }
 
   if (process.platform === 'linux') {
-    // gradlew → java 主类：Fabric=devlaunchinjector，Forge/NeoForge=dev-launch，原版=Main
+    // 游戏 JVM 的特征参数就是 quickPlay（各加载器主类不同：devlaunchinjector /
+    // cpw.mods.modlauncher.Launcher / net.minecraft.client.main.Main），按参数匹配最稳
     const found = spawnSync(
       'bash',
-      [
-        '-c',
-        "pgrep -f 'devlaunchinjector|dev-launch-injector|net.minecraft.client.main.Main' | head -n 1"
-      ],
+      ['-c', "pgrep -f 'quickPlaySingleplayer' | head -n 1"],
       { encoding: 'utf-8', timeout: 10_000 }
     )
     const pid = (found.stdout ?? '').trim()

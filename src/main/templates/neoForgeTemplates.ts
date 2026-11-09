@@ -6,7 +6,7 @@
  * 模板不会在该版本上被调用；jdk 联合保留 25 仅为与矩阵类型一致。
  */
 
-import { compareMcVersion, isMojangEra, nextMinorMc } from './loaderVersionMatrix'
+import { compareMcVersion, nextMinorMc } from './loaderVersionMatrix'
 
 export interface NeoForgeTemplateVars {
   modId: string
@@ -97,15 +97,18 @@ repositories {
 ${repos}
 }
 
-// NeoForge 传递依赖 net.minecraftforge:unsafe 声明 log4j-core:2.11.+ 与 log4j-api:2.11.+（动态版本），
+// NeoForge 1.20.x 传递依赖 net.minecraftforge:unsafe 声明 log4j-core:2.11.+ 与 log4j-api:2.11.+（动态版本），
 // 解析必须走 maven-metadata，而 BMCLAPI 镜像的 metadata 重定向链接 HEAD 403 必失败
-// （实测可复现：离线预检 Could not resolve log4j-api:2.11.+）。钉死具体版本跳过动态版本 metadata 查询。
+// （实测可复现：离线预检 Could not resolve log4j-api:2.11.+）。国内源下钉死具体版本跳过动态版本查询。
 // XV-03：log4j-api 与 log4j-core 必须一起 force，否则 api 仍走动态版本查询。
-// 26.x 例外：NeoForge 自带新版 log4j（slf4j2 绑定），强降到 2.11.1 会在 runServer 启动即
-// NoSuchMethodError: LoggerContextFactory.isClassLoaderDependent()（客户端门禁实测）。
-${isMojangEra(v.mcVersion) ? '' : `configurations.all {
+// 仅限「国内源 + 1.21.6 之前」：
+//  - 官方源不存在 metadata 403，无需钉死；
+//  - 1.21.6 起 NeoForge（FML 9/12）自带新版 log4j 与 slf4j2 绑定，强降到 2.11.1 会在
+//    runServer/runClient 启动即 NoSuchMethodError: LoggerContextFactory.isClassLoaderDependent()
+//    （1.21.11 与 26.3 客户端门禁先后实测）。
+${mirror === 'china' && compareMcVersion(v.mcVersion, '1.21.6') < 0 ? `configurations.all {
     resolutionStrategy.force 'org.apache.logging.log4j:log4j-core:2.11.1', 'org.apache.logging.log4j:log4j-api:2.11.1'
-}`}
+}` : ''}
 
 neoForge {
     // 使用 enable{} DSL 并关闭反编译/重编译管线（MDG 2.0.124+ 支持）。

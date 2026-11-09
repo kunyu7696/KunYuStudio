@@ -384,23 +384,22 @@ describe('NeoForge 元数据/构建脚本按版本分派', () => {
     expect(toml).toContain('versionRange="[21.1,)"')
   })
 
-  it('build.gradle：钉死 log4j-core + log4j-api 动态版本（bmclapi metadata 403 规避）', () => {
-    for (const mirror of ['china', 'official'] as const) {
-      const bg = neoForgeBuildGradle(NEO_BASE_VARS, mirror)
-      expect(bg).toContain(
-        "resolutionStrategy.force 'org.apache.logging.log4j:log4j-core:2.11.1', 'org.apache.logging.log4j:log4j-api:2.11.1'"
-      )
-    }
+  it('build.gradle：国内源 + 1.21.6 之前钉死 log4j（bmclapi metadata 403 规避）', () => {
+    const bg = neoForgeBuildGradle(NEO_BASE_VARS, 'china')
+    expect(bg).toContain(
+      "resolutionStrategy.force 'org.apache.logging.log4j:log4j-core:2.11.1', 'org.apache.logging.log4j:log4j-api:2.11.1'"
+    )
+    // 官方源无 metadata 403，不需要钉死
+    expect(neoForgeBuildGradle(NEO_BASE_VARS, 'official')).not.toContain('log4j-core:2.11.1')
   })
 
-  it('build.gradle：26.x 不再强降 log4j（自带 slf4j2 绑定，2.11.1 会 NoSuchMethodError）', () => {
-    for (const mirror of ['china', 'official'] as const) {
-      const bg = neoForgeBuildGradle(
-        { ...NEO_BASE_VARS, mcVersion: '26.3', neoForgeVersion: '26.3.0.101' },
-        mirror
-      )
-      expect(bg).not.toContain('log4j-core:2.11.1')
-      expect(bg).not.toContain('log4j-api:2.11.1')
+  it('build.gradle：1.21.6+ 不再强降 log4j（FML 9/12 自带 slf4j2 绑定，2.11.1 会 NoSuchMethodError）', () => {
+    for (const mcVersion of ['1.21.11', '26.3']) {
+      for (const mirror of ['china', 'official'] as const) {
+        const bg = neoForgeBuildGradle({ ...NEO_BASE_VARS, mcVersion }, mirror)
+        expect(bg).not.toContain('log4j-core:2.11.1')
+        expect(bg).not.toContain('log4j-api:2.11.1')
+      }
     }
   })
 
