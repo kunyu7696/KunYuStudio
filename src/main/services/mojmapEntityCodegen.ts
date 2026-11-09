@@ -826,7 +826,7 @@ export function fabricMojmapClientJava(ctx: ModContext, entities: EntitySchema[]
   const rendererRegs = entities
     .map(
       (e) =>
-        `        EntityRenderers.register(ModEntities.${toJavaConst(e.id)}, ${mojmapEntityRendererClassName(e)}::new);`
+        `        EntityRendererRegistry.register(ModEntities.${toJavaConst(e.id)}, ${mojmapEntityRendererClassName(e)}::new);`
     )
     .join('\n')
 
@@ -836,7 +836,7 @@ ${entityImports}
 import ${ctx.packageName}.registry.ModEntities;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
-import net.minecraft.client.renderer.entity.EntityRenderers;
+import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 
 /**
  * ${GENERATED_BANNER}

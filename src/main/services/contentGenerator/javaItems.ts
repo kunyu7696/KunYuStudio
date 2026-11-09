@@ -432,15 +432,20 @@ function fabricMojmapModItemsJava(
 
   const itemFields = items.map((i) => fabricMojmapItemField(ctx, i))
 
-  // 26.x 刷怪蛋：SpawnEggItem(Properties)，实体类型经 Properties.spawnEgg(EntityType) 指定，
-  // 颜色已数据驱动（不再有主/副色构造参数）
+  // 刷怪蛋构造器按版本分派（Yarn javadoc 实证）：
+  //   ≤1.21.8：SpawnEggItem(EntityType, Settings)，颜色已数据驱动、无主/副色参数；
+  //   ≥1.21.9：SpawnEggItem(Settings)，实体类型经 Settings.spawnEgg(EntityType) 指定。
+  const eggPropsBased = compareMcVersions(ctx.mcVersion, '1.21.9') >= 0
   const eggFields = eggEntities.map((e) => {
     const name = oneLine(e.displayName.zh_cn || e.id)
     const setId = setIdCallExpr(ctx.mcVersion, 'ITEM', ctx.modClassName, `${e.id}_spawn_egg`)
+    const props = `${itemPropertiesExpr(ctx.mcVersion)}${setId ? `\n            ${setId}` : ''}`
+    const ctorArgs = eggPropsBased
+      ? props + `\n            .spawnEgg(ModEntities.${toJavaConst(e.id)})`
+      : `ModEntities.${toJavaConst(e.id)},\n        ${props}`
     return `    /** ${name}刷怪蛋 */
     public static final Item ${toJavaConst(e.id)}_SPAWN_EGG = new SpawnEggItem(
-        ${itemPropertiesExpr(ctx.mcVersion)}${setId ? `\n            ${setId}` : ''}
-            .spawnEgg(ModEntities.${toJavaConst(e.id)})
+        ${ctorArgs}
     );`
   })
 

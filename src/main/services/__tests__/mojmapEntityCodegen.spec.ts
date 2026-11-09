@@ -195,11 +195,14 @@ describe('Mojmap 实体生成（Forge 1.20.1）', () => {
 /* ------------------------------------------------------------------ */
 /* Fabric Mojang 官方映射（1.21.6~1.21.11 / 26.x）                       */
 /* ------------------------------------------------------------------ */
-for (const mcVersion of ['1.21.6', '1.21.11', '26.3'] as const) {
+for (const mcVersion of ['1.21.6', '1.21.8', '1.21.9', '1.21.11', '26.3'] as const) {
   describe(`Fabric Mojmap 实体生成（Fabric ${mcVersion}）`, () => {
     let root: string
     // 1.21.6~1.21.10 官方映射类名仍为 ResourceLocation，1.21.11 起改名 Identifier
-    const locCls = mcVersion === '1.21.6' ? 'ResourceLocation' : 'Identifier'
+    const patch = mcVersion.startsWith('1.21.') ? Number(mcVersion.split('.')[2]) : 99
+    const locCls = patch < 11 ? 'ResourceLocation' : 'Identifier'
+    // 1.21.9 起 SpawnEggItem 构造器收窄为 (Settings)，实体经 Settings.spawnEgg 指定
+    const eggPropsBased = patch >= 9
 
     function scaffold(): void {
       const resources = join(root, 'src', 'main', 'resources')
@@ -325,7 +328,13 @@ for (const mcVersion of ['1.21.6', '1.21.11', '26.3'] as const) {
       expect(client).toContain(
         'EntityModelLayerRegistry.registerModelLayer(SpriteRenderer.MODEL_LAYER, SpriteModel::createBodyLayer);'
       )
-      expect(client).toContain('EntityRenderers.register(ModEntities.SPRITE, SpriteRenderer::new);')
+      expect(client).toContain(
+        'import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;'
+      )
+      expect(client).toContain(
+        'EntityRendererRegistry.register(ModEntities.SPRITE, SpriteRenderer::new);'
+      )
+      expect(client).not.toContain('EntityRenderers.register')
 
       const modJson = JSON.parse(readRel('src/main/resources/fabric.mod.json'))
       expect(modJson.entrypoints.client).toContain('com.kunyu.testmod.TestmodModClient')
@@ -335,12 +344,19 @@ for (const mcVersion of ['1.21.6', '1.21.11', '26.3'] as const) {
       expect(main).toContain('ModEntities.register();')
     })
 
-    it('刷怪蛋：SpawnEggItem + Properties.spawnEgg（无主/副色构造参数）', () => {
+    it('刷怪蛋：按版本选择 SpawnEggItem 构造器', () => {
       generateContent(root, [passiveSprite()])
       const java = readRel('src/main/java/com/kunyu/testmod/registry/ModItems.java')
       expect(java).toContain('import net.minecraft.world.item.SpawnEggItem;')
       expect(java).toContain('new SpawnEggItem(')
-      expect(java).toContain('.spawnEgg(ModEntities.SPRITE)')
+      if (eggPropsBased) {
+        // 1.21.9+：SpawnEggItem(Settings)，实体类型经 Settings.spawnEgg 指定
+        expect(java).toContain('.spawnEgg(ModEntities.SPRITE)')
+      } else {
+        // ≤1.21.8：SpawnEggItem(EntityType, Settings)
+        expect(java).toContain('ModEntities.SPRITE,\n        new Item.Properties()')
+        expect(java).not.toContain('.spawnEgg(')
+      }
       expect(java).not.toContain('FabricItemSettings')
     })
   })
