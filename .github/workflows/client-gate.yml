@@ -63,11 +63,27 @@ jobs:
       - name: 安装虚拟显示与抓屏依赖
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb xauth x11-utils imagemagick ffmpeg \
-            libgl1-mesa-dri libglu1-mesa libgl1 libglx-mesa0 \
+          sudo apt-get install -y xvfb xauth x11-utils imagemagick ffmpeg mesa-utils \
+            libgl1-mesa-dri libglu1-mesa libgl1 libglx-mesa0 libegl1 libegl-mesa0 \
             libx11-6 libxext6 libxrandr2 libxcursor1 libxi6 libxxf86vm1 libxinerama1
 
       - run: npm ci
+
+      # 26.x 客户端窗口改用 SDL3（FML 早期窗报 Couldn't find matching GLX visual）。
+      # 自检输出写进步骤摘要：GLX 缺失 / 无匹配 visual 两种情况能一眼区分。
+      - name: 显示环境自检（GLX / EGL 能力）
+        run: |
+          xvfb-run -a --server-args="-screen 0 640x360x24 +extension GLX +render -noreset" bash -c '
+            echo "== xdpyinfo =="; xdpyinfo | sed -n "1,30p" || true
+            echo "== glxinfo -B =="; glxinfo -B || true
+            echo "== GLX fbconfig 计数 =="; glxinfo -t 2>/dev/null | grep -c "visual id" || true
+            echo "== GLX fbconfig 明细（前 40 行） =="; glxinfo -t 2>/dev/null | sed -n "1,40p" || true
+            echo "== eglinfo -B =="; eglinfo -B 2>/dev/null | sed -n "1,30p" || true
+          ' 2>&1 | tee "$RUNNER_TEMP/display-check.txt"
+          cat "$RUNNER_TEMP/display-check.txt" >> "$GITHUB_STEP_SUMMARY"
+          # 随截图 artifact 一起上传，失败时可直接拉下来看 GLX/EGL 能力
+          mkdir -p .dev-userdata/client-gate
+          cp "$RUNNER_TEMP/display-check.txt" .dev-userdata/client-gate/display-check.txt
 
       - name: 客户端进游戏（Xvfb + 软件渲染）
         id: client
@@ -76,6 +92,8 @@ jobs:
           KY_CLIENT_VIDEO_SIZE: 640x360
           LIBGL_ALWAYS_SOFTWARE: '1'
           GALLIUM_DRIVER: llvmpipe
+          # 规范变量名：仅 GALLIUM_DRIVER 在某些 Mesa 版本不会真正选中 llvmpipe
+          MESA_LOADER_DRIVER_OVERRIDE: llvmpipe
           MESA_GL_VERSION_OVERRIDE: '4.5'
           # 无声卡：OpenAL Soft 走 null 后端，避免 ALSA 阻塞/噪声干扰渲染线程
           ALSOFT_DRIVERS: 'null'
@@ -83,7 +101,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           set -o pipefail
-          xvfb-run -a --server-args="-screen 0 640x360x24" npm run test:client 2>&1 | tee "$RUNNER_TEMP/client-gate.log"
+          xvfb-run -a --server-args="-screen 0 640x360x24 +extension GLX +render -noreset" npm run test:client 2>&1 | tee "$RUNNER_TEMP/client-gate.log"
           ec=${PIPESTATUS[0]}
           if [ "$ec" -eq 0 ]; then exit 0; fi
 
