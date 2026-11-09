@@ -6,9 +6,8 @@
  * 压过门禁新绿灯，「修了一边、另一边没修」。本模块把全部读写收敛到同一文件：
  *
  * - 唯一真源：<userData>/ai/ai-reference-overlay.json（运行时层）
- * - manifest.json 冻结为静态基线（坐标 pin/模板/指纹），不再被任何流程回写；
- *   其 health/verifiedAt/matrixHealth 仅在 overlay 无记录时作一次性种子迁入
- *   （seedFromBaseline，保证既有绿灯成果与 prod 升级后基线不丢失）
+ * - manifest.json 由 CI 全量门禁导出为事实快照；服务启动时 seedFromBaseline 补齐
+ *   缺失组合，再 mergeFromBaseline 采纳更新的灯色/统计（本地刚跑过探针则保留本地灯色）
  * - 写方：编译探针 recordProbeResult、上游监测 recordUpstreamState、
  *   矩阵门禁 recordGateResult（原写 manifest，统一成套整改后并入本层）
  * - 读方：referencePackageService（listMatrixCells/getComboHealth/readTemplate）
@@ -117,8 +116,9 @@ export interface MatrixHealthStore {
   /**
    * 增量同步基线：把 manifest 里比 overlay 更新的 matrixHealth 采纳过来
    * （按 lastVerifiedAt 比较；overlay 无记录时整条灌入）。
-   * 只动 matrixHealth 统计，不改 health / verifiedAt —— 灯色仍归运行时通道，
-   * 避免旧基线把探针/监测写下的红灯刷回绿灯。
+   * 基线快照更新时一并采纳灯色/verifiedAt（manifest 由 CI 全量门禁导出，
+   * 是比本地运行时记录更新的事实）；若本地 verifiedAt 更新（探针/监测刚跑过），
+   * 则只同步统计、保留本地灯色。
    * @returns 实际采纳的组合数（0 = 本地已是最新）
    */
   mergeFromBaseline(manifest: ReferenceManifest): number
@@ -299,7 +299,14 @@ export function createMatrixHealthStore(deps: { path: string }): MatrixHealthSto
         const curAt = cur.matrixHealth?.lastVerifiedAt ?? ''
         const inAt = incoming.lastVerifiedAt ?? ''
         if (inAt <= curAt) continue
-        next.combos[f.id] = { ...cur, matrixHealth: incoming }
+        // 基线更新：采纳统计；基线门禁时间不早于本地运行时记录时一并采纳灯色
+        // （manifest 是 CI 全量门禁导出的事实快照；本地刚跑过探针则保留本地灯色）
+        const adoptLight = inAt > (cur.verifiedAt ?? '')
+        next.combos[f.id] = {
+          ...cur,
+          matrixHealth: incoming,
+          ...(adoptLight ? { health: f.health, verifiedAt: f.verifiedAt } : {})
+        }
         adopted += 1
       }
       if (adopted > 0) {

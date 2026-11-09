@@ -29,6 +29,8 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_REPO: ${{ github.repository }}
     steps:
+      - uses: actions/checkout@v4
+
       - name: 统计最近 3 个自然日的 CI 结论
         id: check
         shell: bash
@@ -98,6 +100,83 @@ jobs:
             "" \
             "CI 恢复后请关闭本 issue；本工作流不会自动关闭。")
           EXISTING=$(gh issue list --state open --search "CI 连续 3 天失败 in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "$BODY"
+            echo "已在 issue #$EXISTING 追加评论"
+          else
+            gh issue create --title "$TITLE" --body "$BODY"
+            echo "已新建 issue"
+          fi
+
+      # 兜底：CI 的 schedule 曾出现「配置正确但从未被调度」（schedule_total=0），
+      # 这种情况下没有任何 run 会变红，守夜也看不到。矩阵健康度的 lastVerifiedAt
+      # 是全量门禁成功回写的直接证据，超期即视为「全量矩阵没有真正跑过」。
+      - name: 检查矩阵健康度新鲜度（全量门禁）
+        id: freshness
+        shell: bash
+        env:
+          MAX_AGE_DAYS: '8'
+          # push 自检：强制命中，演练「矩阵过期」分支（只读查询，不落 issue）
+          FORCE_STALE: ${{ github.event_name == 'push' }}
+        run: |
+          set -euo pipefail
+          NEWEST=$(jq -r '[.versionFingerprints[].matrixHealth.lastVerifiedAt // empty] | max // ""' resources/ai-reference/manifest.json)
+          NOW=$(date -u +%s)
+          if [ -z "$NEWEST" ]; then
+            echo "manifest 中没有任何 matrixHealth 记录（全量门禁从未成功回写）"
+            DAYS=999
+          else
+            THEN=$(date -u -d "$NEWEST" +%s)
+            DAYS=$(( (NOW - THEN) / 86400 ))
+            echo "最近一次全量矩阵真机构建：$NEWEST（$DAYS 天前）"
+          fi
+          STALE=false
+          if [ "$DAYS" -ge "$MAX_AGE_DAYS" ]; then STALE=true; fi
+          if [ "$FORCE_STALE" = "true" ]; then STALE=true; fi
+          echo "阈值：${MAX_AGE_DAYS} 天；判定 stale=$STALE"
+          echo "stale=$STALE" >> "$GITHUB_OUTPUT"
+          echo "newest=$NEWEST" >> "$GITHUB_OUTPUT"
+          echo "days=$DAYS" >> "$GITHUB_OUTPUT"
+
+      - name: 自检演练（矩阵新鲜度，只读）
+        if: steps.freshness.outputs.stale == 'true' && github.event_name == 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "=== 自检：矩阵健康度过期命中（不会创建/评论 issue）==="
+          echo "最近一次回写：${{ steps.freshness.outputs.newest }}（${{ steps.freshness.outputs.days }} 天前）"
+          echo "--- 现有同名 open issue（只读查询）---"
+          gh issue list --state open --search "矩阵健康度超过 8 天未刷新 in:title" --json number,title
+          echo "自检通过：新鲜度判定、正文渲染、issue 查询均可用。"
+
+      - name: 矩阵健康度过期自动开 issue
+        if: steps.freshness.outputs.stale == 'true' && github.event_name != 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+          TITLE='[自动化] 矩阵健康度超过 8 天未刷新'
+          NEWEST='${{ steps.freshness.outputs.newest }}'
+          DAYS='${{ steps.freshness.outputs.days }}'
+          if [ -z "$NEWEST" ]; then
+            LATEST='manifest 中没有任何 matrixHealth 记录'
+          else
+            LATEST="最近一次全量矩阵真机构建：$NEWEST（$DAYS 天前）"
+          fi
+          BODY=$(printf '%s\n' \
+            "仓库 manifest 的矩阵健康度已经超过 **8 天**没有刷新，说明全量 matrix-gate 没有成功运行/回写。" \
+            "" \
+            "- $LATEST" \
+            "- 判定口径：versionFingerprints[].matrixHealth.lastVerifiedAt 的最大值" \
+            "" \
+            "排查顺序：" \
+            "1. Actions → CI → 是否有 schedule 或 workflow_dispatch 的全量矩阵运行（combos 留空）" \
+            "2. 若 cron 未触发：确认默认分支为 master、workflow 处于 active；必要时手动 dispatch 一次全量" \
+            "3. 若矩阵运行失败：看 matrix-gate job 日志；环境性失败（Gradle/镜像 504）重试即可" \
+            "" \
+            "本次检查：$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            "" \
+            "全量门禁恢复后请关闭本 issue；本工作流不会自动关闭。")
+          EXISTING=$(gh issue list --state open --search "矩阵健康度超过 8 天未刷新 in:title" --json number --jq '.[0].number // empty')
           if [ -n "$EXISTING" ]; then
             gh issue comment "$EXISTING" --body "$BODY"
             echo "已在 issue #$EXISTING 追加评论"

@@ -6,9 +6,9 @@
  * - prod：process.resourcesPath/ai-reference（electron-builder extraResources）
  *
  * 安装目录内的 manifest/模板/prompt 全部只读；组合灯色/探针签字/门禁档案
- * 统一读写 userData/ai/ai-reference-overlay.json（唯一真源，见 matrixHealthStore）。
- * manifest.json 冻结为静态基线，不再被任何流程回写；其 health/verifiedAt/
- * matrixHealth 仅在 overlay 无记录时经 seedFromBaseline 一次性迁入。
+ * 统一读写 userData/ai/ai-reference-overlay.json（唯一运行时真源，见 matrixHealthStore）。
+ * manifest.json 由 CI 全量门禁导出为事实快照；服务启动时先 seed（补齐缺失组合）
+ * 再 merge（采纳比本地更新的基线灯色/统计），此后应用只读 overlay 一份数据。
  */
 import { app } from 'electron'
 import { existsSync, readFileSync } from 'node:fs'
@@ -224,6 +224,9 @@ export function createReferenceService(deps: {
     // 一次性种子迁移：overlay 无记录的组合从 manifest 基线灌入（幂等，
     // 已有运行时记录绝不覆盖）——保证既有绿灯成果与 prod 升级后基线不丢失
     store.seedFromBaseline(manifest)
+    // 启动即合并导出基线：CI 全量门禁回写的 manifest 若比本地 overlay 新则自动采纳，
+    // 无需用户手动「刷新」。此后应用只读 overlay 这一份运行时真源（单一事实源）。
+    store.mergeFromBaseline(manifest)
   } catch (e) {
     error = (e as Error).message
   }

@@ -5,7 +5,7 @@
  * 是「工具链健康」的借来绿灯，不作事实依据；历史脏值（build="unverified"、
  * verified=false 布尔）一律按未验证处理。
  */
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -174,6 +174,52 @@ describe('ReferenceService.listTemplates 门禁', () => {
     const list = svc.listTemplates('fabric', '1.20.1', undefined, { includeCandidates: true })
     expect(list.map((t) => t.id)).toContain(PENDING_ID)
     expect(list.map((t) => t.id)).toContain(DIRTY_ID)
+  })
+})
+
+describe('启动时基线合并（单一事实源）', () => {
+  it('manifest 导出快照比 overlay 新：启动即采纳灯色与矩阵统计', () => {
+    const manifestPath = join(dir, 'manifest.json')
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf-8'))
+    manifest.versionFingerprints[0] = {
+      ...manifest.versionFingerprints[0],
+      health: 'green',
+      verifiedAt: '2026-11-09T07:22:35.604Z',
+      matrixHealth: {
+        templateCount: 5,
+        verifiedCount: 5,
+        passRate: 100,
+        lastVerifiedAt: '2026-11-09T07:22:35.604Z'
+      }
+    }
+    writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8')
+    writeFileSync(
+      overlayPath,
+      JSON.stringify({
+        version: 1,
+        templates: {},
+        combos: {
+          'fabric-1.20.1': {
+            health: 'yellow',
+            verifiedAt: '2026-11-08T00:00:00.000Z',
+            matrixHealth: {
+              templateCount: 3,
+              verifiedCount: 1,
+              passRate: 33,
+              lastVerifiedAt: '2026-11-08T00:00:00.000Z'
+            }
+          }
+        }
+      }),
+      'utf-8'
+    )
+
+    const svc = createReferenceService({ referenceDir: dir, overlayPath })
+    // 无需手动 reloadBaseline：服务创建时已把更新的导出基线并入 overlay
+    expect(svc.getComboHealth('fabric-1.20.1')).toBe('green')
+    const cell = svc.listMatrixCells().find((c) => c.id === 'fabric-1.20.1')
+    expect(cell?.matrixHealth?.passRate).toBe(100)
+    expect(cell?.verifiedAt).toBe('2026-11-09T07:22:35.604Z')
   })
 })
 

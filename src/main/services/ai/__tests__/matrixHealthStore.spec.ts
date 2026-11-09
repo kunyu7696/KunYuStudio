@@ -4,9 +4,9 @@
  * 背景：overlay 是运行时唯一真源，manifest 只在「overlay 无记录」时做一次性种子；
  * 结果是参考包基线里更新的门禁结论永远进不来，「版本矩阵健康度 → 刷新」点了没反应。
  * mergeFromBaseline 用 lastVerifiedAt 做时间守卫补齐这个缺口：
- *  - 基线更新 → 采纳统计
+ *  - 基线更新 → 采纳统计；若基线门禁时间也不早于本地 verifiedAt，一并采纳灯色
  *  - 基线更旧/相同 → 不动（避免把探针/监测的新结论刷回旧值）
- *  - 只动 matrixHealth，不动 health/verifiedAt（灯色归运行时通道）
+ *  - 本地 verifiedAt 更新（刚跑过探针/监测）→ 只同步统计，保留本地灯色
  */
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -76,7 +76,7 @@ describe('mergeFromBaseline（矩阵健康度刷新）', () => {
     expect(store.getCombo('fabric-1.20.1')?.matrixHealth?.passRate).toBe(100)
   })
 
-  it('基线更新：采纳新统计，但不改 health / verifiedAt（灯色归运行时）', () => {
+  it('基线更新：采纳新统计与灯色（基线门禁时间晚于本地记录）', () => {
     writeFileSync(
       path,
       JSON.stringify({
@@ -116,9 +116,54 @@ describe('mergeFromBaseline（矩阵健康度刷新）', () => {
     expect(adopted).toBe(1)
     const combo = store.getCombo('fabric-1.20.1')
     expect(combo?.matrixHealth?.passRate).toBe(100)
-    // 运行时灯色不被基线覆盖
-    expect(combo?.health).toBe('yellow')
-    expect(combo?.verifiedAt).toBe('2026-10-23T00:00:00.000Z')
+    // 基线门禁时间（10/27）晚于本地 verifiedAt（10/23）→ 采纳导出快照的灯色
+    expect(combo?.health).toBe('green')
+    expect(combo?.verifiedAt).toBe('2026-10-27T00:00:00.000Z')
+  })
+
+  it('基线统计更新但本地 verifiedAt 更新：只同步统计，保留本地灯色', () => {
+    writeFileSync(
+      path,
+      JSON.stringify({
+        version: 1,
+        combos: {
+          'fabric-1.20.1': {
+            health: 'red',
+            verifiedAt: '2026-11-01T00:00:00.000Z',
+            matrixHealth: {
+              templateCount: 3,
+              verifiedCount: 1,
+              passRate: 20,
+              lastVerifiedAt: '2026-10-20T00:00:00.000Z'
+            }
+          }
+        },
+        templates: {}
+      }),
+      'utf-8'
+    )
+    const store = createMatrixHealthStore({ path })
+    const adopted = store.mergeFromBaseline(
+      manifestOf([
+        {
+          id: 'fabric-1.20.1',
+          health: 'green',
+          verifiedAt: '2026-10-27T00:00:00.000Z',
+          matrixHealth: {
+            templateCount: 5,
+            verifiedCount: 5,
+            passRate: 100,
+            lastVerifiedAt: '2026-10-27T00:00:00.000Z'
+          }
+        }
+      ])
+    )
+    expect(adopted).toBe(1)
+    const combo = store.getCombo('fabric-1.20.1')
+    expect(combo?.matrixHealth?.passRate).toBe(100)
+    // 本地探针记录（11/01）更新：灯色与 verifiedAt 不被旧基线覆盖
+    expect(combo?.health).toBe('red')
+    expect(combo?.verifiedAt).toBe('2026-11-01T00:00:00.000Z')
   })
 
   it('基线更旧或相同：不覆盖，返回 0（保证探针新结论不被旧基线刷掉）', () => {
