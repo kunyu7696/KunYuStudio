@@ -6,8 +6,11 @@ on:
     branches: [master]
   pull_request:
   schedule:
-    # 每周一 03:00 UTC 跑一次矩阵门禁（真实构建耗时长，不随 PR 触发）
-    - cron: '0 3 * * 1'
+    # 每周一 03:23 UTC 跑一次矩阵门禁（真实构建耗时长，不随 PR 触发）。
+    # 原为 0 3 * * 1，与 matrix-refresh 的每日 03:00 同刻；GitHub 调度在高负载下会
+    # 延迟/丢弃事件——实测该 workflow 自 10/28 起 schedule_total=0，而 nightly、
+    # matrix-refresh 均有调度记录。改为错峰分钟，避开整点与同刻冲突。
+    - cron: '23 3 * * 1'
   workflow_dispatch:
     inputs:
       combos:
@@ -137,7 +140,7 @@ jobs:
 
   matrix-gate:
     name: 矩阵门禁（core/extended/legacy 真机构建）
-    # 全部 32 个「加载器 × MC 版本」组合各跑一次 gradlew build，只随定时/手动触发
+    # 全部 35 个「加载器 × MC 版本」组合各跑一次 gradlew build，只随定时/手动触发
     # （forge-1.16.5 已冻结，不在构建矩阵内、仅存 manifest 指纹）；
     # legacy 三个遗产版本（1.16.5/1.18.2/1.19.2，fabric/forge 共 5 组合）
     # 修复后纳入门禁，不再永绝于编译验证之外
