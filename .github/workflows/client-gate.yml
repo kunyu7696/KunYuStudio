@@ -88,7 +88,8 @@ jobs:
       # 而 Xvfb + llvmpipe 的 GLX 没有这类配置 → glXChooseFBConfig 返回空，
       # 报 "Couldn't find matching GLX visual"。SDL 的 EGL 后端把 sRGB 放在 surface 属性
       # （EGL_GL_COLORSPACE）而非 config 选择上，X11 EGL 在 llvmpipe 下可用（eglinfo 已确认），
-      # 故强制 SDL 走 EGL。该变量只影响 SDL（26.x）；用 GLFW 的 1.20.1/1.21.x 不受影响。
+      # 故强制 SDL 走 EGL（SDL3 的 hint 名是 SDL_VIDEO_FORCE_EGL，不是 SDL_VIDEO_X11_FORCE_EGL）。
+      # 该变量只影响 SDL（26.x）；用 GLFW 的 1.20.1/1.21.x 不受影响。
       - name: 客户端进游戏（Xvfb + 软件渲染）
         id: client
         env:
@@ -99,7 +100,7 @@ jobs:
           # 规范变量名：仅 GALLIUM_DRIVER 在某些 Mesa 版本不会真正选中 llvmpipe
           MESA_LOADER_DRIVER_OVERRIDE: llvmpipe
           MESA_GL_VERSION_OVERRIDE: '4.5'
-          SDL_VIDEO_X11_FORCE_EGL: '1'
+          SDL_VIDEO_FORCE_EGL: '1'
           # 无声卡：OpenAL Soft 走 null 后端，避免 ALSA 阻塞/噪声干扰渲染线程
           ALSOFT_DRIVERS: 'null'
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
