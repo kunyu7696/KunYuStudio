@@ -586,12 +586,29 @@ describe.skipIf(!GATE_ENABLED)(`客户端进游戏门禁（共 ${COMBOS.length} 
     }
   })
 
-  afterEach(() => {
+  /**
+   * 清理项目目录。Gradle 单次 daemon 在 runClient 退出后仍会补写 .gradle/loom-cache，
+   * 与 rmSync 撞车会抛 ENOTEMPTY（实测 1.21.11 已通过截图校验却在此被判失败）。
+   * 退避重试；彻底删不掉也不该推翻已得出的门禁结论。
+   */
+  afterEach(async () => {
     if (activeChild) {
       killTree(activeChild)
       activeChild = null
     }
-    rmSync(gateBase, { recursive: true, force: true })
+    for (let i = 0; i < 5; i++) {
+      try {
+        rmSync(gateBase, { recursive: true, force: true })
+        return
+      } catch {
+        await new Promise((resolveWait) => setTimeout(resolveWait, 1000))
+      }
+    }
+    try {
+      rmSync(gateBase, { recursive: true, force: true })
+    } catch {
+      /* 留给临时目录自动清理 */
+    }
   })
 
   afterAll(() => {
