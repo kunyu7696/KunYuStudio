@@ -17,6 +17,7 @@ import { generateContent, planGeneration } from '../contentGenerator'
 import { registerProjectRoot, unregisterProjectRoot } from '../fsService'
 import { createDefaultCube } from '../../../shared/types/content'
 import { createDefaultEntity } from '../../../shared/schemas/entity.schema'
+import { createDefaultBlock } from '../../../shared/schemas/block.schema'
 
 /** 构造带内嵌 Cube 模型且启用刷怪蛋的被动实体（含属性与 AI goals 默认值） */
 function passiveSprite() {
@@ -603,5 +604,12 @@ describe('Mojmap 实体生成（NeoForge 26.3，RenderState 体系）', () => {
       'new SpawnEggItem(new Item.Properties().spawnEgg(ModEntities.SPRITE.get()))'
     )
     expect(java).not.toContain('DeferredSpawnEggItem')
+  })
+
+  it('方块：1.21.2+ Properties 必须 setId（否则 Block 构造 NPE: Block id not set）', () => {
+    const block = createDefaultBlock('gate_block')
+    generateContent(root, [block])
+    const java = readRel('src/main/java/com/kunyu/testmod/registry/ModBlocks.java')
+    expect(java).toContain('.setId(BLOCKS.key("gate_block"))')
   })
 })

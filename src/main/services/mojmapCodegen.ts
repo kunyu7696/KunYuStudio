@@ -21,7 +21,7 @@ import {
   type ToolKind
 } from '../../shared/schemas/item.schema'
 // 资源位置类名与 Fabric 模板同源：1.21.11 / 26.x 官方映射把 ResourceLocation 改名为 Identifier
-import { fabricIdentifierClass } from '../templates/loaderVersionMatrix'
+import { fabricIdentifierClass, isEntityRenderStateEra } from '../templates/loaderVersionMatrix'
 
 /**
  * 盔甲耐久 multiplier 表（Mojmap 1.20.5+：ArmorItem.Type.getDurability(multiplier)；
@@ -257,9 +257,12 @@ export function mojmapModBlocksJava(ctx: ModContext, blocks: GeneratorBlock[]): 
   const propsExpr = f.blockPropsNeedsMaterial
     ? 'BlockBehaviour.Properties.of(Material.STONE)'
     : 'BlockBehaviour.Properties.of()'
+  // 1.21.2 起 Block 构造强制要求 Properties.setId（26.x 实测 NullPointerException: Block id not set）
+  const blockIdEra = isEntityRenderStateEra(ctx.mcVersion)
   const fields = blocks
     .map((b) => {
       const chain: string[] = []
+      if (blockIdEra) chain.push(`            .setId(BLOCKS.key("${b.id}"))`)
       chain.push(`            .strength(${fmtFloat(b.hardness)}, ${fmtFloat(b.resistance)})`)
       chain.push(`            .sound(SoundType.${b.soundGroup.toUpperCase()})`)
       if (b.requiresTool) chain.push('            .requiresCorrectToolForDrops()')
