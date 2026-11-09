@@ -203,6 +203,9 @@ for (const mcVersion of ['1.21.6', '1.21.8', '1.21.9', '1.21.11', '26.3'] as con
     const locCls = patch < 11 ? 'ResourceLocation' : 'Identifier'
     // 1.21.9 起 SpawnEggItem 构造器收窄为 (Settings)，实体经 Settings.spawnEgg 指定
     const eggPropsBased = patch >= 9
+    // 26.x 起 fabric-rendering-v1 将模型层注册类改名为 ModelLayerRegistry
+    const layerRegistry =
+      mcVersion === '26.3' ? 'ModelLayerRegistry' : 'EntityModelLayerRegistry'
 
     function scaffold(): void {
       const resources = join(root, 'src', 'main', 'resources')
@@ -326,7 +329,10 @@ for (const mcVersion of ['1.21.6', '1.21.8', '1.21.9', '1.21.11', '26.3'] as con
       const client = readRel('src/main/java/com/kunyu/testmod/TestmodModClient.java')
       expect(client).toContain('implements ClientModInitializer')
       expect(client).toContain(
-        'EntityModelLayerRegistry.registerModelLayer(SpriteRenderer.MODEL_LAYER, SpriteModel::createBodyLayer);'
+        `import net.fabricmc.fabric.api.client.rendering.v1.${layerRegistry};`
+      )
+      expect(client).toContain(
+        `${layerRegistry}.registerModelLayer(SpriteRenderer.MODEL_LAYER, SpriteModel::createBodyLayer);`
       )
       expect(client).toContain(
         'import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;'

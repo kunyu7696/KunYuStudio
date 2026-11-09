@@ -14,7 +14,7 @@
 import type { CubeElement } from '../../shared/types/content'
 import type { EntitySchema, AiGoal, AiTarget } from '../../shared/schemas/entity.schema'
 import { autoUvAllBox } from '../../shared/utils/cubeModel'
-import { fabricIdentifierClass } from '../templates/loaderVersionMatrix'
+import { fabricIdentifierClass, isMojangEra } from '../templates/loaderVersionMatrix'
 import { resolveMojmapFlavor } from './mojmapCodegen'
 import type { ModContext } from './contentGenerator'
 
@@ -811,6 +811,9 @@ public class ${cls} extends MobRenderer<${entCls}, ${stateCls}, ${modelCls}> {
 /** 客户端入口（Fabric Mojmap）：模型层 + 渲染器注册 */
 export function fabricMojmapClientJava(ctx: ModContext, entities: EntitySchema[]): string {
   const cls = `${ctx.modClassName}Client`
+  // 模型层注册类在 26.x 改名：1.21.x 为 EntityModelLayerRegistry，
+  // 26.3 的 fabric-rendering-v1 已改为 ModelLayerRegistry（源码实测）
+  const layerRegistry = isMojangEra(ctx.mcVersion) ? 'ModelLayerRegistry' : 'EntityModelLayerRegistry'
   const entityImports = entities
     .map(
       (e) =>
@@ -820,7 +823,7 @@ export function fabricMojmapClientJava(ctx: ModContext, entities: EntitySchema[]
   const layerRegs = entities
     .map(
       (e) =>
-        `        EntityModelLayerRegistry.registerModelLayer(${mojmapEntityRendererClassName(e)}.MODEL_LAYER, ${mojmapEntityModelClassName(e)}::createBodyLayer);`
+        `        ${layerRegistry}.registerModelLayer(${mojmapEntityRendererClassName(e)}.MODEL_LAYER, ${mojmapEntityModelClassName(e)}::createBodyLayer);`
     )
     .join('\n')
   const rendererRegs = entities
@@ -835,7 +838,7 @@ export function fabricMojmapClientJava(ctx: ModContext, entities: EntitySchema[]
 ${entityImports}
 import ${ctx.packageName}.registry.ModEntities;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.${layerRegistry};
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 
 /**
