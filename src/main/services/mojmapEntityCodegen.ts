@@ -1,21 +1,20 @@
 /**
- * 实体 Java 代码生成（Mojang 官方映射：Forge 1.20.1 / NeoForge 1.21.1）。
+ * 实体 Java 代码生成（Mojang 官方映射）。
  *
- * 与 contentGenerator 内的 fabric/Yarn 实体分支（fabricEntityJava 等）平行：
- * 输入同一份实体语义（EntitySchema），输出
- * - registry/ModEntities.java（DeferredRegister<EntityType<?>>）
- * - entity/<Pascal>Entity.java（实体类 + AI + createAttributes）
- * - entity/<Pascal>Model.java / <Pascal>Renderer.java（静态 cube 模型渲染）
- * - entity/ModEntitySetup.java（EntityAttributeCreationEvent 属性注册，注解驱动免改主类）
- * - entity/ClientEntitySetup.java（EntityRenderersEvent 渲染器/模型层注册，Dist.CLIENT）
+ * 两条产物链共享同一份实体语义（EntitySchema）：
+ *  - Forge 1.20.1 / NeoForge 1.21.1：DeferredRegister + 注解驱动事件（ModEntitySetup /
+ *    ClientEntitySetup），渲染为 1.21.1 之前的 EntityModel<Entity> 体系；
+ *  - Fabric 1.21.6+ / 26.x（官方 MDK 改用 Mojmap）：Registry.register(BuiltInRegistries.ENTITY_TYPE)
+ *    + FabricDefaultAttributeRegistry，渲染为 1.21.2 起的 EntityRenderState 体系
+ *    （EntityRenderer 解耦实体实例，MobRenderer<T, S, M> 三泛型）。
  *
- * 两加载器差异（注册持有类型、事件 FQN、订阅注解）由 MojmapFlavor 参数化。
  * 注：Mojmap 实体暂不支持 GeckoLib 骨骼动画；blockbench_geo 实体退化为静态
- * cube 模型生成（无 cube 数据时产出空模型 + 主色铺底贴图），实体类头注释标注。
+ * cube 模型生成（无 cube 数据时产出占位模型 + 主色铺底贴图），实体类头注释标注。
  */
 import type { CubeElement } from '../../shared/types/content'
 import type { EntitySchema, AiGoal, AiTarget } from '../../shared/schemas/entity.schema'
 import { autoUvAllBox } from '../../shared/utils/cubeModel'
+import { fabricIdentifierClass } from '../templates/loaderVersionMatrix'
 import { resolveMojmapFlavor } from './mojmapCodegen'
 import type { ModContext } from './contentGenerator'
 
@@ -58,6 +57,11 @@ export function mojmapEntityModelClassName(e: EntitySchema): string {
 /** 实体渲染器类名（goblin → GoblinRenderer） */
 export function mojmapEntityRendererClassName(e: EntitySchema): string {
   return `${pascal(e.id)}Renderer`
+}
+
+/** 实体渲染状态类名（goblin → GoblinRenderState；1.21.2+ EntityRenderState 体系） */
+export function mojmapEntityRenderStateClassName(e: EntitySchema): string {
+  return `${pascal(e.id)}RenderState`
 }
 
 /* ------------------------------------------------------------------ */
@@ -207,14 +211,53 @@ function mojmapEntityAttrLines(e: EntitySchema): string[] {
   return lines
 }
 
+interface MojmapEntityJavaOptions {
+  /** 原定义为 blockbench_geo（GeckoLib）实体：Mojmap 分支暂不支持 GeckoLib，按静态 cube 退化 */
+  geoFallback?: boolean
+  /** 属性工厂覆盖（Fabric Mojmap 统一 Mob.createMobAttributes，规避各版本专用工厂命名差异） */
+  attrFactory?: string
+  /** 实体类名覆盖（AI 自定义类简写名；缺省 <Pascal>Entity） */
+  className?: string
+  /** 头部附注（映射世代差异说明） */
+  note?: string
+}
+
 /**
  * 实体主类 Java。
  * @param geoFallback true 表示原定义为 blockbench_geo（GeckoLib）实体；
  *                    Mojmap 分支暂不支持 GeckoLib，已按静态 cube 模型生成，头部注释显式标注。
  */
 export function mojmapEntityJava(ctx: ModContext, e: EntitySchema, geoFallback = false): string {
+  return mojmapEntityJavaWithOptions(ctx, e, { geoFallback })
+}
+
+/** Fabric 1.21.6+（Mojang 官方映射）实体主类：属性工厂统一 Mob.createMobAttributes */
+export function fabricMojmapEntityJava(
+  ctx: ModContext,
+  e: EntitySchema,
+  geoFallback = false
+): string {
+  return mojmapEntityJavaWithOptions(ctx, e, {
+    geoFallback,
+    attrFactory: 'Mob.createMobAttributes',
+    className: mojmapEntityClassRef(e),
+    note: 'Fabric 1.21.6+ 使用 Mojang 官方映射；GeckoLib 未适配该映射世代，骨骼动画实体已按静态模型生成。'
+  })
+}
+
+/** 实体 Java 类引用：优先 AI 自定义类简写名（与 Yarn 分支 entityClassName 行为一致） */
+export function mojmapEntityClassRef(e: EntitySchema): string {
+  return e.customClass?.split('.').pop() || mojmapEntityClassName(e)
+}
+
+function mojmapEntityJavaWithOptions(
+  ctx: ModContext,
+  e: EntitySchema,
+  opts: MojmapEntityJavaOptions = {}
+): string {
   const base = mojmapEntityBase(e)
-  const cls = mojmapEntityClassName(e)
+  const cls = opts.className ?? mojmapEntityClassName(e)
+  const attrFactory = opts.attrFactory ?? MOJMAP_ATTR_FACTORY[base]
 
   const goalLines: string[] = []
   for (const g of e.ai.goals) {
@@ -238,7 +281,7 @@ export function mojmapEntityJava(ctx: ModContext, e: EntitySchema, geoFallback =
     'import net.minecraft.world.level.Level;'
   ]
   // Mob 基类以外的属性工厂同样需要 Mob 符号（Mob.createMobAttributes）
-  if (MOJMAP_ATTR_FACTORY[base].startsWith('Mob.') && base !== 'Mob') {
+  if (attrFactory.startsWith('Mob.') && base !== 'Mob') {
     imports.push('import net.minecraft.world.entity.Mob;')
   }
   if (isAnimal) {
@@ -264,16 +307,17 @@ export function mojmapEntityJava(ctx: ModContext, e: EntitySchema, geoFallback =
     }
 `
 
-  const geoNote = geoFallback
-    ? '\n * 注意：原定义为 Blockbench/GeckoLib 骨骼动画实体；Mojmap（Forge/NeoForge）实体暂不支持 GeckoLib，已按静态 cube 模型生成。'
+  const geoNote = opts.geoFallback
+    ? '\n * 注意：原定义为 Blockbench/GeckoLib 骨骼动画实体；Mojmap 实体暂不支持 GeckoLib，已按静态 cube 模型生成。'
     : ''
+  const extraNote = opts.note ? `\n * ${opts.note}` : ''
 
   return `package ${ctx.packageName}.entity;
 
 ${imports.join('\n')}
 
 /**
- * ${GENERATED_BANNER}${geoNote}
+ * ${GENERATED_BANNER}${geoNote}${extraNote}
  */
 public class ${cls} extends ${base} {
     public ${cls}(EntityType<? extends ${base}> type, Level level) {
@@ -286,7 +330,7 @@ ${goalLines.join('\n') || '        // 无 AI 目标'}
     }
 
     public static AttributeSupplier.Builder createAttributes() {
-        return ${MOJMAP_ATTR_FACTORY[base]}()
+        return ${attrFactory}()
 ${mojmapEntityAttrLines(e).join('\n')};
     }
 ${isAnimal ? animalMethods : ''}}
@@ -524,6 +568,284 @@ ${rendererRegs}
     @SubscribeEvent
     public static void onRegisterLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
 ${layerRegs}
+    }
+}
+`
+}
+
+/* ------------------------------------------------------------------ */
+/* Fabric · Mojang 官方映射（1.21.6+ / 26.x）                            */
+/* ------------------------------------------------------------------ */
+
+/**
+ * 资源位置类名：1.21.6~1.21.10 为 ResourceLocation，1.21.11 起官方改名为 Identifier
+ * （与主类 id() 助手 / fabricTemplates.identifierFactoryCall 同一事实源）。
+ */
+function fabricLocClass(ctx: ModContext): string {
+  return fabricIdentifierClass(ctx.mcVersion)
+}
+
+/** 资源位置字面量：<Loc>.fromNamespaceAndPath("modid", "path")（构造器已私有化） */
+function fabricLocExpr(ctx: ModContext, path: string): string {
+  return `${fabricLocClass(ctx)}.fromNamespaceAndPath("${ctx.modId}", "${path}")`
+}
+
+/**
+ * ModEntities（Fabric Mojmap）：静态 Registry.register(BuiltInRegistries.ENTITY_TYPE) +
+ * register() 内 FabricDefaultAttributeRegistry 属性注册。
+ * 1.21.2 起 EntityType.Builder.build 必须携带 ResourceKey（官方映射实测），
+ * 与 Yarn 版 FabricEntityTypeBuilder 的语义等价。
+ */
+export function fabricMojmapModEntitiesJava(ctx: ModContext, entities: EntitySchema[]): string {
+  const fields = entities
+    .map((e) => {
+      const entCls = mojmapEntityClassRef(e)
+      const name = e.displayName.zh_cn || e.displayName.en_us || e.id
+      const extras = [`            .clientTrackingRange(${e.properties.trackingRange ?? 8})`]
+      if (e.properties.fireImmune) extras.push('            .fireImmune()')
+      return `    /** ${name} */
+    public static final EntityType<${entCls}> ${toJavaConst(e.id)} = register("${e.id}",
+        EntityType.Builder.<${entCls}>of(${entCls}::new, MobCategory.${e.properties.spawnGroup || 'MISC'})
+            .sized(${fmtFloat(e.properties.width)}, ${fmtFloat(e.properties.height)})
+${extras.join('\n')});`
+    })
+    .join('\n\n')
+
+  const attrs = entities
+    .map(
+      (e) =>
+        `        FabricDefaultAttributeRegistry.register(${toJavaConst(e.id)}, ${mojmapEntityClassRef(e)}.createAttributes());`
+    )
+    .join('\n')
+
+  return `package ${ctx.packageName}.registry;
+
+import ${ctx.packageName}.${ctx.modClassName};
+import ${ctx.packageName}.entity.*;
+import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
+
+/**
+ * ${GENERATED_BANNER}
+ */
+public class ModEntities {
+${fields}
+
+    /** 1.21.2 起 EntityType.Builder.build 必须携带实体注册键 */
+    private static <T extends Entity> EntityType<T> register(String name, EntityType.Builder<T> builder) {
+        ResourceKey<EntityType<?>> key = ResourceKey.create(Registries.ENTITY_TYPE, ${ctx.modClassName}.id(name));
+        return Registry.register(BuiltInRegistries.ENTITY_TYPE, key, builder.build(key));
+    }
+
+    public static void register() {
+${attrs}
+    }
+}
+`
+}
+
+/**
+ * 实体渲染状态类（1.21.2 起渲染与实体实例解耦）：仅承载渲染期数值，
+ * 需要动画/同步字段时由 AI 或用户在本类上扩展。
+ */
+export function fabricMojmapEntityRenderStateJava(ctx: ModContext, e: EntitySchema): string {
+  const cls = mojmapEntityRenderStateClassName(e)
+  return `package ${ctx.packageName}.entity;
+
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+
+/**
+ * ${GENERATED_BANNER}
+ */
+public class ${cls} extends LivingEntityRenderState {
+}
+`
+}
+
+/**
+ * 实体模型类（Fabric Mojmap）：cube elements → LayerDefinition + EntityModel<RenderState>。
+ * 1.21.2 起 EntityModel 以渲染状态为泛型参数，root 由父类持有并在 renderToBuffer 中绘制。
+ */
+export function fabricMojmapEntityModelJava(
+  ctx: ModContext,
+  e: EntitySchema,
+  cube: { textureSize: number; elements: CubeElement[] }
+): string {
+  const cls = mojmapEntityModelClassName(e)
+  const stateCls = mojmapEntityRenderStateClassName(e)
+  const cuboids = elementsToCuboids(cube.elements, cube.textureSize)
+  const childLines = cuboids
+    .map(
+      (c, i) =>
+        `        part.addOrReplaceChild("part${i}",
+            CubeListBuilder.create()
+                .texOffs(${c.uv0}, ${c.uv1})
+                .addBox(${[c.x, c.y, c.z, c.sx, c.sy, c.sz].map(fmtFloat).join(', ')}),
+            PartPose.offset(8.0f, 24.0f, 8.0f));`
+    )
+    .join('\n')
+
+  return `package ${ctx.packageName}.entity;
+
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
+
+/**
+ * ${GENERATED_BANNER}
+ */
+public class ${cls} extends EntityModel<${stateCls}> {
+    public ${cls}(ModelPart root) {
+        super(root);
+    }
+
+    public static LayerDefinition createBodyLayer() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition part = mesh.getRoot();
+${childLines}
+        return LayerDefinition.create(mesh, ${cube.textureSize}, ${cube.textureSize});
+    }
+
+    @Override
+    public void setupAnim(${stateCls} state) {
+        super.setupAnim(state);
+    }
+}
+`
+}
+
+/**
+ * 无 cube 资产实体的占位模型（AI 自定义类 / geo 退化）：单个方形柱体，
+ * 与 Yarn 分支 fallback 模型同尺寸（64×64），确保进游戏可见可召唤。
+ */
+export function fabricMojmapFallbackModelJava(ctx: ModContext, e: EntitySchema): string {
+  const cls = mojmapEntityModelClassName(e)
+  const stateCls = mojmapEntityRenderStateClassName(e)
+  return `package ${ctx.packageName}.entity;
+
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
+
+/**
+ * ${GENERATED_BANNER}
+ */
+public class ${cls} extends EntityModel<${stateCls}> {
+    public ${cls}(ModelPart root) {
+        super(root);
+    }
+
+    public static LayerDefinition createBodyLayer() {
+        MeshDefinition mesh = new MeshDefinition();
+        PartDefinition part = mesh.getRoot();
+        part.addOrReplaceChild("body",
+            CubeListBuilder.create().texOffs(0, 0).addBox(-7.0f, 0.0f, -7.0f, 14.0f, 26.0f, 14.0f),
+            PartPose.offset(0.0f, 0.0f, 0.0f));
+        return LayerDefinition.create(mesh, 64, 64);
+    }
+
+    @Override
+    public void setupAnim(${stateCls} state) {
+        super.setupAnim(state);
+    }
+}
+`
+}
+
+/**
+ * 实体渲染器（Fabric Mojmap）：MobRenderer<Entity, RenderState, Model> +
+ * 静态 MODEL_LAYER（客户端入口经 EntityModelLayerRegistry 注册）。
+ */
+export function fabricMojmapEntityRendererJava(ctx: ModContext, e: EntitySchema): string {
+  const cls = mojmapEntityRendererClassName(e)
+  const entCls = mojmapEntityClassRef(e)
+  const modelCls = mojmapEntityModelClassName(e)
+  const stateCls = mojmapEntityRenderStateClassName(e)
+  const locCls = fabricLocClass(ctx)
+  return `package ${ctx.packageName}.entity;
+
+import net.minecraft.client.model.geom.ModelLayerLocation;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.MobRenderer;
+import net.minecraft.resources.${locCls};
+
+/**
+ * ${GENERATED_BANNER}
+ */
+public class ${cls} extends MobRenderer<${entCls}, ${stateCls}, ${modelCls}> {
+    public static final ModelLayerLocation MODEL_LAYER =
+        new ModelLayerLocation(${fabricLocExpr(ctx, e.id)}, "main");
+    private static final ${locCls} TEXTURE = ${fabricLocExpr(ctx, `textures/entity/${e.id}.png`)};
+
+    public ${cls}(EntityRendererProvider.Context context) {
+        super(context, new ${modelCls}(context.bakeLayer(MODEL_LAYER)), 0.5f);
+    }
+
+    @Override
+    public ${stateCls} createRenderState() {
+        return new ${stateCls}();
+    }
+
+    @Override
+    public ${locCls} getTextureLocation(${stateCls} state) {
+        return TEXTURE;
+    }
+}
+`
+}
+
+/** 客户端入口（Fabric Mojmap）：模型层 + 渲染器注册 */
+export function fabricMojmapClientJava(ctx: ModContext, entities: EntitySchema[]): string {
+  const cls = `${ctx.modClassName}Client`
+  const entityImports = entities
+    .map(
+      (e) =>
+        `import ${ctx.packageName}.entity.${mojmapEntityModelClassName(e)};\nimport ${ctx.packageName}.entity.${mojmapEntityRendererClassName(e)};`
+    )
+    .join('\n')
+  const layerRegs = entities
+    .map(
+      (e) =>
+        `        EntityModelLayerRegistry.registerModelLayer(${mojmapEntityRendererClassName(e)}.MODEL_LAYER, ${mojmapEntityModelClassName(e)}::createBodyLayer);`
+    )
+    .join('\n')
+  const rendererRegs = entities
+    .map(
+      (e) =>
+        `        EntityRenderers.register(ModEntities.${toJavaConst(e.id)}, ${mojmapEntityRendererClassName(e)}::new);`
+    )
+    .join('\n')
+
+  return `package ${ctx.packageName};
+
+${entityImports}
+import ${ctx.packageName}.registry.ModEntities;
+import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
+import net.minecraft.client.renderer.entity.EntityRenderers;
+
+/**
+ * ${GENERATED_BANNER}
+ */
+public class ${cls} implements ClientModInitializer {
+    @Override
+    public void onInitializeClient() {
+${layerRegs}
+${rendererRegs}
     }
 }
 `

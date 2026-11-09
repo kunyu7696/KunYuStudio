@@ -193,6 +193,160 @@ describe('Mojmap 实体生成（Forge 1.20.1）', () => {
 })
 
 /* ------------------------------------------------------------------ */
+/* Fabric Mojang 官方映射（1.21.6~1.21.11 / 26.x）                       */
+/* ------------------------------------------------------------------ */
+for (const mcVersion of ['1.21.6', '1.21.11', '26.3'] as const) {
+  describe(`Fabric Mojmap 实体生成（Fabric ${mcVersion}）`, () => {
+    let root: string
+    // 1.21.6~1.21.10 官方映射类名仍为 ResourceLocation，1.21.11 起改名 Identifier
+    const locCls = mcVersion === '1.21.6' ? 'ResourceLocation' : 'Identifier'
+
+    function scaffold(): void {
+      const resources = join(root, 'src', 'main', 'resources')
+      mkdirSync(join(root, 'src', 'main', 'java', 'com', 'kunyu', 'testmod'), { recursive: true })
+      mkdirSync(resources, { recursive: true })
+      writeFileSync(
+        join(resources, 'fabric.mod.json'),
+        JSON.stringify(
+          {
+            schemaVersion: 1,
+            id: 'testmod',
+            entrypoints: { main: ['com.kunyu.testmod.TestmodMod'] }
+          },
+          null,
+          2
+        )
+      )
+      writeFileSync(
+        join(root, 'gradle.properties'),
+        `maven_group=com.kunyu.testmod\nminecraft_version=${mcVersion}\n`
+      )
+    }
+
+    function readRel(relPath: string): string {
+      return readFileSync(join(root, relPath), 'utf-8')
+    }
+
+    beforeEach(() => {
+      root = mkdtempSync(join(tmpdir(), `ky-fabric-mojmap-entity-${mcVersion}-`))
+      registerProjectRoot(root)
+      scaffold()
+    })
+    afterEach(() => {
+      unregisterProjectRoot(root)
+      rmSync(root, { recursive: true, force: true })
+    })
+
+    it('planGeneration：实体全套产物列入 writes（含 RenderState 与客户端入口）', () => {
+      const plan = planGeneration(root, [passiveSprite()])
+      const paths = plan.writes.map((w) => w.path)
+      for (const rel of [
+        'src/main/java/com/kunyu/testmod/registry/ModEntities.java',
+        'src/main/java/com/kunyu/testmod/entity/SpriteEntity.java',
+        'src/main/java/com/kunyu/testmod/entity/SpriteModel.java',
+        'src/main/java/com/kunyu/testmod/entity/SpriteRenderer.java',
+        'src/main/java/com/kunyu/testmod/entity/SpriteRenderState.java',
+        'src/main/java/com/kunyu/testmod/TestmodModClient.java',
+        'src/main/resources/assets/testmod/models/item/sprite_spawn_egg.json',
+        'src/main/resources/assets/testmod/textures/entity/sprite.png'
+      ]) {
+        expect(paths).toContain(rel)
+      }
+    })
+
+    it('ModEntities：BuiltInRegistries.ENTITY_TYPE + ResourceKey + 属性注册', () => {
+      generateContent(root, [passiveSprite()])
+      const java = readRel('src/main/java/com/kunyu/testmod/registry/ModEntities.java')
+      expect(java).toContain('import net.minecraft.core.registries.BuiltInRegistries;')
+      expect(java).toContain('import net.minecraft.core.registries.Registries;')
+      expect(java).toContain('import net.minecraft.resources.ResourceKey;')
+      expect(java).toContain(
+        'EntityType.Builder.<SpriteEntity>of(SpriteEntity::new, MobCategory.CREATURE)'
+      )
+      expect(java).toContain('.sized(0.9f, 1.4f)')
+      expect(java).toContain('.clientTrackingRange(8)')
+      expect(java).toContain(
+        'ResourceKey.create(Registries.ENTITY_TYPE, TestmodMod.id(name))'
+      )
+      expect(java).toContain(
+        'Registry.register(BuiltInRegistries.ENTITY_TYPE, key, builder.build(key))'
+      )
+      expect(java).toContain(
+        'FabricDefaultAttributeRegistry.register(SPRITE, SpriteEntity.createAttributes());'
+      )
+      expect(java).not.toContain('FabricEntityTypeBuilder')
+      expect(java).not.toContain('DeferredRegister')
+    })
+
+    it('实体类：Mojmap Animal 基类 + Mob.createMobAttributes + goals', () => {
+      generateContent(root, [passiveSprite()])
+      const java = readRel('src/main/java/com/kunyu/testmod/entity/SpriteEntity.java')
+      expect(java).toContain('import net.minecraft.world.entity.animal.Animal;')
+      expect(java).toContain('extends Animal')
+      expect(java).toContain('public SpriteEntity(EntityType<? extends Animal> type, Level level)')
+      expect(java).toContain('Mob.createMobAttributes()')
+      expect(java).toContain('this.goalSelector.addGoal(5, new RandomStrollGoal(this, 0.8f));')
+      expect(java).not.toContain('net.minecraft.entity.')
+    })
+
+    it('模型/渲染器/渲染状态：EntityModel<RenderState> + MobRenderer 三泛型', () => {
+      generateContent(root, [passiveSprite()])
+
+      const state = readRel('src/main/java/com/kunyu/testmod/entity/SpriteRenderState.java')
+      expect(state).toContain('import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;')
+      expect(state).toContain('public class SpriteRenderState extends LivingEntityRenderState')
+
+      const model = readRel('src/main/java/com/kunyu/testmod/entity/SpriteModel.java')
+      expect(model).toContain('extends EntityModel<SpriteRenderState>')
+      expect(model).toContain('super(root);')
+      expect(model).toContain('public static LayerDefinition createBodyLayer()')
+      expect(model).toContain('CubeListBuilder.create()')
+      expect(model).toContain('PartPose.offset(8.0f, 24.0f, 8.0f)')
+      expect(model).toContain('LayerDefinition.create(mesh, 16, 16)')
+      expect(model).toContain('public void setupAnim(SpriteRenderState state)')
+
+      const renderer = readRel('src/main/java/com/kunyu/testmod/entity/SpriteRenderer.java')
+      expect(renderer).toContain('extends MobRenderer<SpriteEntity, SpriteRenderState, SpriteModel>')
+      expect(renderer).toContain(`import net.minecraft.resources.${locCls};`)
+      expect(renderer).toContain(
+        `new ModelLayerLocation(${locCls}.fromNamespaceAndPath("testmod", "sprite"), "main")`
+      )
+      expect(renderer).toContain(
+        `${locCls}.fromNamespaceAndPath("testmod", "textures/entity/sprite.png")`
+      )
+      expect(renderer).toContain('public SpriteRenderState createRenderState()')
+      expect(renderer).toContain('context.bakeLayer(MODEL_LAYER)')
+    })
+
+    it('客户端入口：模型层 + 渲染器注册，并织入 fabric.mod.json / 主类', () => {
+      generateContent(root, [passiveSprite()])
+      const client = readRel('src/main/java/com/kunyu/testmod/TestmodModClient.java')
+      expect(client).toContain('implements ClientModInitializer')
+      expect(client).toContain(
+        'EntityModelLayerRegistry.registerModelLayer(SpriteRenderer.MODEL_LAYER, SpriteModel::createBodyLayer);'
+      )
+      expect(client).toContain('EntityRenderers.register(ModEntities.SPRITE, SpriteRenderer::new);')
+
+      const modJson = JSON.parse(readRel('src/main/resources/fabric.mod.json'))
+      expect(modJson.entrypoints.client).toContain('com.kunyu.testmod.TestmodModClient')
+
+      const main = readRel('src/main/java/com/kunyu/testmod/TestmodMod.java')
+      expect(main).toContain('import com.kunyu.testmod.registry.ModEntities;')
+      expect(main).toContain('ModEntities.register();')
+    })
+
+    it('刷怪蛋：SpawnEggItem + Properties.spawnEgg（无主/副色构造参数）', () => {
+      generateContent(root, [passiveSprite()])
+      const java = readRel('src/main/java/com/kunyu/testmod/registry/ModItems.java')
+      expect(java).toContain('import net.minecraft.world.item.SpawnEggItem;')
+      expect(java).toContain('new SpawnEggItem(')
+      expect(java).toContain('.spawnEgg(ModEntities.SPRITE)')
+      expect(java).not.toContain('FabricItemSettings')
+    })
+  })
+}
+
+/* ------------------------------------------------------------------ */
 /* NeoForge（参数化：1.20.4 FML 2.x + 1.21.1 FML 3.x）                  */
 /* ------------------------------------------------------------------ */
 for (const mcVersion of ['1.20.4', '1.21.1'] as const) {

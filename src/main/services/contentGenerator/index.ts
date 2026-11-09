@@ -36,6 +36,13 @@ import { dataPath, tagRegistryPath } from '../../../shared/dataPath'
 import { toGeneratorBlocks } from '../blockAdapter'
 import { applyItemHeldDisplay, compileModelToMcJson, pixelsToPng, pixelsToPngRect } from '../modelCompiler'
 import {
+  fabricMojmapClientJava,
+  fabricMojmapEntityJava,
+  fabricMojmapEntityModelJava,
+  fabricMojmapEntityRendererJava,
+  fabricMojmapEntityRenderStateJava,
+  fabricMojmapFallbackModelJava,
+  fabricMojmapModEntitiesJava,
   mojmapClientEntitySetupJava,
   mojmapEntityClassName,
   mojmapEntityJava,
@@ -43,6 +50,7 @@ import {
   mojmapEntityModelJava,
   mojmapEntityRendererClassName,
   mojmapEntityRendererJava,
+  mojmapEntityRenderStateClassName,
   mojmapEntitySetupJava,
   mojmapModEntitiesJava
 } from '../mojmapEntityCodegen'
@@ -259,16 +267,6 @@ function runGeneration(
     (e) => e.customClass && !resolveEntityCube(e, modelMap) && !resolveEntityGeo(e)
   )
   const modeledEntities = [...cubeModeledEntities, ...geoModeledEntities, ...customClassEntities]
-  // Fabric 1.21.6+ 自官方 MDK 起改用 Mojang 官方映射（fabric-loom-remap），
-  // 而实体注册/渲染生成仍是 Yarn 路径（Mojmap 实体生成目前只服务 Forge/NeoForge 的
-  // DeferredRegister）。这里显式失败，避免生成必然编译不过的工程。
-  if (modeledEntities.length > 0 && ctx.loader === 'fabric' && isMojmapFabric(ctx.mcVersion)) {
-    throw new Error(
-      `Fabric ${ctx.mcVersion} 使用 Mojang 官方映射，实体生成尚未迁移（待后续阶段）：` +
-        `涉及 ${modeledEntities.map((e) => e.id).join(', ')}。` +
-        '请删除这些实体，或改用 1.21.5 及更早版本。'
-    )
-  }
   const enchantments = definitions.filter((d): d is EnchantmentSchema => d.kind === 'enchantment')
   // 1.21+ NeoForge 附魔数据驱动（JSON），其余加载器走 Java 注册类
   const dataDrivenEnchantments = isDataDrivenEnchantment(ctx)
@@ -474,8 +472,59 @@ function runGeneration(
     )
   }
 
-  // 3a) 实体 Java 产物（仅 Fabric/Yarn；仅已建模实体）
-  if (ctx.loader === 'fabric' && modeledEntities.length > 0) {
+  // 3a) 实体 Java 产物（Fabric/Yarn、Fabric/Mojmap 与 Forge/NeoForge 三分支；仅已建模实体）
+  if (ctx.loader === 'fabric' && modeledEntities.length > 0 && isMojmapFabric(ctx.mcVersion)) {
+    // Fabric 1.21.6+（Mojang 官方映射）：Registry.register(BuiltInRegistries.ENTITY_TYPE) +
+    // FabricDefaultAttributeRegistry；渲染走 1.21.2 起的 EntityRenderState 三泛型体系。
+    // GeckoLib 未适配该映射世代：geo 实体退化为静态 cube / 占位模型（与 Forge/NeoForge 一致）。
+    for (const e of modeledEntities) {
+      const geoInfo = resolveEntityGeo(e)
+      const cube = resolveEntityCube(e, modelMap)
+      // 无 cube 资产时用 64×64 占位柱体（主色铺底），保证实体可见可召唤
+      const cubeData = cube ?? {
+        textureSize: 64,
+        pixels: Array.from({ length: 64 * 64 }, () => e.properties.primaryColor),
+        elements: []
+      }
+      // AI 自定义类（customClass）实体类由 AI 负责，生成器只补模型/渲染器/渲染状态
+      if (!e.customClass) {
+        sink.text(
+          join(ctx.javaDir, 'entity', `${mojmapEntityClassName(e)}.java`),
+          fabricMojmapEntityJava(ctx, e, geoInfo !== null)
+        )
+      }
+      sink.text(
+        join(ctx.javaDir, 'entity', `${mojmapEntityModelClassName(e)}.java`),
+        cube
+          ? fabricMojmapEntityModelJava(ctx, e, cubeData)
+          : fabricMojmapFallbackModelJava(ctx, e)
+      )
+      sink.text(
+        join(ctx.javaDir, 'entity', `${mojmapEntityRendererClassName(e)}.java`),
+        fabricMojmapEntityRendererJava(ctx, e)
+      )
+      sink.text(
+        join(ctx.javaDir, 'entity', `${mojmapEntityRenderStateClassName(e)}.java`),
+        fabricMojmapEntityRenderStateJava(ctx, e)
+      )
+      const texPath = join(ctx.assetsDir, 'textures', 'entity', `${e.id}.png`)
+      const texAnim = resolveEntityTextureAnimation(root, e, modelMap)
+      writePixelsPng(sink, texPath, cubeData, texAnim)
+      writeTexMcmeta(sink, texPath, texAnim)
+    }
+    sink.text(
+      join(ctx.registryDir, 'ModEntities.java'),
+      fabricMojmapModEntitiesJava(ctx, modeledEntities)
+    )
+    sink.text(
+      join(ctx.javaDir, `${ctx.modClassName}Client.java`),
+      fabricMojmapClientJava(ctx, modeledEntities)
+    )
+    // 主类 / fabric.mod.json 织入与 Yarn 分支共用；GeckoLib 在该映射世代不可用，撤销历史织入
+    syncFabricMainClass(ctx, modeledEntities, sink)
+    syncFabricModJson(ctx, modeledEntities, sink, false)
+    syncFabricGeckolib(root, [], sink)
+  } else if (ctx.loader === 'fabric' && modeledEntities.length > 0) {
     for (const e of modeledEntities) {
       const geoInfo = resolveEntityGeo(e)
       if (geoInfo) {
