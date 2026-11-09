@@ -122,8 +122,10 @@ describe('Fabric 1.21.6~1.21.11 映射策略对齐官方 MDK（Mojang 官方映�
     expect(isMojmapFabric('1.21.5')).toBe(false)
     // isMojangEra 语义保持 26.x（Forge/迁移告警依赖），不被 1.21.6 污染
     expect(isMojangEra('1.21.6')).toBe(false)
-    // 资源位置类名差异：1.21.6 是 ResourceLocation，26.3 起改名 Identifier
+    // 资源位置类名差异：1.21.6~1.21.10 是 ResourceLocation，1.21.11 起改名 Identifier
     expect(fabricIdentifierClass('1.21.6')).toBe('ResourceLocation')
+    expect(fabricIdentifierClass('1.21.10')).toBe('ResourceLocation')
+    expect(fabricIdentifierClass('1.21.11')).toBe('Identifier')
     expect(fabricIdentifierClass('26.3')).toBe('Identifier')
   })
 

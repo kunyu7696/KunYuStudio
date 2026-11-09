@@ -226,7 +226,8 @@ AI 参考包 manifest 登记 13 种内容类型。
   （26.x 线），由环境引导器自动检测与下载。
 - **映射体系**：Fabric 1.21.6 起跟随官方 MDK 改用 Mojang 官方映射
   （`net.fabricmc.fabric-loom-remap` + `loom.officialMojangMappings()`，不再声明
-  `yarn_mappings`；资源位置类仍为 `ResourceLocation`，26.3 起改名 `Identifier`）；
+  `yarn_mappings`；资源位置类 1.21.6~1.21.10 为 `ResourceLocation`，1.21.11 起
+  改名 `Identifier`）；
   26.x 改用 `net.fabricmc.fabric-loom` 且不写 mappings 行。Forge 26.3 为 FG7 mavenizer 体系。
 
 ---

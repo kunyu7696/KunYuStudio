@@ -153,7 +153,7 @@
       "type": "yarn",
       "identifierClass": "net.minecraft.util.Identifier",
       "registryClass": "net.minecraft.registry.Registries",
-      "description": "Fabric ≤1.21.5 uses Yarn mappings (e.g. Identifier, Registries). From 1.21.6 the official MDK switches to Mojang official mappings (fabric-loom-remap + loom.officialMojangMappings, ResourceLocation, BuiltInRegistries) — check each version fingerprint's mapping field."
+      "description": "Fabric ≤1.21.5 uses Yarn mappings (e.g. Identifier, Registries). From 1.21.6 the official MDK switches to Mojang official mappings (fabric-loom-remap + loom.officialMojangMappings, ResourceLocation, BuiltInRegistries); from 1.21.11 ResourceLocation is renamed to Identifier. Check each version fingerprint's mapping field."
     },
     "forge": {
       "type": "mojang_official",

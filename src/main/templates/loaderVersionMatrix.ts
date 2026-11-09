@@ -85,9 +85,16 @@ export function isMojmapFabric(mcVersion: string): boolean {
   return minor === 21 && patch >= 6
 }
 
-/** Fabric Mojang 映射时代的资源位置类名（1.21.6~1.21.11 为 ResourceLocation，26.x 为 Identifier） */
+/** Fabric Mojang 映射时代的资源位置类名：
+ *  1.21.6~1.21.10 为 ResourceLocation（官方映射实测），1.21.11 起改名为 Identifier
+ *  （1.21.11 client.txt 已无 ResourceLocation，官方示例源码同步改为 Identifier）。 */
 export function fabricIdentifierClass(mcVersion: string): 'ResourceLocation' | 'Identifier' {
-  return isMojangEra(mcVersion) ? 'Identifier' : 'ResourceLocation'
+  if (isMojangEra(mcVersion)) return 'Identifier'
+  const m = /^1\.(\d+)\.(\d+)$/.exec(mcVersion)
+  if (!m) return 'ResourceLocation'
+  const minor = Number(m[1])
+  const patch = Number(m[2])
+  return minor === 21 && patch >= 11 ? 'Identifier' : 'ResourceLocation'
 }
 
 export interface FabricToolchain {
