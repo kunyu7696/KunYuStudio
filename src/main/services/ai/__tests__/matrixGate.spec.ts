@@ -23,7 +23,7 @@
  * 注意 maven.neoforged.net 在部分国内网络环境被污染（DNS 指向无效 IP），
  * NFRT 下载会失败——neoforge 组合以 CI matrix-gate job 结果为准。
  */
-import { rmSync } from 'node:fs'
+import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { execSync } from 'node:child_process'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
@@ -214,6 +214,25 @@ function runGradleBuild(root: string, javaHome: string | undefined): Promise<Gat
   })
 }
 
+/**
+ * CI 的 Gradle 发行包走腾讯云直连镜像。
+ *
+ * CI runner 在国外，maven 仓库仍强制 official（国内镜像对国外 IP 不稳定）；
+ * 但 services.gradle.org 的发行包会 307 到 GitHub Releases，近期持续 504，
+ * 属于环境性失败、与生成代码无关。腾讯云镜像是产品 china 默认源（同一发行包），
+ * 直连返回 200，避免 504 掩盖真实编译结论。
+ */
+function useGradleDistMirror(root: string, gradleVersion: string): void {
+  const p = join(root, 'gradle', 'wrapper', 'gradle-wrapper.properties')
+  if (!existsSync(p)) return
+  const text = readFileSync(p, 'utf-8')
+  const next = text.replace(
+    /^distributionUrl=.*$/m,
+    `distributionUrl=https\\://mirrors.cloud.tencent.com/gradle/gradle-${gradleVersion}-bin.zip`
+  )
+  if (next !== text) writeFileSync(p, next, 'utf-8')
+}
+
 /** 把单组合构建结果写回矩阵健康统一存储（与探针/监测同一文件，杜绝双写分裂） */
 function writeBackMatrixHealth(combo: GateCombo, pass: boolean, definitionCount: number): void {
   const storePath =
@@ -287,6 +306,11 @@ describe.skipIf(!GATE_ENABLED)(`矩阵门禁（tiers=${GATE_TIERS.join(',')}，�
         modId: 'gatemod',
         namespace: 'gatemod'
       })
+
+      // CI 环境：Gradle 发行包改走腾讯云直连镜像（GitHub Releases 504 频发，属环境性失败）
+      if (process.env.CI) {
+        useGradleDistMirror(project.path, getToolchain(loader, mcVersion).gradleVersion)
+      }
 
       // 五类高频内容全走「快速创建」语义入口，覆盖方块注册与物品四子类型
       const block = unifiedToBlock(
