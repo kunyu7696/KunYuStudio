@@ -20,7 +20,16 @@
  * 定位：advisory（不阻塞合并/发布），稳定后再纳入发布前检查单。
  */
 import { spawn, spawnSync, type ChildProcess } from 'node:child_process'
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs'
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  statSync,
+  writeFileSync
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { PNG } from 'pngjs'
@@ -98,6 +107,23 @@ const SCREENSHOT_SETTLE_MS = 6000
 /** 抓屏分辨率（须与 Xvfb 屏幕一致；游戏窗口同尺寸，避免截图含大片黑边） */
 const VIDEO_SIZE = process.env.KY_CLIENT_VIDEO_SIZE ?? '1280x720'
 const [GAME_WIDTH = '1280', GAME_HEIGHT = '720'] = VIDEO_SIZE.split('x')
+
+/**
+ * runClient 追加 quickPlay 参数。
+ * 用 init script 在 projectsEvaluated 阶段 append，而非命令行 `--args`：
+ * `--args` 会整体替换 JavaExec 的 args 列表（各加载器自己的启动参数可能被冲掉），
+ * 而 append 与 Loom/FG/MDG 的参数装配方式无关。
+ */
+const CLIENT_INIT_SCRIPT = `gradle.projectsEvaluated {
+    gradle.rootProject.allprojects { p ->
+        p.tasks.matching { it.name == 'runClient' }.configureEach { t ->
+            if (t instanceof org.gradle.api.tasks.JavaExec) {
+                t.args('--quickPlaySingleplayer', 'gate_world', '--width', '${GAME_WIDTH}', '--height', '${GAME_HEIGHT}')
+            }
+        }
+    }
+}
+`
 
 /** 版本族代表组（客户端入口/渲染断点；Forge 只保留 1.20.1 旧入口，26.3 先观察 NeoForge） */
 const REPRESENTATIVE: GateCombo[] = [
@@ -382,7 +408,13 @@ function runClient(
       env['JAVA_HOME'] = javaHome
       env['PATH'] = `${join(javaHome, 'bin')}:${env['PATH'] ?? ''}`
     }
-    const gameArgs = `--quickPlaySingleplayer gate_world --width ${GAME_WIDTH} --height ${GAME_HEIGHT}`
+    // Loom 1.19 在 CI + Linux 下会给 runClient 再套一层 `xvfb-run --auto-servernum`
+    // （游戏渲染到内部独立 DISPLAY），外层抓屏只会拿到黑屏。
+    // 摘掉 CI 让 Loom 复用外层 Xvfb 的 DISPLAY，截图才是真实画面。
+    delete env['CI']
+
+    const initScript = join(root, 'gate-client.init.gradle')
+    writeFileSync(initScript, CLIENT_INIT_SCRIPT, 'utf-8')
     // --no-daemon：每组独占一个单次 daemon，随游戏退出释放内存（6 组合常驻 daemon 会压满 runner）
     const child = spawn(
       'sh',
@@ -391,7 +423,7 @@ function runClient(
         'runClient',
         '--console=plain',
         '--no-daemon',
-        `--args=${gameArgs}`
+        `--init-script=${initScript}`
       ],
       {
         cwd: root,
