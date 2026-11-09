@@ -169,15 +169,15 @@ const COMBOS = REPRESENTATIVE.filter(
  * 客户端致命首因（命中即提前终止，避免白等超时；进程退出后仍用整段日志复查）。
  *
  * 不含通用的 `Failed to create window`：FML 早期进度窗（EARLYDISPLAY / SDL3）
- * 在 Xvfb + llvmpipe 下找不到匹配的 GLX visual 时只打一条 ERROR，
- * ImmediateWindowHandler 会吞掉 initialize 异常继续加载（26.3 实测），
- * 主窗口能否创建由后续 GLFW/SDL 专有模式与超时判定，不能在这里提前判死。
+ * 创建失败时会打这条 ERROR，但真正致命的是随后的 ERROR DISPLAY 对话框
+ * （见下一条模式）；只按前者判死会把排查方向误指到主窗口。
  */
 const CLIENT_FATAL_PATTERNS: RegExp[] = [
   /A fatal error has been detected/,
   /The game crashed whilst/,
   /Exception in thread "Render thread"/,
   /Exception in thread "main"/,
+  /Failed to initialize the mod loading system and display/,
   /Failed to initialize GLFW/,
   /GLFW error 65544/,
   /Couldn't set pixel format/,

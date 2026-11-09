@@ -69,15 +69,13 @@ jobs:
 
       - run: npm ci
 
-      # 26.x 客户端窗口改用 SDL3（FML 早期窗报 Couldn't find matching GLX visual）。
-      # 自检输出写进步骤摘要：GLX 缺失 / 无匹配 visual 两种情况能一眼区分。
+      # 自检输出写进步骤摘要并随 artifact 上传：GLX 缺 sRGB 配置与 EGL 可用性可一眼区分
       - name: 显示环境自检（GLX / EGL 能力）
         run: |
           xvfb-run -a --server-args="-screen 0 640x360x24 +extension GLX +render -noreset" bash -c '
             echo "== xdpyinfo =="; xdpyinfo | sed -n "1,30p" || true
             echo "== glxinfo -B =="; glxinfo -B || true
-            echo "== GLX fbconfig 计数 =="; glxinfo -t 2>/dev/null | grep -c "visual id" || true
-            echo "== GLX fbconfig 明细（前 40 行） =="; glxinfo -t 2>/dev/null | sed -n "1,40p" || true
+            echo "== GLX fbconfig 全量 =="; glxinfo -t 2>/dev/null || true
             echo "== eglinfo -B =="; eglinfo -B 2>/dev/null | sed -n "1,30p" || true
           ' 2>&1 | tee "$RUNNER_TEMP/display-check.txt"
           cat "$RUNNER_TEMP/display-check.txt" >> "$GITHUB_STEP_SUMMARY"
@@ -85,6 +83,12 @@ jobs:
           mkdir -p .dev-userdata/client-gate
           cp "$RUNNER_TEMP/display-check.txt" .dev-userdata/client-gate/display-check.txt
 
+      # 26.x 客户端窗口改用 SDL3。FML GlRenderer 请求 SDL_GL_FRAMEBUFFER_SRGB_CAPABLE=1，
+      # SDL 的 GLX 后端据此要求 GLX_FRAMEBUFFER_SRGB_CAPABLE_ARB=True 的 FBConfig，
+      # 而 Xvfb + llvmpipe 的 GLX 没有这类配置 → glXChooseFBConfig 返回空，
+      # 报 "Couldn't find matching GLX visual"。SDL 的 EGL 后端把 sRGB 放在 surface 属性
+      # （EGL_GL_COLORSPACE）而非 config 选择上，X11 EGL 在 llvmpipe 下可用（eglinfo 已确认），
+      # 故强制 SDL 走 EGL。该变量只影响 SDL（26.x）；用 GLFW 的 1.20.1/1.21.x 不受影响。
       - name: 客户端进游戏（Xvfb + 软件渲染）
         id: client
         env:
@@ -95,6 +99,7 @@ jobs:
           # 规范变量名：仅 GALLIUM_DRIVER 在某些 Mesa 版本不会真正选中 llvmpipe
           MESA_LOADER_DRIVER_OVERRIDE: llvmpipe
           MESA_GL_VERSION_OVERRIDE: '4.5'
+          SDL_VIDEO_X11_FORCE_EGL: '1'
           # 无声卡：OpenAL Soft 走 null 后端，避免 ALSA 阻塞/噪声干扰渲染线程
           ALSOFT_DRIVERS: 'null'
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
