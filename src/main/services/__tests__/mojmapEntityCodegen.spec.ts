@@ -610,6 +610,8 @@ describe('Mojmap 实体生成（NeoForge 26.3，RenderState 体系）', () => {
     const block = createDefaultBlock('gate_block')
     generateContent(root, [block])
     const java = readRel('src/main/java/com/kunyu/testmod/registry/ModBlocks.java')
-    expect(java).toContain('.setId(BLOCKS.key("gate_block"))')
+    expect(java).toContain(
+      '.setId(ResourceKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath(TestmodMod.MOD_ID, "gate_block")))'
+    )
   })
 })

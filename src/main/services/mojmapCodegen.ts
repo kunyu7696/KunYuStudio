@@ -257,12 +257,16 @@ export function mojmapModBlocksJava(ctx: ModContext, blocks: GeneratorBlock[]): 
   const propsExpr = f.blockPropsNeedsMaterial
     ? 'BlockBehaviour.Properties.of(Material.STONE)'
     : 'BlockBehaviour.Properties.of()'
-  // 1.21.2 起 Block 构造强制要求 Properties.setId（26.x 实测 NullPointerException: Block id not set）
+  // 1.21.2 起 Block 构造强制要求 Properties.setId（26.x 实测 NullPointerException: Block id not set）；
+  // 26.x 的 DeferredRegister 已无 key(String)，直接构造注册键（资源位置类随版本改名 Identifier）
   const blockIdEra = isEntityRenderStateEra(ctx.mcVersion)
+  const locCls = fabricIdentifierClass(ctx.mcVersion)
+  const blockIdExpr = (id: string): string =>
+    `ResourceKey.create(Registries.BLOCK, ${locCls}.fromNamespaceAndPath(${ctx.modClassName}.MOD_ID, "${id}"))`
   const fields = blocks
     .map((b) => {
       const chain: string[] = []
-      if (blockIdEra) chain.push(`            .setId(BLOCKS.key("${b.id}"))`)
+      if (blockIdEra) chain.push(`            .setId(${blockIdExpr(b.id)})`)
       chain.push(`            .strength(${fmtFloat(b.hardness)}, ${fmtFloat(b.resistance)})`)
       chain.push(`            .sound(SoundType.${b.soundGroup.toUpperCase()})`)
       if (b.requiresTool) chain.push('            .requiresCorrectToolForDrops()')
@@ -283,11 +287,17 @@ ${chain.join('\n')}));`
   const materialImport = f.blockPropsNeedsMaterial
     ? 'import net.minecraft.world.level.material.Material;\n'
     : ''
+  const blockIdImports = blockIdEra
+    ? `import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.${locCls};
+`
+    : ''
   const imports = blocks.length
     ? `import ${ctx.packageName}.${ctx.modClassName};
 ${f.registriesImport.map((i) => `import ${i};`).join('\n')}
 import ${f.holderImport};
-import net.minecraft.world.level.block.Block;
+${blockIdImports}import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 ${materialImport}`
