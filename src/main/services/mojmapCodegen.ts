@@ -219,6 +219,7 @@ export function resolveMojmapFlavor(loader: 'forge' | 'neoforge', mcVersion: str
     // FML loader 9.x（MC 1.21.6 起，pom 实证：21.5.98→loader 7.0.13、21.6.20-beta→9.0.2）
     // 移除 @EventBusSubscriber 的 bus 属性，事件按 IModBusEvent 类型自动路由
     modBusSubscriber: (mod, clientOnly) => {
+      // 1.21.6+（loader 9.x）起 EventBusSubscriber 移除 bus 属性，事件按 IModBusEvent 自动路由
       const busAttr = compareMcVersions(mcVersion, '1.21.6') >= 0 ? '' : ', bus = EventBusSubscriber.Bus.MOD'
       return useFml2Nested
         ? `@Mod.EventBusSubscriber(modid = ${mod}.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD${clientOnly ? ', value = Dist.CLIENT' : ''})`
@@ -342,7 +343,13 @@ const MOJMAP_ARMOR_EQUIPMENT_SLOTS: Record<ArmorSlot, string> = {
   boots: 'FEET'
 }
 
-function mojmapItemField(i: ItemSchema, f: MojmapFlavor): string {
+/** 1.21.2+ 物品 Properties 必须 setId（26.x 实测 NullPointerException: Item id not set） */
+function mojmapItemProps(ctx: ModContext, id: string): string {
+  if (!isEntityRenderStateEra(ctx.mcVersion)) return 'new Item.Properties()'
+  return `new Item.Properties().setId(ResourceKey.create(Registries.ITEM, ${fabricIdentifierClass(ctx.mcVersion)}.fromNamespaceAndPath(${ctx.modClassName}.MOD_ID, "${id}")))`
+}
+
+function mojmapItemField(ctx: ModContext, i: ItemSchema, f: MojmapFlavor): string {
   const name = itemDisplayName(i, 'zh_cn')
   let comment = `/** ${name} */`
   if (i.itemType === 'block_item' && i.blockRef) {
@@ -472,8 +479,8 @@ function mojmapItemField(i: ItemSchema, f: MojmapFlavor): string {
     settings.push(...foodLines)
   }
 
-  const chain =
-    settings.length > 0 ? `new Item.Properties()\n${settings.join('\n')}` : 'new Item.Properties()'
+  const propsBase = mojmapItemProps(ctx, i.id)
+  const chain = settings.length > 0 ? `${propsBase}\n${settings.join('\n')}` : propsBase
   // 1.18 及以前原版工具类构造器为 protected（javap 实证），外部包需用匿名子类实例化
   const ctorTail =
     i.itemType === 'tool' && !f.toolViaAttributes && f.toolCtorNeedsAnon ? ' {}' : ''
@@ -506,10 +513,10 @@ export function mojmapModItemsJava(
     const name = oneLine(b.displayName)
     return `    /** ${name}（方块物品） */
     public static final ${f.itemHolder}<Item> ${toJavaConst(b.id)} = ITEMS.register("${b.id}",
-        () -> new BlockItem(ModBlocks.${toJavaConst(b.id)}.get(), new Item.Properties()));`
+        () -> new BlockItem(ModBlocks.${toJavaConst(b.id)}.get(), ${mojmapItemProps(ctx, b.id)}));`
   })
 
-  const itemFields = items.map((i) => mojmapItemField(i, f))
+  const itemFields = items.map((i) => mojmapItemField(ctx, i, f))
   // 刷怪蛋字段：颜色为 0xRRGGBB 十进制字面量（对齐 fabric 分支的 parseInt 转换）；
   // ModEntities 与 ModItems 同在 registry 包，无需 import
   const eggFields = eggEntities.map((e) => {
@@ -521,17 +528,17 @@ export function mojmapModItemsJava(
       // Forge/NeoForge 的 ModEntities 是 holder，需 .get() 取 EntityType
       return `    /** ${name}刷怪蛋 */
     public static final ${f.itemHolder}<Item> ${toJavaConst(e.id)}_SPAWN_EGG = ITEMS.register("${e.id}_spawn_egg",
-        () -> new SpawnEggItem(new Item.Properties().spawnEgg(ModEntities.${toJavaConst(e.id)}.get())));`
+        () -> new SpawnEggItem(${mojmapItemProps(ctx, `${e.id}_spawn_egg`)}.spawnEgg(ModEntities.${toJavaConst(e.id)}.get())));`
     }
     if (f.spawnEggVanilla) {
       // 1.21.5+（NeoForge）：DeferredSpawnEggItem 移除，原版 SpawnEggItem(EntityType, Properties)，颜色数据驱动化
       return `    /** ${name}刷怪蛋 */
     public static final ${f.itemHolder}<Item> ${toJavaConst(e.id)}_SPAWN_EGG = ITEMS.register("${e.id}_spawn_egg",
-        () -> new SpawnEggItem(ModEntities.${toJavaConst(e.id)}.get(), new Item.Properties()));`
+        () -> new SpawnEggItem(ModEntities.${toJavaConst(e.id)}.get(), ${mojmapItemProps(ctx, `${e.id}_spawn_egg`)}));`
     }
     return `    /** ${name}刷怪蛋 */
     public static final ${f.itemHolder}<Item> ${toJavaConst(e.id)}_SPAWN_EGG = ITEMS.register("${e.id}_spawn_egg",
-        () -> new ${f.spawnEggClass}(ModEntities.${toJavaConst(e.id)}, ${primary}, ${secondary}, new Item.Properties()));`
+        () -> new ${f.spawnEggClass}(ModEntities.${toJavaConst(e.id)}, ${primary}, ${secondary}, ${mojmapItemProps(ctx, `${e.id}_spawn_egg`)}));`
   })
   const fields = [...blockItemFields, ...itemFields, ...eggFields].join('\n\n')
   const total = blocks.length + items.length + eggEntities.length
@@ -541,8 +548,16 @@ export function mojmapModItemsJava(
   const toolImports = f.dataComponentItems
     ? ''
     : usedToolClasses.map((c) => `import net.minecraft.world.item.${c};\n`).join('')
+  // 1.21.2+ 物品 Properties.setId 需要的注册表键/资源位置类
+  const itemIdImports =
+    total > 0 && isEntityRenderStateEra(ctx.mcVersion)
+      ? `import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.${fabricIdentifierClass(ctx.mcVersion)};
+`
+      : ''
   const imports = `import ${ctx.packageName}.${ctx.modClassName};
-${total > 0 ? f.registriesImport.map((i) => `import ${i};`).join('\n') + '\n' : ''}${
+${itemIdImports}${total > 0 ? f.registriesImport.map((i) => `import ${i};`).join('\n') + '\n' : ''}${
     needItemImport ? `import ${f.itemHolderImport};\n` : ''
   }${blocks.length > 0 ? 'import net.minecraft.world.item.BlockItem;\n' : ''}${
     needItemImport ? 'import net.minecraft.world.item.Item;\n' : ''

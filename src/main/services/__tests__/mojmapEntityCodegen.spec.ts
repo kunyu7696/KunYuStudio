@@ -601,7 +601,7 @@ describe('Mojmap 实体生成（NeoForge 26.3，RenderState 体系）', () => {
     generateContent(root, [passiveSprite()])
     const java = readRel('src/main/java/com/kunyu/testmod/registry/ModItems.java')
     expect(java).toContain(
-      'new SpawnEggItem(new Item.Properties().spawnEgg(ModEntities.SPRITE.get()))'
+      'new SpawnEggItem(new Item.Properties().setId(ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(TestmodMod.MOD_ID, "sprite_spawn_egg"))).spawnEgg(ModEntities.SPRITE.get()))'
     )
     expect(java).not.toContain('DeferredSpawnEggItem')
   })
