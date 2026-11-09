@@ -9,6 +9,11 @@ on:
     # 每周一 03:00 UTC 跑一次矩阵门禁（真实构建耗时长，不随 PR 触发）
     - cron: '0 3 * * 1'
   workflow_dispatch:
+    inputs:
+      combos:
+        description: '只跑指定组合（逗号分隔，如 fabric-1.21.11）；留空 = 跑全量分层'
+        required: false
+        default: ''
 
 # Unix LF 换行符必须保留：Windows CRLF 会导致 YAML 解析错误（项目硬约束）
 jobs:
@@ -138,9 +143,10 @@ jobs:
     # 修复后纳入门禁，不再永绝于编译验证之外
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: windows-latest
-    # matrixHealth 落回仓库 manifest 需要 push 权限（结果不再只进 artifact）
+    # matrixHealth 落回仓库 manifest 需要 push 权限；失败诊断要在 issue 里留痕
     permissions:
       contents: write
+      issues: write
     steps:
       - uses: actions/checkout@v4
 
@@ -171,14 +177,39 @@ jobs:
       - run: npm ci
 
       - name: 矩阵真实构建（结果写入统一存储 overlay）
-        run: npm run test:matrix
+        id: matrix
+        shell: pwsh
         env:
           KY_MATRIX_TIERS: core,extended,legacy
+          # 定向复跑（诊断用）：填 fabric-1.21.11 之类的组合名则只跑该组合
+          KY_MATRIX_COMBOS: ${{ github.event.inputs.combos }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          $log = Join-Path $env:RUNNER_TEMP 'matrix-gate.log'
+          npm run test:matrix *>&1 | Tee-Object -FilePath $log | Write-Host
+          $ec = $LASTEXITCODE
+          if ($ec -eq 0) { exit 0 }
 
-      # 统一成套整改：门禁只写 overlay（运行时唯一真源），manifest 不再被测试回写；
-      # 这里把 overlay 快照单向导出回仓库 manifest（发布基线刷新），artifact/commit 链路照旧。
+          # 失败诊断：无人订阅 CI 时 job 红等于静默；把 vitest 失败段写进步骤摘要 + issue，
+          # 无需下载日志即可定位是哪个组合、什么错。
+          $text = Get-Content $log -Raw
+          $i = $text.IndexOf('Failed Tests')
+          $excerpt = if ($i -ge 0) { $text.Substring($i) } else { $text.Substring([Math]::Max(0, $text.Length - 8000)) }
+          if ($excerpt.Length -gt 9000) { $excerpt = $excerpt.Substring(0, 9000) }
+          $body = "矩阵门禁失败（commit $env:GITHUB_SHA）。`n运行：$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID`n`n$excerpt"
+          $body | Add-Content -Path $env:GITHUB_STEP_SUMMARY -Encoding utf8
+          $existing = gh issue list --state open --search "矩阵门禁失败 in:title" --json number --jq '.[0].number'
+          if ($existing) {
+            gh issue comment "$existing" --body $body
+          } else {
+            gh issue create --title '矩阵门禁失败（真机构建）' --body $body
+          }
+          exit $ec
+
+      # 定向复跑（combos 非空）不写回仓库：只用于诊断单个组合，避免部分结果覆盖基线
       - name: matrixHealth 快照导出 manifest
-        if: always()
+        if: always() && github.event.inputs.combos == ''
         run: node scripts/exportMatrixHealth.mjs
 
       - uses: actions/upload-artifact@v4
@@ -191,7 +222,7 @@ jobs:
         # 此前结果只随 artifact 上传，仓库内 matrixHealth 永久停在最后一次本机运行。
         # 回写在 test:matrix 内部完成（writeBackMatrixHealth），这里把变更提交回触发分支。
         # 若无变更（如环境性失败未回写）则 git diff --quiet 短路，push 为 no-op。
-        if: always()
+        if: always() && github.event.inputs.combos == ''
         run: |
           git config user.name "kunyu-ci-bot"
           git config user.email "actions@users.noreply.github.com"

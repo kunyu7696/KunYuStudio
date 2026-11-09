@@ -88,6 +88,14 @@ const GATE_TIERS = (process.env.KY_MATRIX_TIERS ?? 'core,extended,legacy')
   .split(',')
   .map((t) => t.trim())
   .filter((t) => t.length > 0)
+/**
+ * 单组合定向复跑（诊断用）：KY_MATRIX_COMBOS=fabric-1.21.11,fabric-1.21.6
+ * 留空 = 按分层跑全量。CI 通过 workflow_dispatch 的 combos 输入透传。
+ */
+const GATE_COMBOS_FILTER = (process.env.KY_MATRIX_COMBOS ?? '')
+  .split(',')
+  .map((c) => c.trim())
+  .filter((c) => c.length > 0)
 /** 单组合上限：完整 build 首次需下载 Gradle 发行包与全部依赖（对齐编译探针 30 分钟并留余量）；
  *  PR 档跑 compileJava+processResources+jar（PR 档补资源拷贝与打包任务），
  *  forge/neoforge 冷缓存需下载 ForgeGradle 插件 + Minecraft 映射 + 重映射，10 分钟不够，
@@ -129,6 +137,9 @@ const GATE_COMBOS: GateCombo[] = LOADERS.flatMap((loader) =>
     .filter((v) => GATE_TIERS.includes(tierOfMcVersion(v)))
     .filter((v) => !isBetaBlocked(loader, v))
     .map((mcVersion) => ({ loader, mcVersion }))
+).filter(
+  (c) =>
+    GATE_COMBOS_FILTER.length === 0 || GATE_COMBOS_FILTER.includes(`${c.loader}-${c.mcVersion}`)
 )
 
 /** 按 GitHub runner 约定解析 JDK 宿主：setup-java 写入 JAVA_HOME_<major>_<arch> */
