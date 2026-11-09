@@ -176,8 +176,8 @@
       "loaderVersion": "0.15.11",
       "mapping": "yarn",
       "jdk": 17,
-      "health": "green",
-      "verifiedAt": "2026-11-09T07:15:40.576Z",
+      "health": "unknown",
+      "verifiedAt": null,
       "driftRisk": "low",
       "note": "M7 active path; Fabric loader rolling releases require periodic re-probe",
       "templatePin": {
@@ -189,10 +189,17 @@
       },
       "tier": "core",
       "matrixHealth": {
-        "templateCount": 5,
-        "verifiedCount": 5,
-        "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T07:15:40.576Z"
+        "templateCount": 0,
+        "verifiedCount": 0,
+        "passRate": 0,
+        "lastVerifiedAt": null,
+        "stages": {
+          "runtime": {
+            "pass": true,
+            "at": "2026-11-09T22:49:16.583Z",
+            "note": "已进入世界并截图：.dev-userdata/client-gate/fabric-1.20.1.png"
+          }
+        }
       }
     },
     {
@@ -430,8 +437,8 @@
       "loaderVersion": "47.4.23",
       "mapping": "mojang_official",
       "jdk": 17,
-      "health": "green",
-      "verifiedAt": "2026-11-09T07:31:54.217Z",
+      "health": "unknown",
+      "verifiedAt": null,
       "driftRisk": "low",
       "note": "M7 active path; Forge 47.x promoted releases tracked via maven.minecraftforge.net",
       "templatePin": {
@@ -441,10 +448,17 @@
       },
       "tier": "core",
       "matrixHealth": {
-        "templateCount": 5,
-        "verifiedCount": 5,
-        "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T07:31:54.217Z"
+        "templateCount": 0,
+        "verifiedCount": 0,
+        "passRate": 0,
+        "lastVerifiedAt": null,
+        "stages": {
+          "runtime": {
+            "pass": false,
+            "at": "2026-11-09T23:10:24.966Z",
+            "note": "未进入世界：客户端已启动但未进入世界（渲染/加载阻塞）；已留证：forge-1.20.1-latest.log、forge-1.20.1-cmdline.txt"
+          }
+        }
       }
     },
     {
@@ -823,8 +837,8 @@
       "loaderVersion": "0.20.1",
       "mapping": "mojang_official",
       "jdk": 21,
-      "health": "green",
-      "verifiedAt": "2026-11-09T07:27:19.448Z",
+      "health": "unknown",
+      "verifiedAt": null,
       "driftRisk": "medium",
       "note": "坐标按官方 fabric-example-mod 1.21.11 分支核对：映射已改为 Mojang 官方映射（net.fabricmc.fabric-loom-remap + loom.officialMojangMappings，官方不再声明 yarn_mappings），loader 0.20.1 / fabric-api 0.141.6+1.21.11 / loom 1.19-SNAPSHOT / Gradle 9.8.2。真机验证未完成。",
       "templatePin": {
@@ -835,10 +849,17 @@
       },
       "tier": "extended",
       "matrixHealth": {
-        "templateCount": 6,
-        "verifiedCount": 6,
-        "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T07:27:19.448Z"
+        "templateCount": 0,
+        "verifiedCount": 0,
+        "passRate": 0,
+        "lastVerifiedAt": null,
+        "stages": {
+          "runtime": {
+            "pass": true,
+            "at": "2026-11-09T22:50:51.755Z",
+            "note": "已进入世界并截图：.dev-userdata/client-gate/fabric-1.21.11.png"
+          }
+        }
       }
     },
     {
@@ -968,8 +989,8 @@
       "loaderVersion": "21.11.45",
       "mapping": "mojang_official",
       "jdk": 21,
-      "health": "green",
-      "verifiedAt": "2026-11-09T07:55:52.506Z",
+      "health": "unknown",
+      "verifiedAt": null,
       "driftRisk": "medium",
       "note": "NeoForge 21.11.45（BMCLAPI 镜像官方 maven-metadata 核实，2026-10）；ModDevGradle 2.0.147。真机验证未完成，registeredButInactive，向导标「待验证」",
       "templatePin": {
@@ -979,10 +1000,17 @@
       },
       "tier": "extended",
       "matrixHealth": {
-        "templateCount": 5,
-        "verifiedCount": 5,
-        "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T07:55:52.506Z"
+        "templateCount": 0,
+        "verifiedCount": 0,
+        "passRate": 0,
+        "lastVerifiedAt": null,
+        "stages": {
+          "runtime": {
+            "pass": false,
+            "at": "2026-11-09T23:12:19.133Z",
+            "note": "世界生成失败：服务器提前退出（exit=1）"
+          }
+        }
       }
     },
     {
@@ -992,8 +1020,8 @@
       "loaderVersion": "0.19.5",
       "mapping": "mojang_official",
       "jdk": 25,
-      "health": "green",
-      "verifiedAt": "2026-11-09T07:28:02.920Z",
+      "health": "unknown",
+      "verifiedAt": null,
       "driftRisk": "medium",
       "note": "26.3（2026-10 接入）：Fabric 发布当天（2026-09-15）即提供稳定版，推荐 loader 0.19.5；fabric-api 0.162.0+26.3 / loom 1.18-SNAPSHOT（官方插件 id net.fabricmc.fabric-loom，勿写 1.18.4）/ Gradle 9.7.1 / JDK 25。26.x Yarn 无构建（meta count=0），无 mappings 行，Loom 默认 Mojang 官方映射（Identifier.fromNamespaceAndPath，import net.minecraft.resources.Identifier；注册走 BuiltInRegistries + Properties.setId(ResourceKey)）。官方 fabric-example-mod 26.3 分支一手核实，registeredButInactive，真机验证待补",
       "templatePin": {
@@ -1004,10 +1032,17 @@
       },
       "tier": "extended",
       "matrixHealth": {
-        "templateCount": 6,
-        "verifiedCount": 6,
-        "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T07:28:02.920Z"
+        "templateCount": 0,
+        "verifiedCount": 0,
+        "passRate": 0,
+        "lastVerifiedAt": null,
+        "stages": {
+          "runtime": {
+            "pass": true,
+            "at": "2026-11-09T22:52:13.629Z",
+            "note": "已进入世界并截图：.dev-userdata/client-gate/fabric-26.3.png"
+          }
+        }
       }
     },
     {
@@ -1041,8 +1076,8 @@
       "loaderVersion": "26.3.0.101",
       "mapping": "mojang_official",
       "jdk": 25,
-      "health": "green",
-      "verifiedAt": "2026-11-09T07:57:16.068Z",
+      "health": "unknown",
+      "verifiedAt": null,
       "driftRisk": "high",
       "note": "NeoForge 26.3 已转正（maven 26.3.0.76 起去除 -beta 后缀，当前 26.3.0.101），矩阵解除 beta 禁用，组合可由脚手架/整合包/CI/探针选用；ModDevGradle 取全矩阵统一 2.0.147、Gradle 取 26.3 线通用 9.7.1（与 fabric/forge 26.3 一致），真机构建验证待补",
       "templatePin": {
@@ -1052,10 +1087,17 @@
       },
       "tier": "extended",
       "matrixHealth": {
-        "templateCount": 5,
-        "verifiedCount": 5,
-        "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T07:57:16.068Z"
+        "templateCount": 0,
+        "verifiedCount": 0,
+        "passRate": 0,
+        "lastVerifiedAt": null,
+        "stages": {
+          "runtime": {
+            "pass": true,
+            "at": "2026-11-09T23:14:34.040Z",
+            "note": "已进入世界并截图：.dev-userdata/client-gate/neoforge-26.3.png"
+          }
+        }
       }
     }
   ],
