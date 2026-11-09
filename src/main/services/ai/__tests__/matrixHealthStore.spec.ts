@@ -54,6 +54,55 @@ afterEach(() => {
   rmSync(dir, { recursive: true, force: true })
 })
 
+describe('三态报告（stages）', () => {
+  it('recordGateResult 写 compile 阶段，load/runtime 保留', () => {
+    const store = createMatrixHealthStore({ path })
+    store.recordGateResult({
+      comboId: 'fabric-1.20.1',
+      pass: true,
+      templateCount: 5,
+      at: '2026-11-09T00:00:00.000Z'
+    })
+    store.recordLoadResult({
+      comboId: 'fabric-1.20.1',
+      pass: false,
+      at: '2026-11-09T01:00:00.000Z',
+      note: 'Missing or unsupported mandatory dependencies'
+    })
+    // 再跑一次编译：load 阶段不被覆盖
+    store.recordGateResult({
+      comboId: 'fabric-1.20.1',
+      pass: true,
+      templateCount: 6,
+      at: '2026-11-09T02:00:00.000Z'
+    })
+    const combo = store.getCombo('fabric-1.20.1')
+    expect(combo?.matrixHealth?.stages?.compile).toEqual({
+      pass: true,
+      at: '2026-11-09T02:00:00.000Z'
+    })
+    expect(combo?.matrixHealth?.stages?.load).toEqual({
+      pass: false,
+      at: '2026-11-09T01:00:00.000Z',
+      note: 'Missing or unsupported mandatory dependencies'
+    })
+  })
+
+  it('recordLoadResult 无编译记录时补 0 统计，不伪造灯色', () => {
+    const store = createMatrixHealthStore({ path })
+    store.recordLoadResult({
+      comboId: 'fabric-1.20.1',
+      pass: true,
+      at: '2026-11-09T01:00:00.000Z'
+    })
+    const combo = store.getCombo('fabric-1.20.1')
+    expect(combo?.health).toBe('unknown')
+    expect(combo?.matrixHealth?.passRate).toBe(0)
+    expect(combo?.matrixHealth?.stages?.load?.pass).toBe(true)
+    expect(combo?.matrixHealth?.stages?.compile).toBeUndefined()
+  })
+})
+
 describe('mergeFromBaseline（矩阵健康度刷新）', () => {
   it('overlay 无记录：整条灌入并计入采纳数', () => {
     const store = createMatrixHealthStore({ path })

@@ -37,6 +37,18 @@
             {{ formatMatrixTime(row.lastVerifiedAt) }}
           </template>
         </el-table-column>
+        <el-table-column :label="t('settings.ai.matrix.colStages')" width="110" align="center">
+          <template #default="scope">
+            <span class="stage-group">
+              <span
+                v-for="k in MATRIX_STAGE_KEYS"
+                :key="k"
+                :class="matrixStageDotClass(scope.row as MatrixHealthRow, k)"
+                :title="matrixStageLabel(scope.row as MatrixHealthRow, k)"
+              />
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column :label="t('settings.ai.matrix.colHealth')" width="90" align="center">
           <template #default="scope">
             <span class="ext-dot" :class="matrixHealthDotClass(scope.row as MatrixHealthRow)" :title="matrixHealthLabel(scope.row as MatrixHealthRow)" />
@@ -1007,7 +1019,7 @@ import { useAiMonitorStore } from '../../stores/aiMonitor'
 import { useProjectStore } from '../../stores/project'
 import { MCP_PRESETS } from '../../../../shared/types/settings'
 import { TIER_METAS } from '../../../../shared/types/tiers'
-import { useMatrixHealth } from './ai/useMatrixHealth'
+import { MATRIX_STAGE_KEYS, useMatrixHealth } from './ai/useMatrixHealth'
 import { useAiProviders } from './ai/useAiProviders'
 import { useTierModels } from './ai/useTierModels'
 import { useObserverInject } from './ai/useObserverInject'
@@ -1230,6 +1242,8 @@ const {
   matrixHealthRows,
   matrixHealthDotClass,
   matrixHealthLabel,
+  matrixStageDotClass,
+  matrixStageLabel,
   formatMatrixTime,
   loadMatrixHealth,
   refreshMatrixHealth
@@ -1396,6 +1410,11 @@ onBeforeUnmount(() => {
 /* 版本矩阵健康度表格 */
 .matrix-table {
   width: 100%;
+}
+.stage-group {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
 }
 .matrix-table :deep(.el-table__header) {
   background: var(--ky-bg-panel);

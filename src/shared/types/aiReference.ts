@@ -127,12 +127,26 @@ export interface VersionFingerprint {
   matrixHealth?: MatrixHealthSummary
 }
 
+/** 三态门禁：单个阶段的结果（compile=真实编译 / load=专用服务器加载 / runtime=客户端进游戏） */
+export interface MatrixStageResult {
+  pass: boolean
+  at: string
+  /** 失败摘要（编译错误首行 / 服务器启动失败原因 / 截图路径等） */
+  note?: string
+}
+
 /** 组合级模板健康度汇总 */
 export interface MatrixHealthSummary {
   templateCount: number
   verifiedCount: number
   passRate: number
   lastVerifiedAt: string | null
+  /** 三态报告；缺省时按 compile 阶段解释（兼容历史数据） */
+  stages?: {
+    compile?: MatrixStageResult
+    load?: MatrixStageResult
+    runtime?: MatrixStageResult
+  }
 }
 
 export interface ErrorPattern {

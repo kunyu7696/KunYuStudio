@@ -1,0 +1,107 @@
+name: Runtime 门禁（专用服务器加载）
+
+# 三态门禁 Stage 1：编译通过 ≠ 能加载。
+# 在「版本族代表组」上执行 createProject → generateContent（含实体）→ gradlew runServer，
+# 日志出现 Done (…) 即通过；结果写回 overlay 的 matrixHealth.stages.load，
+# 再导出并提交到 manifest（设置页三态报告的第二枚状态点）。
+#
+# 覆盖策略：代表组而非全量 35 组合（运行时差异是族级：Yarn / ResourceLocation /
+# Identifier / ModelLayerRegistry 四个断点）。Forge 矩阵无 1.21.11，故共 11 组。
+#
+# 定位：advisory（不阻塞合并/发布）。稳定后再纳入发布前检查单。
+# 触发：每天 04:10 UTC（北京时间 12:10），避开 matrix-refresh(03:00)、
+#       CI 全量(周一 03:23)、nightly(16:00)、失败守夜(01:00)。
+on:
+  schedule:
+    - cron: '10 4 * * *'
+  workflow_dispatch:
+    inputs:
+      combos:
+        description: '只跑指定组合（逗号分隔，如 fabric-1.21.11）；留空 = 全部代表组'
+        required: false
+        default: ''
+
+# Unix LF 换行符必须保留（项目硬约束）
+jobs:
+  runtime-gate:
+    name: 专用服务器加载（代表组）
+    runs-on: windows-latest
+    # 11 组合 × 单组上限 20 分钟；留足冷缓存/依赖下载余量
+    timeout-minutes: 330
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: |
+            17
+            21
+            25
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('src/main/templates/mdkSnapshot.json') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - run: npm ci
+
+      - name: 专用服务器加载（结果写入统一存储 overlay）
+        id: runtime
+        shell: pwsh
+        env:
+          KY_RUNTIME_COMBOS: ${{ github.event.inputs.combos }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          $log = Join-Path $env:RUNNER_TEMP 'runtime-gate.log'
+          npm run test:runtime *>&1 | Tee-Object -FilePath $log | Write-Host
+          $ec = $LASTEXITCODE
+          if ($ec -eq 0) { exit 0 }
+
+          # 失败留痕：把 vitest 失败段写进步骤摘要 + issue（无人订阅时红等于静默）
+          $text = Get-Content $log -Raw
+          $i = $text.IndexOf('Failed Tests')
+          $excerpt = if ($i -ge 0) { $text.Substring($i) } else { $text.Substring([Math]::Max(0, $text.Length - 9000)) }
+          if ($excerpt.Length -gt 9000) { $excerpt = $excerpt.Substring(0, 9000) }
+          $body = "Runtime 门禁（专用服务器加载）失败（commit $env:GITHUB_SHA）。`n运行：$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID`n`n$excerpt"
+          $body | Add-Content -Path $env:GITHUB_STEP_SUMMARY -Encoding utf8
+          $existing = gh issue list --state open --search "Runtime 门禁失败 in:title" --json number --jq '.[0].number'
+          if ($existing) {
+            gh issue comment "$existing" --body $body
+          } else {
+            gh issue create --title 'Runtime 门禁失败（专用服务器加载）' --body $body
+          }
+          exit $ec
+
+      # 定向复跑（combos 非空）不写回仓库：只用于诊断，避免部分结果覆盖基线
+      - name: matrixHealth 快照导出 manifest
+        if: always() && github.event.inputs.combos == ''
+        run: node scripts/exportMatrixHealth.mjs
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: runtime-manifest
+          path: resources/ai-reference/manifest.json
+
+      - name: stages.load 落回仓库 manifest
+        if: always() && github.event.inputs.combos == ''
+        run: |
+          git config user.name "kunyu-ci-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add resources/ai-reference/manifest.json
+          git diff --cached --quiet || git commit -m "chore(matrix): 夜间 runtime 门禁刷新 stages.load"
+          git push

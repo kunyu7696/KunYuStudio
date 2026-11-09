@@ -1,4 +1,5 @@
 import type { AiProviderConfig } from '../../../../../shared/types/ai'
+import type { MatrixHealthSummary } from '../../../../../shared/types/aiReference'
 
 // ---------- 版本矩阵健康度（技术债 #7） ----------
 export interface MatrixHealthRow {
@@ -9,6 +10,8 @@ export interface MatrixHealthRow {
   passRate: number
   lastVerifiedAt: string | null
   health: string
+  /** 三态报告：compile / load / runtime（缺省 = 历史数据，只按 compile 解释） */
+  stages?: MatrixHealthSummary['stages']
 }
 
 // ---------- 内置 observer 探针注入 ----------

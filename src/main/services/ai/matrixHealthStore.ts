@@ -92,6 +92,15 @@ export interface GateRecordInput {
   at: string
 }
 
+/** 运行时加载阶段回写（专用服务器启动到 Done） */
+export interface LoadRecordInput {
+  comboId: string
+  pass: boolean
+  at: string
+  /** 失败摘要（启动异常首行 / 超时原因） */
+  note?: string
+}
+
 export interface MatrixHealthStore {
   readonly path: string
   /** 当前 overlay 快照（读取前自动 syncFromDisk） */
@@ -108,6 +117,8 @@ export interface MatrixHealthStore {
   recordUpstreamState(input: UpstreamRecordInput): void
   /** 矩阵门禁回写：灯色（green/yellow）+ matrixHealth 档案；red 留给带错误归因的探针通道 */
   recordGateResult(input: GateRecordInput): void
+  /** 运行时加载阶段回写：只更新 stages.load，保留编译统计与其它阶段 */
+  recordLoadResult(input: LoadRecordInput): void
   /**
    * 一次性种子迁移：overlay 无记录的组合从 manifest 基线灌入（幂等）。
    * 已有运行时记录的组合绝不覆盖（运行时层优先级恒高于基线）。
@@ -253,7 +264,41 @@ export function createMatrixHealthStore(deps: { path: string }): MatrixHealthSto
           templateCount: input.templateCount,
           verifiedCount: input.pass ? input.templateCount : 0,
           passRate: input.pass ? 100 : 0,
-          lastVerifiedAt: input.at
+          lastVerifiedAt: input.at,
+          // 三态：编译阶段结果；load/runtime 由各自门禁写入，此处保留
+          stages: {
+            ...prev?.matrixHealth?.stages,
+            compile: { pass: input.pass, at: input.at }
+          }
+        }
+      }
+      persist()
+    },
+
+    recordLoadResult(input) {
+      syncFromDisk()
+      overlay = structuredClone(overlay)
+      const prev = overlay.combos[input.comboId]
+      const prevHealth = prev?.matrixHealth
+      overlay.combos[input.comboId] = {
+        // 加载结果不改灯色（灯色是编译/探针结论），仅补三态报告
+        health: prev?.health ?? 'unknown',
+        verifiedAt: prev?.verifiedAt ?? null,
+        latestLoaderVersion: prev?.latestLoaderVersion,
+        coveredByGate: prev?.coveredByGate,
+        matrixHealth: {
+          templateCount: prevHealth?.templateCount ?? 0,
+          verifiedCount: prevHealth?.verifiedCount ?? 0,
+          passRate: prevHealth?.passRate ?? 0,
+          lastVerifiedAt: prevHealth?.lastVerifiedAt ?? null,
+          stages: {
+            ...prevHealth?.stages,
+            load: {
+              pass: input.pass,
+              at: input.at,
+              ...(input.note ? { note: input.note } : {})
+            }
+          }
         }
       }
       persist()

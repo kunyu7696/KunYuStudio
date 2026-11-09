@@ -3,7 +3,7 @@
  * 主进程 monitorService/probeService/mcpClient 与渲染层
  * aiMonitor store 共用同一模型。
  */
-import type { LoaderId, MappingType } from './aiReference'
+import type { LoaderId, MappingType, MatrixHealthSummary } from './aiReference'
 
 /** 组合健康灯色：green=最近回测通过 / yellow=上游出新 build 待重测 / red=回测失败 / unknown=未测 / deprecated=已废弃（框架级不可用，冻结）/ beta=上游仍为 Beta，矩阵禁用（向导灰显，待官方 GA） */
 export type ComboHealth = 'green' | 'yellow' | 'red' | 'unknown' | 'deprecated' | 'beta'
@@ -36,12 +36,7 @@ export interface ComboMatrixCell {
   /** 版本分层（core/extended/legacy），缺省按 mcVersion 派生 */
   tier?: VersionTier
   /** 组合级门禁健康度（由矩阵门禁真机构建回写 manifest：matrixGate.spec writeBackMatrixHealth） */
-  matrixHealth?: {
-    templateCount: number
-    verifiedCount: number
-    passRate: number
-    lastVerifiedAt: string | null
-  }
+  matrixHealth?: MatrixHealthSummary
   /** 禁用组合（health==='beta' 时为 true：向导格子灰显不可选，创建链路也会被矩阵拦截） */
   disabled?: boolean
 }

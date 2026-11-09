@@ -3,6 +3,10 @@ import type { ComboMatrixCell } from '../../../../../shared/types/monitor'
 import { t } from '../../../i18n'
 import type { MatrixHealthRow } from './types'
 
+/** 三态门禁的阶段顺序（编译 → 加载 → 进游戏） */
+export const MATRIX_STAGE_KEYS = ['compile', 'load', 'runtime'] as const
+export type MatrixStageKey = (typeof MATRIX_STAGE_KEYS)[number]
+
 export function useMatrixHealth() {
   const matrixLoading = ref(false)
   const matrixCells = ref<ComboMatrixCell[]>([])
@@ -17,7 +21,8 @@ export function useMatrixHealth() {
       verifiedCount: c.matrixHealth?.verifiedCount ?? 0,
       passRate: c.matrixHealth?.passRate ?? 0,
       lastVerifiedAt: c.matrixHealth?.lastVerifiedAt ?? null,
-      health: c.health
+      health: c.health,
+      stages: c.matrixHealth?.stages
     }))
     const order: Record<string, number> = { fabric: 0, forge: 1, neoforge: 2 }
     return rows.sort((a, b) => {
@@ -62,6 +67,38 @@ export function useMatrixHealth() {
     return t('settings.ai.matrix.label', { label, rate: row.passRate })
   }
 
+  function matrixStageState(
+    row: MatrixHealthRow,
+    stage: MatrixStageKey
+  ): 'pass' | 'fail' | 'pending' {
+    const result = row.stages?.[stage]
+    if (!result) return 'pending'
+    return result.pass ? 'pass' : 'fail'
+  }
+
+  /** 三态状态点：pass=绿 / fail=红 / pending=灰（未跑） */
+  function matrixStageDotClass(row: MatrixHealthRow, stage: MatrixStageKey): Record<string, boolean> {
+    const state = matrixStageState(row, stage)
+    return {
+      'ext-dot': true,
+      'is-ok': state === 'pass',
+      'is-fail': state === 'fail',
+      'is-idle': state === 'pending'
+    }
+  }
+
+  function matrixStageLabel(row: MatrixHealthRow, stage: MatrixStageKey): string {
+    const name = t(`settings.ai.matrix.stage.${stage}`)
+    const result = row.stages?.[stage]
+    const state = result
+      ? result.pass
+        ? t('settings.ai.matrix.stagePass')
+        : t('settings.ai.matrix.stageFail')
+      : t('settings.ai.matrix.stagePending')
+    const note = result?.note ? ` — ${result.note}` : ''
+    return t('settings.ai.matrix.stageLabel', { stage: name, state, note })
+  }
+
   function formatMatrixTime(iso: string | null): string {
     if (!iso) return '—'
     const d = new Date(iso)
@@ -104,6 +141,8 @@ export function useMatrixHealth() {
     matrixHealthRows,
     matrixHealthDotClass,
     matrixHealthLabel,
+    matrixStageDotClass,
+    matrixStageLabel,
     formatMatrixTime,
     loadMatrixHealth,
     refreshMatrixHealth

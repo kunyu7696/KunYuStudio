@@ -30,6 +30,7 @@
     "test": "node scripts/run-vitest.cjs run",
     "test:matrix": "node scripts/run-matrix-gate.cjs",
     "test:matrix-pr": "node scripts/run-matrix-gate-pr.cjs",
+    "test:runtime": "node scripts/run-runtime-gate.cjs",
     "test:coverage": "node scripts/run-vitest.cjs run --coverage",
     "test:watch": "node scripts/run-vitest.cjs",
     "verify:enchant": "node scripts/verify-enchant-build.mjs",
