@@ -11,7 +11,7 @@
  * 实体渲染器 API、Forge/NeoForge 客户端事件），故只跑版本族代表组。
  *
  * 通过判据（三者缺一不可）：
- *  1) 客户端进程存活到世界加载完成（日志出现集成服务器 `Done (…)`）；
+ *  1) 客户端进程存活到世界加载完成（日志出现玩家加入单人世界）；
  *  2) 无致命渲染/模组异常、无新 crash-report；
  *  3) 抓屏成功且画面非全黑（截图作为 artifact 上传，编译绿 ≠ 能玩的证据）。
  *
@@ -118,7 +118,8 @@ const CLIENT_OPTIONS = [
   'menuBackgroundBlurriness:0',
   'graphicsMode:1',
   'renderDistance:2',
-  'simulationDistance:2',
+  // 1.21.11 的模拟距离下限是 5，写 2 会报 "outside of range [5:33]" 并落回默认 12
+  'simulationDistance:5',
   'guiScale:1',
   'particles:2',
   'entityShadows:false',
@@ -182,8 +183,14 @@ const CLIENT_FATAL_PATTERNS: RegExp[] = [
 
 /** 客户端窗口/渲染管线就绪（Sound engine 依赖音频设备，headless 下不可靠，不作判据） */
 const CLIENT_READY_RE = /Backend library: LWJGL|Setting user:|Environment: authHost/
-/** 集成服务器启动完成 = 已进入世界（quickPlay 单机存档） */
-const WORLD_READY_RE = /\bDone \([\d.]+s\)! For help/
+/**
+ * 已进入世界。
+ * 单人集成服务器不会打印专用服务器的 `Done (…)`（实测 1.21.11 只输出
+ * `Preparing spawn area: 100%`、`logged in with entity id`、`joined the game`），
+ * 故以玩家成功加入为就绪标志，同时保留 DedicatedServer 的 Done 兼容。
+ */
+const WORLD_READY_RE =
+  /\bDone \([\d.]+s\)! For help|\] .* joined the game|logged in with entity id/
 
 interface ClientRunResult {
   pass: boolean
