@@ -177,7 +177,7 @@
       "mapping": "yarn",
       "jdk": 17,
       "health": "green",
-      "verifiedAt": "2026-11-09T01:36:28.984Z",
+      "verifiedAt": "2026-11-09T07:15:40.576Z",
       "driftRisk": "low",
       "note": "M7 active path; Fabric loader rolling releases require periodic re-probe",
       "templatePin": {
@@ -192,7 +192,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T01:36:28.984Z"
+        "lastVerifiedAt": "2026-11-09T07:15:40.576Z"
       }
     },
     {
@@ -203,7 +203,7 @@
       "mapping": "yarn",
       "jdk": 17,
       "health": "green",
-      "verifiedAt": "2026-11-09T01:34:12.920Z",
+      "verifiedAt": "2026-11-09T07:13:16.372Z",
       "driftRisk": "high",
       "note": "M23: legacy 版本已纳入矩阵（loom 1.4-SNAPSHOT / 编译目标 Java 8，宿主 JDK 17+）",
       "templatePin": {
@@ -218,7 +218,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T01:34:12.920Z"
+        "lastVerifiedAt": "2026-11-09T07:13:16.372Z"
       }
     },
     {
@@ -229,7 +229,7 @@
       "mapping": "yarn",
       "jdk": 17,
       "health": "green",
-      "verifiedAt": "2026-11-09T01:35:10.731Z",
+      "verifiedAt": "2026-11-09T07:14:18.596Z",
       "driftRisk": "medium",
       "note": "M23: 脚手架已适配全版本矩阵，待探针验证",
       "templatePin": {
@@ -244,7 +244,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T01:35:10.731Z"
+        "lastVerifiedAt": "2026-11-09T07:14:18.596Z"
       }
     },
     {
@@ -255,7 +255,7 @@
       "mapping": "yarn",
       "jdk": 17,
       "health": "green",
-      "verifiedAt": "2026-11-09T01:36:03.654Z",
+      "verifiedAt": "2026-11-09T07:15:13.316Z",
       "driftRisk": "medium",
       "note": "M23: 脚手架已适配全版本矩阵，待探针验证",
       "templatePin": {
@@ -270,7 +270,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T01:36:03.654Z"
+        "lastVerifiedAt": "2026-11-09T07:15:13.316Z"
       }
     },
     {
@@ -281,7 +281,7 @@
       "mapping": "yarn",
       "jdk": 17,
       "health": "green",
-      "verifiedAt": "2026-11-09T01:37:27.931Z",
+      "verifiedAt": "2026-11-09T07:17:05.204Z",
       "driftRisk": "medium",
       "note": "M23: 脚手架已适配全版本矩阵，待探针验证",
       "templatePin": {
@@ -296,7 +296,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T01:37:27.931Z"
+        "lastVerifiedAt": "2026-11-09T07:17:05.204Z"
       }
     },
     {
@@ -307,7 +307,7 @@
       "mapping": "yarn",
       "jdk": 21,
       "health": "green",
-      "verifiedAt": "2026-11-09T01:38:39.311Z",
+      "verifiedAt": "2026-11-09T07:18:13.379Z",
       "driftRisk": "medium",
       "note": "M23: 脚手架已适配全版本矩阵，待探针验证",
       "templatePin": {
@@ -322,7 +322,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T01:38:39.311Z"
+        "lastVerifiedAt": "2026-11-09T07:18:13.379Z"
       }
     },
     {
@@ -333,7 +333,7 @@
       "mapping": "yarn",
       "jdk": 21,
       "health": "green",
-      "verifiedAt": "2026-11-09T01:39:06.919Z",
+      "verifiedAt": "2026-11-09T07:18:41.425Z",
       "driftRisk": "medium",
       "note": "M23: 脚手架已适配全版本矩阵，待探针验证",
       "templatePin": {
@@ -348,7 +348,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T01:39:06.919Z"
+        "lastVerifiedAt": "2026-11-09T07:18:41.425Z"
       }
     },
     {
@@ -383,7 +383,7 @@
       "mapping": "mojang_official",
       "jdk": 17,
       "health": "green",
-      "verifiedAt": "2026-11-09T01:50:25.659Z",
+      "verifiedAt": "2026-11-09T07:30:01.765Z",
       "driftRisk": "medium",
       "note": "M23: 脚手架已适配全版本矩阵，待探针验证",
       "templatePin": {
@@ -396,7 +396,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T01:50:25.659Z"
+        "lastVerifiedAt": "2026-11-09T07:30:01.765Z"
       }
     },
     {
@@ -407,7 +407,7 @@
       "mapping": "mojang_official",
       "jdk": 17,
       "health": "green",
-      "verifiedAt": "2026-11-09T01:52:07.077Z",
+      "verifiedAt": "2026-11-09T07:31:32.888Z",
       "driftRisk": "medium",
       "note": "M23: 脚手架已适配全版本矩阵，待探针验证",
       "templatePin": {
@@ -420,7 +420,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T01:52:07.077Z"
+        "lastVerifiedAt": "2026-11-09T07:31:32.888Z"
       }
     },
     {
@@ -431,7 +431,7 @@
       "mapping": "mojang_official",
       "jdk": 17,
       "health": "green",
-      "verifiedAt": "2026-11-09T01:52:27.115Z",
+      "verifiedAt": "2026-11-09T07:31:54.217Z",
       "driftRisk": "low",
       "note": "M7 active path; Forge 47.x promoted releases tracked via maven.minecraftforge.net",
       "templatePin": {
@@ -444,7 +444,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T01:52:27.115Z"
+        "lastVerifiedAt": "2026-11-09T07:31:54.217Z"
       }
     },
     {
@@ -455,7 +455,7 @@
       "mapping": "mojang_official",
       "jdk": 17,
       "health": "green",
-      "verifiedAt": "2026-11-09T01:54:10.108Z",
+      "verifiedAt": "2026-11-09T07:33:33.973Z",
       "driftRisk": "medium",
       "note": "M23: 脚手架已适配全版本矩阵，待探针验证",
       "templatePin": {
@@ -468,7 +468,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T01:54:10.108Z"
+        "lastVerifiedAt": "2026-11-09T07:33:33.973Z"
       }
     },
     {
@@ -479,7 +479,7 @@
       "mapping": "mojang_official",
       "jdk": 21,
       "health": "green",
-      "verifiedAt": "2026-11-09T01:54:24.996Z",
+      "verifiedAt": "2026-11-09T07:33:48.970Z",
       "driftRisk": "medium",
       "note": "M23: 脚手架已适配全版本矩阵，待探针验证",
       "templatePin": {
@@ -492,7 +492,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T01:54:24.996Z"
+        "lastVerifiedAt": "2026-11-09T07:33:48.970Z"
       }
     },
     {
@@ -503,7 +503,7 @@
       "mapping": "mojang_official",
       "jdk": 17,
       "health": "green",
-      "verifiedAt": "2026-11-09T02:01:06.059Z",
+      "verifiedAt": "2026-11-09T07:40:47.735Z",
       "driftRisk": "medium",
       "note": "XV-01: 模板 EventBusSubscriber 已按 FML 2.x（1.20.4）改用 Mod.EventBusSubscriber 嵌套类，待真实模板（含客户端订阅类）编译验证后恢复 green",
       "templatePin": {
@@ -516,7 +516,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T02:01:06.059Z"
+        "lastVerifiedAt": "2026-11-09T07:40:47.735Z"
       }
     },
     {
@@ -527,7 +527,7 @@
       "mapping": "mojang_official",
       "jdk": 21,
       "health": "green",
-      "verifiedAt": "2026-11-09T02:02:20.103Z",
+      "verifiedAt": "2026-11-09T07:42:00.582Z",
       "driftRisk": "medium",
       "note": "M23: 脚手架已适配全版本矩阵，待探针验证",
       "templatePin": {
@@ -540,7 +540,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T02:02:20.103Z"
+        "lastVerifiedAt": "2026-11-09T07:42:00.582Z"
       }
     },
     {
@@ -551,7 +551,7 @@
       "mapping": "mojang_official",
       "jdk": 21,
       "health": "green",
-      "verifiedAt": "2026-11-09T02:02:45.079Z",
+      "verifiedAt": "2026-11-09T07:42:26.222Z",
       "driftRisk": "low",
       "note": "M7 active path; NeoForge 21.1 releases tracked via maven.neoforged.net",
       "templatePin": {
@@ -564,7 +564,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T02:02:45.079Z"
+        "lastVerifiedAt": "2026-11-09T07:42:26.222Z"
       }
     },
     {
@@ -575,7 +575,7 @@
       "mapping": "mojang_official",
       "jdk": 21,
       "health": "green",
-      "verifiedAt": "2026-11-09T02:04:10.510Z",
+      "verifiedAt": "2026-11-09T07:43:52.470Z",
       "driftRisk": "high",
       "note": "transition version, diff only",
       "templatePin": {
@@ -588,7 +588,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T02:04:10.510Z"
+        "lastVerifiedAt": "2026-11-09T07:43:52.470Z"
       }
     },
     {
@@ -599,7 +599,7 @@
       "mapping": "yarn",
       "jdk": 21,
       "health": "green",
-      "verifiedAt": "2026-11-09T01:40:52.938Z",
+      "verifiedAt": "2026-11-09T07:20:06.940Z",
       "driftRisk": "medium",
       "note": "V-01：坐标已按 Fabric Maven metadata 登记（yarn 1.21.4+build.8 / fabric-api 0.119.4+1.21.4 / loom 1.10.5），真机构建验证未完成，registeredButInactive，向导标「待验证」",
       "templatePin": {
@@ -614,7 +614,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T01:40:52.938Z"
+        "lastVerifiedAt": "2026-11-09T07:20:06.940Z"
       }
     },
     {
@@ -625,7 +625,7 @@
       "mapping": "yarn",
       "jdk": 21,
       "health": "green",
-      "verifiedAt": "2026-11-09T01:41:49.560Z",
+      "verifiedAt": "2026-11-09T07:21:09.053Z",
       "driftRisk": "medium",
       "note": "V-01：坐标已按 Fabric Maven metadata 登记（yarn 1.21.5+build.1 / fabric-api 0.128.2+1.21.5 / loom 1.10.5），真机构建验证未完成，registeredButInactive，向导标「待验证」",
       "templatePin": {
@@ -640,7 +640,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T01:41:49.560Z"
+        "lastVerifiedAt": "2026-11-09T07:21:09.053Z"
       }
     },
     {
@@ -651,7 +651,7 @@
       "mapping": "mojang_official",
       "jdk": 21,
       "health": "green",
-      "verifiedAt": "2026-11-09T02:06:05.079Z",
+      "verifiedAt": "2026-11-09T07:45:51.364Z",
       "driftRisk": "medium",
       "note": "V-01：NeoForge 21.4.158（Prism meta 镜像官方 maven，2026-10）；ModDevGradle 2.0.147。官方 maven 本机不可达，真机构建验证未完成，registeredButInactive，向导标「待验证」",
       "templatePin": {
@@ -664,7 +664,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T02:06:05.079Z"
+        "lastVerifiedAt": "2026-11-09T07:45:51.364Z"
       }
     },
     {
@@ -675,7 +675,7 @@
       "mapping": "mojang_official",
       "jdk": 21,
       "health": "green",
-      "verifiedAt": "2026-11-09T02:07:25.189Z",
+      "verifiedAt": "2026-11-09T07:47:16.661Z",
       "driftRisk": "medium",
       "note": "V-01：NeoForge 21.5.98（Prism meta 镜像官方 maven，2026-10）；ModDevGradle 2.0.147。官方 maven 本机不可达，真机构建验证未完成，registeredButInactive，向导标「待验证」",
       "templatePin": {
@@ -688,7 +688,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T02:07:25.189Z"
+        "lastVerifiedAt": "2026-11-09T07:47:16.661Z"
       }
     },
     {
@@ -699,7 +699,7 @@
       "mapping": "mojang_official",
       "jdk": 21,
       "health": "green",
-      "verifiedAt": "2026-11-09T01:43:08.266Z",
+      "verifiedAt": "2026-11-09T07:22:35.604Z",
       "driftRisk": "medium",
       "note": "坐标按官方 fabric-example-mod 1.21.6 分支核对：映射已改为 Mojang 官方映射（net.fabricmc.fabric-loom-remap + loom.officialMojangMappings，官方不再声明 yarn_mappings），loader 0.20.1 / fabric-api 0.128.2+1.21.6 / loom 1.19-SNAPSHOT / Gradle 9.8.2。真机验证未完成。",
       "templatePin": {
@@ -710,10 +710,10 @@
       },
       "tier": "extended",
       "matrixHealth": {
-        "templateCount": 5,
-        "verifiedCount": 5,
+        "templateCount": 6,
+        "verifiedCount": 6,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T01:43:08.266Z"
+        "lastVerifiedAt": "2026-11-09T07:22:35.604Z"
       }
     },
     {
@@ -724,7 +724,7 @@
       "mapping": "mojang_official",
       "jdk": 21,
       "health": "green",
-      "verifiedAt": "2026-11-09T01:43:55.711Z",
+      "verifiedAt": "2026-11-09T07:23:28.519Z",
       "driftRisk": "medium",
       "note": "坐标按官方 fabric-example-mod 1.21.7 分支核对：映射已改为 Mojang 官方映射（net.fabricmc.fabric-loom-remap + loom.officialMojangMappings，官方不再声明 yarn_mappings），loader 0.20.1 / fabric-api 0.129.0+1.21.7 / loom 1.19-SNAPSHOT / Gradle 9.8.2。真机验证未完成。",
       "templatePin": {
@@ -735,10 +735,10 @@
       },
       "tier": "extended",
       "matrixHealth": {
-        "templateCount": 5,
-        "verifiedCount": 5,
+        "templateCount": 6,
+        "verifiedCount": 6,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T01:43:55.711Z"
+        "lastVerifiedAt": "2026-11-09T07:23:28.519Z"
       }
     },
     {
@@ -749,7 +749,7 @@
       "mapping": "mojang_official",
       "jdk": 21,
       "health": "green",
-      "verifiedAt": "2026-11-09T01:44:46.781Z",
+      "verifiedAt": "2026-11-09T07:24:21.470Z",
       "driftRisk": "medium",
       "note": "坐标按官方 fabric-example-mod 1.21.8 分支核对：映射已改为 Mojang 官方映射（net.fabricmc.fabric-loom-remap + loom.officialMojangMappings，官方不再声明 yarn_mappings），loader 0.20.1 / fabric-api 0.136.1+1.21.8 / loom 1.19-SNAPSHOT / Gradle 9.8.2。真机验证未完成。",
       "templatePin": {
@@ -760,10 +760,10 @@
       },
       "tier": "extended",
       "matrixHealth": {
-        "templateCount": 5,
-        "verifiedCount": 5,
+        "templateCount": 6,
+        "verifiedCount": 6,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T01:44:46.781Z"
+        "lastVerifiedAt": "2026-11-09T07:24:21.470Z"
       }
     },
     {
@@ -774,7 +774,7 @@
       "mapping": "mojang_official",
       "jdk": 21,
       "health": "green",
-      "verifiedAt": "2026-11-09T01:45:40.318Z",
+      "verifiedAt": "2026-11-09T07:25:19.924Z",
       "driftRisk": "medium",
       "note": "坐标按官方 fabric-example-mod 1.21.9 分支核对：映射已改为 Mojang 官方映射（net.fabricmc.fabric-loom-remap + loom.officialMojangMappings，官方不再声明 yarn_mappings），loader 0.20.1 / fabric-api 0.134.1+1.21.9 / loom 1.19-SNAPSHOT / Gradle 9.8.2。真机验证未完成。",
       "templatePin": {
@@ -785,10 +785,10 @@
       },
       "tier": "extended",
       "matrixHealth": {
-        "templateCount": 5,
-        "verifiedCount": 5,
+        "templateCount": 6,
+        "verifiedCount": 6,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T01:45:40.318Z"
+        "lastVerifiedAt": "2026-11-09T07:25:19.924Z"
       }
     },
     {
@@ -799,7 +799,7 @@
       "mapping": "mojang_official",
       "jdk": 21,
       "health": "green",
-      "verifiedAt": "2026-11-09T01:46:31.979Z",
+      "verifiedAt": "2026-11-09T07:26:14.008Z",
       "driftRisk": "medium",
       "note": "坐标按官方 fabric-example-mod 1.21.10 分支核对：映射已改为 Mojang 官方映射（net.fabricmc.fabric-loom-remap + loom.officialMojangMappings，官方不再声明 yarn_mappings），loader 0.20.1 / fabric-api 0.138.4+1.21.10 / loom 1.19-SNAPSHOT / Gradle 9.8.2。真机验证未完成。",
       "templatePin": {
@@ -810,10 +810,10 @@
       },
       "tier": "extended",
       "matrixHealth": {
-        "templateCount": 5,
-        "verifiedCount": 5,
+        "templateCount": 6,
+        "verifiedCount": 6,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T01:46:31.979Z"
+        "lastVerifiedAt": "2026-11-09T07:26:14.008Z"
       }
     },
     {
@@ -823,8 +823,8 @@
       "loaderVersion": "0.20.1",
       "mapping": "mojang_official",
       "jdk": 21,
-      "health": "yellow",
-      "verifiedAt": "2026-11-09T01:47:21.492Z",
+      "health": "green",
+      "verifiedAt": "2026-11-09T07:27:19.448Z",
       "driftRisk": "medium",
       "note": "坐标按官方 fabric-example-mod 1.21.11 分支核对：映射已改为 Mojang 官方映射（net.fabricmc.fabric-loom-remap + loom.officialMojangMappings，官方不再声明 yarn_mappings），loader 0.20.1 / fabric-api 0.141.6+1.21.11 / loom 1.19-SNAPSHOT / Gradle 9.8.2。真机验证未完成。",
       "templatePin": {
@@ -835,10 +835,10 @@
       },
       "tier": "extended",
       "matrixHealth": {
-        "templateCount": 5,
-        "verifiedCount": 0,
-        "passRate": 0,
-        "lastVerifiedAt": "2026-11-09T01:47:21.492Z"
+        "templateCount": 6,
+        "verifiedCount": 6,
+        "passRate": 100,
+        "lastVerifiedAt": "2026-11-09T07:27:19.448Z"
       }
     },
     {
@@ -849,7 +849,7 @@
       "mapping": "mojang_official",
       "jdk": 21,
       "health": "green",
-      "verifiedAt": "2026-11-09T02:08:49.728Z",
+      "verifiedAt": "2026-11-09T07:48:44.878Z",
       "driftRisk": "medium",
       "note": "NeoForge 21.6.20-beta（BMCLAPI 镜像官方 maven-metadata 核实，2026-10；该线无 GA 构建，最新即 -beta）；ModDevGradle 2.0.147。真机验证未完成，registeredButInactive，向导标「待验证」",
       "templatePin": {
@@ -862,7 +862,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T02:08:49.728Z"
+        "lastVerifiedAt": "2026-11-09T07:48:44.878Z"
       }
     },
     {
@@ -873,7 +873,7 @@
       "mapping": "mojang_official",
       "jdk": 21,
       "health": "green",
-      "verifiedAt": "2026-11-09T02:10:10.414Z",
+      "verifiedAt": "2026-11-09T07:50:07.951Z",
       "driftRisk": "medium",
       "note": "NeoForge 21.7.25-beta（BMCLAPI 镜像官方 maven-metadata 核实，2026-10；该线无 GA 构建，最新即 -beta）；ModDevGradle 2.0.147。真机验证未完成，registeredButInactive，向导标「待验证」",
       "templatePin": {
@@ -886,7 +886,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T02:10:10.414Z"
+        "lastVerifiedAt": "2026-11-09T07:50:07.951Z"
       }
     },
     {
@@ -897,7 +897,7 @@
       "mapping": "mojang_official",
       "jdk": 21,
       "health": "green",
-      "verifiedAt": "2026-11-09T02:11:24.544Z",
+      "verifiedAt": "2026-11-09T07:51:23.287Z",
       "driftRisk": "medium",
       "note": "NeoForge 21.8.54（BMCLAPI 镜像官方 maven-metadata 核实，2026-10）；ModDevGradle 2.0.147。真机验证未完成，registeredButInactive，向导标「待验证」",
       "templatePin": {
@@ -910,7 +910,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T02:11:24.544Z"
+        "lastVerifiedAt": "2026-11-09T07:51:23.287Z"
       }
     },
     {
@@ -921,7 +921,7 @@
       "mapping": "mojang_official",
       "jdk": 21,
       "health": "green",
-      "verifiedAt": "2026-11-09T02:12:49.144Z",
+      "verifiedAt": "2026-11-09T07:52:47.374Z",
       "driftRisk": "medium",
       "note": "NeoForge 21.9.16-beta（BMCLAPI 镜像官方 maven-metadata 核实，2026-10；该线无 GA 构建，最新即 -beta）；ModDevGradle 2.0.147。真机验证未完成，registeredButInactive，向导标「待验证」",
       "templatePin": {
@@ -934,7 +934,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T02:12:49.144Z"
+        "lastVerifiedAt": "2026-11-09T07:52:47.374Z"
       }
     },
     {
@@ -945,7 +945,7 @@
       "mapping": "mojang_official",
       "jdk": 21,
       "health": "green",
-      "verifiedAt": "2026-11-09T02:14:02.192Z",
+      "verifiedAt": "2026-11-09T07:54:04.444Z",
       "driftRisk": "medium",
       "note": "NeoForge 21.10.64（BMCLAPI 镜像官方 maven-metadata 核实，2026-10）；ModDevGradle 2.0.147。真机验证未完成，registeredButInactive，向导标「待验证」",
       "templatePin": {
@@ -958,7 +958,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T02:14:02.192Z"
+        "lastVerifiedAt": "2026-11-09T07:54:04.444Z"
       }
     },
     {
@@ -969,7 +969,7 @@
       "mapping": "mojang_official",
       "jdk": 21,
       "health": "green",
-      "verifiedAt": "2026-11-09T02:15:51.776Z",
+      "verifiedAt": "2026-11-09T07:55:52.506Z",
       "driftRisk": "medium",
       "note": "NeoForge 21.11.45（BMCLAPI 镜像官方 maven-metadata 核实，2026-10）；ModDevGradle 2.0.147。真机验证未完成，registeredButInactive，向导标「待验证」",
       "templatePin": {
@@ -982,7 +982,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T02:15:51.776Z"
+        "lastVerifiedAt": "2026-11-09T07:55:52.506Z"
       }
     },
     {
@@ -993,7 +993,7 @@
       "mapping": "mojang_official",
       "jdk": 25,
       "health": "green",
-      "verifiedAt": "2026-11-09T01:47:59.143Z",
+      "verifiedAt": "2026-11-09T07:28:02.920Z",
       "driftRisk": "medium",
       "note": "26.3（2026-10 接入）：Fabric 发布当天（2026-09-15）即提供稳定版，推荐 loader 0.19.5；fabric-api 0.162.0+26.3 / loom 1.18-SNAPSHOT（官方插件 id net.fabricmc.fabric-loom，勿写 1.18.4）/ Gradle 9.7.1 / JDK 25。26.x Yarn 无构建（meta count=0），无 mappings 行，Loom 默认 Mojang 官方映射（Identifier.fromNamespaceAndPath，import net.minecraft.resources.Identifier；注册走 BuiltInRegistries + Properties.setId(ResourceKey)）。官方 fabric-example-mod 26.3 分支一手核实，registeredButInactive，真机验证待补",
       "templatePin": {
@@ -1004,10 +1004,10 @@
       },
       "tier": "extended",
       "matrixHealth": {
-        "templateCount": 5,
-        "verifiedCount": 5,
+        "templateCount": 6,
+        "verifiedCount": 6,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T01:47:59.143Z"
+        "lastVerifiedAt": "2026-11-09T07:28:02.920Z"
       }
     },
     {
@@ -1018,7 +1018,7 @@
       "mapping": "mojang_official",
       "jdk": 25,
       "health": "green",
-      "verifiedAt": "2026-11-09T01:59:33.616Z",
+      "verifiedAt": "2026-11-09T07:39:17.450Z",
       "driftRisk": "medium",
       "note": "26.3（2026-10 接入）：Forge 66.0.x 已结束测试，66.0.11 为官方最新正式版（2026-09-30 起 66.0.9 GA）。ForgeGradle [7.0.17,8) mavenizer 体系（implementation minecraft.dependency(...) + annotationProcessor eventbus-validator:7.0.6，无 mappings channel）/ Gradle 9.7.1 / JDK 25；pack.mcmeta 仅 min_format/max_format=121；主类构造器注入 FMLJavaModLoadingContext + ModBusGroup；方块/物品 Properties 强制 setId(DeferredRegister.key(...))。官方 forge-26.3-66.0.11 MDK 逐文件核实，registeredButInactive，真机验证待补",
       "templatePin": {
@@ -1031,7 +1031,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T01:59:33.616Z"
+        "lastVerifiedAt": "2026-11-09T07:39:17.450Z"
       }
     },
     {
@@ -1042,7 +1042,7 @@
       "mapping": "mojang_official",
       "jdk": 25,
       "health": "green",
-      "verifiedAt": "2026-11-09T02:17:22.273Z",
+      "verifiedAt": "2026-11-09T07:57:16.068Z",
       "driftRisk": "high",
       "note": "NeoForge 26.3 已转正（maven 26.3.0.76 起去除 -beta 后缀，当前 26.3.0.101），矩阵解除 beta 禁用，组合可由脚手架/整合包/CI/探针选用；ModDevGradle 取全矩阵统一 2.0.147、Gradle 取 26.3 线通用 9.7.1（与 fabric/forge 26.3 一致），真机构建验证待补",
       "templatePin": {
@@ -1055,7 +1055,7 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T02:17:22.273Z"
+        "lastVerifiedAt": "2026-11-09T07:57:16.068Z"
       }
     }
   ],
