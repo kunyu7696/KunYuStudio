@@ -393,6 +393,17 @@ describe('NeoForge 元数据/构建脚本按版本分派', () => {
     }
   })
 
+  it('build.gradle：26.x 不再强降 log4j（自带 slf4j2 绑定，2.11.1 会 NoSuchMethodError）', () => {
+    for (const mirror of ['china', 'official'] as const) {
+      const bg = neoForgeBuildGradle(
+        { ...NEO_BASE_VARS, mcVersion: '26.3', neoForgeVersion: '26.3.0.101' },
+        mirror
+      )
+      expect(bg).not.toContain('log4j-core:2.11.1')
+      expect(bg).not.toContain('log4j-api:2.11.1')
+    }
+  })
+
   it('resolveModContext：仅 mods.toml + moddev 插件 → 判为 neoforge（1.20.4 旧元数据）', () => {
     const root = mkdtempSync(join(tmpdir(), 'ky-drift-neodetect-'))
     registerProjectRoot(root)
