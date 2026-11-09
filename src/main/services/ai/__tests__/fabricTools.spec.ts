@@ -264,6 +264,37 @@ describe('fabricTools', () => {
       )
       expect(r.text).toContain('net.minecraft.entity.EntityType')
     })
+
+    it.each([
+      ['1.21.6', 'ResourceLocation'],
+      ['26.3', 'Identifier']
+    ])('%s item 骨架走 Mojang 官方映射（%s）', async (mcVersion, locCls) => {
+      writeFileSync(join(root, 'gradle.properties'), `minecraft_version=${mcVersion}\n`)
+      const r = await tool('fabric_content_register').execute({ kind: 'item', name: 'ruby' }, CTX)
+      expect(r.ok).toBe(true)
+      expect(r.text).toContain('import net.minecraft.world.item.Item;')
+      expect(r.text).toContain('Registry.register(BuiltInRegistries.ITEM')
+      expect(r.text).toContain('.setId(ResourceKey.create(Registries.ITEM')
+      expect(r.text).toContain(`${locCls}.fromNamespaceAndPath(MOD_ID, "ruby")`)
+      expect(r.text).not.toContain('new Identifier')
+      expect(r.text).not.toContain('net.minecraft.item.Item;')
+      expect(r.text).not.toContain('Item.Settings')
+    })
+
+    it('1.21.6 block 骨架走 Mojang 官方映射', async () => {
+      writeFileSync(join(root, 'gradle.properties'), 'minecraft_version=1.21.6\n')
+      const r = await tool('fabric_content_register').execute(
+        { kind: 'block', name: 'ruby_block' },
+        CTX
+      )
+      expect(r.ok).toBe(true)
+      expect(r.text).toContain('import net.minecraft.world.level.block.Block;')
+      expect(r.text).toContain('BlockBehaviour.Properties.of()')
+      expect(r.text).toContain('Registry.register(BuiltInRegistries.BLOCK')
+      expect(r.text).toContain('.setId(ResourceKey.create(Registries.BLOCK')
+      expect(r.text).not.toContain('net.minecraft.block.Block;')
+      expect(r.text).not.toContain('FabricBlockSettings')
+    })
   })
 
   describe('fabric_data_assets_generate', () => {

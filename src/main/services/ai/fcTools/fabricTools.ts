@@ -121,6 +121,36 @@ function registerSnippet(
   const newIdentifier = identifierFactoryCall(mcVersion)
   const idExpr = (a: string, b: string): string =>
     newIdentifier === 'Identifier.of' ? `Identifier.of(${a}, ${b})` : `new Identifier(${a}, ${b})`
+  // Mojang 官方映射（1.21.6+）：Item.Properties / BlockBehaviour.Properties 必须挂 setId(ResourceKey)，
+  // 注册走 BuiltInRegistries；资源位置类 1.21.11/26.3 为 Identifier，1.21.6~1.21.10 为 ResourceLocation。
+  if (kind === 'item' && isMojmapFabric(mcVersion)) {
+    const locCls = fabricIdentifierClass(mcVersion)
+    return (
+      `package ${pkg}.registry;\n\n` +
+      `import net.minecraft.core.Registry;\n` +
+      `import net.minecraft.core.registries.BuiltInRegistries;\n` +
+      `import net.minecraft.core.registries.Registries;\n` +
+      `import net.minecraft.resources.ResourceKey;\n` +
+      `import net.minecraft.resources.${locCls};\n` +
+      `import net.minecraft.world.item.Item;\n\n` +
+      `/** ${modId} 物品注册表（Mojang 官方映射）。在 ModInitializer.onInitialize 中调用 registerAll()。 */\n` +
+      `public final class ${className} {\n` +
+      `    public static final String MOD_ID = "${modId}";\n\n` +
+      `    public static final Item ${constName} = register("${name}", new Item(new Item.Properties()\n` +
+      `        .setId(ResourceKey.create(Registries.ITEM, ${locCls}.fromNamespaceAndPath(MOD_ID, "${name}")))));\n\n` +
+      `    public static Item register(String name, Item item) {\n` +
+      `        return Registry.register(BuiltInRegistries.ITEM, ${locCls}.fromNamespaceAndPath(MOD_ID, name), item);\n` +
+      `    }\n\n` +
+      `    /** 触发类加载完成静态注册。 */\n` +
+      `    public static void registerAll() {\n` +
+      `        @SuppressWarnings("unused")\n` +
+      `        Item ensureClassInit = ${constName};\n` +
+      `    }\n\n` +
+      `    private ${className}() {\n` +
+      `    }\n` +
+      `}\n`
+    )
+  }
   if (kind === 'item') {
     const settingsCtor = isModernBlockSettings(mcVersion) ? 'new Item.Settings()' : 'new FabricItemSettings()'
     const settingsImport = isModernBlockSettings(mcVersion) ? '' : `import net.fabricmc.fabric.api.item.v1.FabricItemSettings;\n`
@@ -141,6 +171,40 @@ function registerSnippet(
       `    public static void registerAll() {\n` +
       `        @SuppressWarnings("unused")\n` +
       `        Item ensureClassInit = ${constName};\n` +
+      `    }\n\n` +
+      `    private ${className}() {\n` +
+      `    }\n` +
+      `}\n`
+    )
+  }
+  if (kind === 'block' && isMojmapFabric(mcVersion)) {
+    const locCls = fabricIdentifierClass(mcVersion)
+    return (
+      `package ${pkg}.registry;\n\n` +
+      `import net.minecraft.core.Registry;\n` +
+      `import net.minecraft.core.registries.BuiltInRegistries;\n` +
+      `import net.minecraft.core.registries.Registries;\n` +
+      `import net.minecraft.resources.ResourceKey;\n` +
+      `import net.minecraft.resources.${locCls};\n` +
+      `import net.minecraft.world.item.BlockItem;\n` +
+      `import net.minecraft.world.item.Item;\n` +
+      `import net.minecraft.world.level.block.Block;\n` +
+      `import net.minecraft.world.level.block.state.BlockBehaviour;\n\n` +
+      `/** ${modId} 方块注册表（Mojang 官方映射）。在 ModInitializer.onInitialize 中调用 registerAll()。 */\n` +
+      `public final class ${className} {\n` +
+      `    public static final String MOD_ID = "${modId}";\n\n` +
+      `    public static final Block ${constName} = register("${name}", new Block(BlockBehaviour.Properties.of()\n` +
+      `        .setId(ResourceKey.create(Registries.BLOCK, ${locCls}.fromNamespaceAndPath(MOD_ID, "${name}")))));\n\n` +
+      `    public static Block register(String name, Block block) {\n` +
+      `        return Registry.register(BuiltInRegistries.BLOCK, ${locCls}.fromNamespaceAndPath(MOD_ID, name), block);\n` +
+      `    }\n\n` +
+      `    /** 方块通常还需对应 BlockItem（Properties 同样需 setId）：\n` +
+      `     * Registry.register(BuiltInRegistries.ITEM, id, new BlockItem(block, new Item.Properties()\n` +
+      `     *     .setId(ResourceKey.create(Registries.ITEM, ${locCls}.fromNamespaceAndPath(MOD_ID, name)))));\n` +
+      `     */\n` +
+      `    public static void registerAll() {\n` +
+      `        @SuppressWarnings("unused")\n` +
+      `        Block ensureClassInit = ${constName};\n` +
       `    }\n\n` +
       `    private ${className}() {\n` +
       `    }\n` +
