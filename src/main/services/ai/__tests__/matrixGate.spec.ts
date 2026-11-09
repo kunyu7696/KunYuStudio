@@ -4,6 +4,7 @@
  * KY_MATRIX_GATE=1 时启用：对 core/extended（可经 KY_MATRIX_TIERS 覆盖，逗号分隔）
  * 全部「加载器 × MC 版本」组合走真实产品链路：
  *   createProject（全量脚手架）→ createQuickContent 注入 block/item/food/tool/armor
+ *   （Fabric 1.21.6+ 额外注入带 cube 模型的被动实体，覆盖 Mojang 映射实体链路）
  *   → unifiedToBlock/unifiedToItem → generateContent → executeGradleBuild('build')
  * 构建结果写回矩阵健康统一存储 ai-reference-overlay.json 对应组合的
  * matrixHealth 档案与灯色（通过 = 100% + health 绿；失败 = 0% + health 黄），
@@ -73,7 +74,15 @@ vi.mock('electron', async () => {
 
 import { createQuickContent } from '../../../../shared/schemas/quickCreate'
 import { unifiedToBlock, unifiedToItem } from '../../../../shared/schemas/unified.adapter'
-import { getToolchain, isBetaBlocked, supportedMcVersions, tierOfMcVersion } from '../../../templates/loaderVersionMatrix'
+import { createDefaultEntity } from '../../../../shared/schemas/entity.schema'
+import { createDefaultCube, type ContentDefinition } from '../../../../shared/types/content'
+import {
+  getToolchain,
+  isBetaBlocked,
+  isMojmapFabric,
+  supportedMcVersions,
+  tierOfMcVersion
+} from '../../../templates/loaderVersionMatrix'
 import { generateContent } from '../../contentGenerator'
 import { executeGradleBuild } from '../../gradleService'
 import { createProject } from '../../projectService'
@@ -295,7 +304,21 @@ describe.skipIf(!GATE_ENABLED)(`矩阵门禁（tiers=${GATE_TIERS.join(',')}，�
       const armor = unifiedToItem(
         createQuickContent('armor', { id: 'gate_armor', namespace: 'gatemod' })
       )
-      const definitions = [block, item, food, tool, armor]
+      const definitions: ContentDefinition[] = [block, item, food, tool, armor]
+      // Fabric 1.21.6+（Mojang 官方映射）实体链路真机验证：注入带 cube 模型与刷怪蛋的
+      // 被动实体，覆盖 ModEntities/实体类/EntityRenderState/模型/渲染器/客户端入口/刷怪蛋。
+      // 该映射世代此前无实体覆盖，避免「五类内容全绿但实体生成编译不过」的盲区。
+      if (loader === 'fabric' && isMojmapFabric(mcVersion)) {
+        const entity = createDefaultEntity('gate_sprite')
+        entity.displayName = { en_us: 'Gate Sprite', zh_cn: '门禁精灵' }
+        entity.spawnEgg.enabled = true
+        entity.renderer.cubeModel = {
+          textureSize: 16,
+          pixels: Array.from({ length: 256 }, () => '#a8c98f'),
+          elements: [createDefaultCube('body')]
+        }
+        definitions.push(entity)
+      }
       const generated = generateContent(project.path, definitions)
       expect(generated.files.length).toBeGreaterThan(0)
 
