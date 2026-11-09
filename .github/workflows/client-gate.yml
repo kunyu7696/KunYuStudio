@@ -77,6 +77,8 @@ jobs:
           LIBGL_ALWAYS_SOFTWARE: '1'
           GALLIUM_DRIVER: llvmpipe
           MESA_GL_VERSION_OVERRIDE: '4.5'
+          # 无声卡：OpenAL Soft 走 null 后端，避免 ALSA 阻塞/噪声干扰渲染线程
+          ALSOFT_DRIVERS: 'null'
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
         run: |

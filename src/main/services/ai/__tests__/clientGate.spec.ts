@@ -302,6 +302,61 @@ function readNewCrash(runDir: string, known: Set<string>): string | null {
   return fresh.length > 0 ? join(dir, fresh[fresh.length - 1]!) : null
 }
 
+/**
+ * 失败留证：完整客户端日志 + Java 进程命令行 + JVM 线程栈。
+ * 只给日志尾部无法区分「渲染线程卡在 native 调用」与「加载只是极慢」；
+ * 超时瞬间的 jstack 加上 ps 命令行（可确认 quickPlay 参数是否真的注入）能直接定位。
+ */
+function dumpClientDiagnostics(runDir: string, comboId: string): string {
+  const outDir = join(process.cwd(), '.dev-userdata', 'client-gate')
+  mkdirSync(outDir, { recursive: true })
+  const saved: string[] = []
+
+  const latest = join(runDir, 'logs', 'latest.log')
+  if (existsSync(latest)) {
+    const dest = join(outDir, `${comboId}-latest.log`)
+    try {
+      cpSync(latest, dest)
+      saved.push(dest)
+    } catch {
+      /* 日志可能正被写入，忽略 */
+    }
+  }
+
+  if (process.platform === 'linux') {
+    // gradlew → java 主类：Fabric=devlaunchinjector，Forge/NeoForge=dev-launch，原版=Main
+    const found = spawnSync(
+      'bash',
+      [
+        '-c',
+        "pgrep -f 'devlaunchinjector|dev-launch-injector|net.minecraft.client.main.Main' | head -n 1"
+      ],
+      { encoding: 'utf-8', timeout: 10_000 }
+    )
+    const pid = (found.stdout ?? '').trim()
+    if (pid.length > 0) {
+      const cmdline = join(outDir, `${comboId}-cmdline.txt`)
+      try {
+        writeFileSync(
+          cmdline,
+          spawnSync('bash', ['-c', `ps -o args= -p ${pid}`], { encoding: 'utf-8' }).stdout ?? '',
+          'utf-8'
+        )
+        saved.push(cmdline)
+      } catch {
+        /* 忽略 */
+      }
+      const stack = join(outDir, `${comboId}-jstack.txt`)
+      const res = spawnSync('bash', ['-c', `jstack ${pid} > "${stack}" 2>&1`], {
+        timeout: 40_000
+      })
+      if (res.status === 0) saved.push(stack)
+    }
+  }
+
+  return saved.length > 0 ? `已留证：${saved.map((p) => p.split(/[\\/]/).pop()).join('、')}` : '留证失败'
+}
+
 function runClient(
   root: string,
   javaHome: string | undefined,
@@ -359,6 +414,7 @@ function runClient(
     const fail = (reason: string): void => {
       if (finished) return
       const crash = readNewCrash(runDir, knownCrashes)
+      const diag = dumpClientDiagnostics(runDir, comboId)
       let suffix = ''
       if (crash) {
         try {
@@ -367,7 +423,7 @@ function runClient(
           suffix = '；crash-report 读取失败'
         }
       }
-      finish({ pass: false, log, reason: `${reason}${suffix}` })
+      finish({ pass: false, log, reason: `${reason}；${diag}${suffix}` })
     }
 
     if (!existsSync(join(root, 'gradlew'))) return fail('项目中未找到 Gradle Wrapper')
@@ -414,6 +470,9 @@ function runClient(
     // （游戏渲染到内部独立 DISPLAY），外层抓屏只会拿到黑屏。
     // 摘掉 CI 让 Loom 复用外层 Xvfb 的 DISPLAY，截图才是真实画面。
     delete env['CI']
+    // 无声卡的 CI 上 OpenAL 会走 ALSA default PCM，既刷错误也可能拖住渲染线程初始化；
+    // 门禁只关心画面，强制 OpenAL Soft 用 null 后端，把音频变量从判据里摘出去。
+    env['ALSOFT_DRIVERS'] = env['ALSOFT_DRIVERS'] ?? 'null'
 
     const initScript = join(root, 'gate-client.init.gradle')
     writeFileSync(initScript, CLIENT_INIT_SCRIPT, 'utf-8')
