@@ -228,6 +228,42 @@ describe('fabricTools', () => {
       expect(w2.ok).toBe(false)
       expect(w2.error).toContain('已存在')
     })
+
+    it.each([
+      ['1.21.6', 'ResourceLocation'],
+      ['1.21.11', 'Identifier'],
+      ['26.3', 'Identifier']
+    ])('%s entity 骨架走 Mojang 官方映射（%s）', async (mcVersion, locCls) => {
+      writeFileSync(join(root, 'gradle.properties'), `minecraft_version=${mcVersion}\n`)
+      const r = await tool('fabric_content_register').execute(
+        { kind: 'entity', name: 'sprite' },
+        CTX
+      )
+      expect(r.ok).toBe(true)
+      expect(r.text).toContain(
+        'import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;'
+      )
+      expect(r.text).toContain('BuiltInRegistries.ENTITY_TYPE')
+      expect(r.text).toContain('ResourceKey.create(Registries.ENTITY_TYPE')
+      expect(r.text).toContain(`${locCls}.fromNamespaceAndPath(MOD_ID, name)`)
+      expect(r.text).toContain(
+        'FabricDefaultAttributeRegistry.register(SPRITE, EntityClass.createAttributes());'
+      )
+      expect(r.text).not.toContain('FabricEntityTypeBuilder')
+      expect(r.text).not.toContain('net.minecraft.entity.EntityType')
+    })
+
+    it('1.20.1 entity 骨架保持 Yarn 写法', async () => {
+      const r = await tool('fabric_content_register').execute(
+        { kind: 'entity', name: 'sprite' },
+        CTX
+      )
+      expect(r.ok).toBe(true)
+      expect(r.text).toContain(
+        'FabricEntityTypeBuilder.create(SpawnGroup.CREATURE, EntityClass::new)'
+      )
+      expect(r.text).toContain('net.minecraft.entity.EntityType')
+    })
   })
 
   describe('fabric_data_assets_generate', () => {

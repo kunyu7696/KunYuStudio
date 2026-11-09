@@ -7,8 +7,8 @@
  *   mcdev-mcp 就绪时实时反编译签名 + Fabric 语料兜底。写代码前必须先查，禁止凭记忆编造。
  * - fabric_template_generate：从 AI 参考包取 Fabric 模板（list 或按 id），做 modId/package/
  *   className 占位替换后可写盘（仅项目根内），落盘后提示 gradle_build 验证。
- * - fabric_content_register：生成 Fabric 注册骨架（Registry.register(Registries.X,
- *   new Identifier(modId, name), ...)），支持 item/block/entity，可选写盘。
+ * - fabric_content_register：生成 Fabric 注册骨架（Yarn：Registry.register(Registries.X, new Identifier(...))；
+ *   Mojang 映射 1.21.6+：Registry.register(BuiltInRegistries.X, ResourceKey, ...)），支持 item/block/entity，可选写盘。
  * - fabric_data_assets_generate：生成 assets/data JSON 骨架（blockstate/模型/配方/战利品表/
  *   lang 条目），命名空间取自 fabric.mod.json 的 id，可选写盘。
  *
@@ -29,6 +29,7 @@ import {
   registryImports,
   registriesConst
 } from '../../../templates/fabricTemplates'
+import { fabricIdentifierClass, isMojmapFabric } from '../../../templates/loaderVersionMatrix'
 import { YARN_TARGETS } from './mixinTools'
 import type { McpToolPort, RegisteredTool, ToolRegistryDeps } from '../toolRegistry'
 
@@ -166,6 +167,43 @@ function registerSnippet(
       `    public static void registerAll() {\n` +
       `        @SuppressWarnings("unused")\n` +
       `        Block ensureClassInit = ${constName};\n` +
+      `    }\n\n` +
+      `    private ${className}() {\n` +
+      `    }\n` +
+      `}\n`
+    )
+  }
+  // Fabric 1.21.6+（Mojang 官方映射）：BuiltInRegistries + ResourceKey + FabricDefaultAttributeRegistry。
+  // 26.3 起资源位置类改名为 Identifier，1.21.6~1.21.10 仍是 ResourceLocation。
+  if (isMojmapFabric(mcVersion)) {
+    const locCls = fabricIdentifierClass(mcVersion)
+    return (
+      `package ${pkg}.registry;\n\n` +
+      `import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;\n` +
+      `import net.minecraft.core.Registry;\n` +
+      `import net.minecraft.core.registries.BuiltInRegistries;\n` +
+      `import net.minecraft.core.registries.Registries;\n` +
+      `import net.minecraft.resources.ResourceKey;\n` +
+      `import net.minecraft.resources.${locCls};\n` +
+      `import net.minecraft.world.entity.Entity;\n` +
+      `import net.minecraft.world.entity.EntityType;\n` +
+      `import net.minecraft.world.entity.MobCategory;\n\n` +
+      `/** ${modId} 实体注册表（Mojang 官方映射）。EntityClass 需替换为真实实体类；在 ModInitializer.onInitialize 中调用 registerAll()。 */\n` +
+      `public final class ${className} {\n` +
+      `    public static final String MOD_ID = "${modId}";\n\n` +
+      `    // TODO: EntityClass 替换为真实实体类（需继承 Mob/Animal，构造器为 (EntityType, Level)）后，取消下方注释：\n` +
+      `    // public static final EntityType<EntityClass> ${constName} = register("${name}",\n` +
+      `    //     EntityType.Builder.<EntityClass>of(EntityClass::new, MobCategory.CREATURE)\n` +
+      `    //         .sized(0.6f, 1.8f)\n` +
+      `    //         .clientTrackingRange(8));\n\n` +
+      `    private static <T extends Entity> EntityType<T> register(String name, EntityType.Builder<T> builder) {\n` +
+      `        ResourceKey<EntityType<?>> key = ResourceKey.create(Registries.ENTITY_TYPE,\n` +
+      `            ${locCls}.fromNamespaceAndPath(MOD_ID, name));\n` +
+      `        return Registry.register(BuiltInRegistries.ENTITY_TYPE, key, builder.build(key));\n` +
+      `    }\n\n` +
+      `    /** 触发类加载完成静态注册，并登记实体属性。 */\n` +
+      `    public static void registerAll() {\n` +
+      `        // FabricDefaultAttributeRegistry.register(${constName}, EntityClass.createAttributes());\n` +
       `    }\n\n` +
       `    private ${className}() {\n` +
       `    }\n` +
@@ -576,8 +614,7 @@ export function builtinFabricTools(deps: ToolRegistryDeps): RegisteredTool[] {
       function: {
         name: 'fabric_content_register',
         description:
-          '生成 Fabric 注册类骨架（Registry.register(Registries.ITEM/BLOCK/ENTITY_TYPE, ' +
-          'new Identifier(modId, name), ...)），含 registerAll() 触发类加载。' +
+          '生成 Fabric 注册类骨架（按 MC 版本分派 Yarn / Mojang 官方映射写法），含 registerAll() 触发类加载。' +
           'write=true 时落盘 src/main/java/<包名>/registry/<className>.java（已存在需 overwrite），落盘后必须 gradle_build 验证。',
         parameters: {
           type: 'object',
