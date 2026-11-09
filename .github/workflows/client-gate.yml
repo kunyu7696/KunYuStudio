@@ -73,7 +73,7 @@ jobs:
         id: client
         env:
           KY_CLIENT_COMBOS: ${{ github.event.inputs.combos }}
-          KY_CLIENT_VIDEO_SIZE: 1280x720
+          KY_CLIENT_VIDEO_SIZE: 640x360
           LIBGL_ALWAYS_SOFTWARE: '1'
           GALLIUM_DRIVER: llvmpipe
           MESA_GL_VERSION_OVERRIDE: '4.5'
@@ -83,7 +83,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           set -o pipefail
-          xvfb-run -a --server-args="-screen 0 1280x720x24" npm run test:client 2>&1 | tee "$RUNNER_TEMP/client-gate.log"
+          xvfb-run -a --server-args="-screen 0 640x360x24" npm run test:client 2>&1 | tee "$RUNNER_TEMP/client-gate.log"
           ec=${PIPESTATUS[0]}
           if [ "$ec" -eq 0 ]; then exit 0; fi
 

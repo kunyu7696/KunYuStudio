@@ -105,8 +105,29 @@ const REPORT_TAIL = 12 * 1024
 /** 世界加载完成后等待画面稳定（区块渲染/光照）再抓屏 */
 const SCREENSHOT_SETTLE_MS = 6000
 /** 抓屏分辨率（须与 Xvfb 屏幕一致；游戏窗口同尺寸，避免截图含大片黑边） */
-const VIDEO_SIZE = process.env.KY_CLIENT_VIDEO_SIZE ?? '1280x720'
-const [GAME_WIDTH = '1280', GAME_HEIGHT = '720'] = VIDEO_SIZE.split('x')
+const VIDEO_SIZE = process.env.KY_CLIENT_VIDEO_SIZE ?? '640x360'
+const [GAME_WIDTH = '640', GAME_HEIGHT = '360'] = VIDEO_SIZE.split('x')
+
+/**
+ * 软件渲染（llvmpipe）下每帧成本直接决定加载进度：集成服务器 tick 挂在客户端帧循环上，
+ * 帧率被背景模糊拖垮就等于世界永远加载不完（jstack 实测 Render thread 停在
+ * processBlurEffect → glDrawArrays）。这里关掉主菜单背景模糊、拉低画质与视距，
+ * 让"能否进入世界"的判据不被画面质量卡住。
+ */
+const CLIENT_OPTIONS = [
+  'menuBackgroundBlurriness:0',
+  'graphicsMode:1',
+  'renderDistance:2',
+  'simulationDistance:2',
+  'guiScale:1',
+  'particles:2',
+  'entityShadows:false',
+  'ao:false',
+  'maxFps:60',
+  'enableVsync:false',
+  'pauseOnLostFocus:false',
+  'fullscreen:false'
+].join('\n')
 
 /**
  * runClient 追加 quickPlay 参数。
@@ -251,7 +272,7 @@ function inspectScreenshot(path: string): { ok: boolean; note: string } {
   let bright = 0
   let sampled = 0
   const colors = new Set<number>()
-  // 隔点采样：全屏 1280x720 逐像素遍历无必要，采样足够判定"黑屏/单色"
+  // 隔点采样：全屏逐像素遍历无必要，采样足够判定"黑屏/单色"
   for (let i = 0; i < png.data.length; i += 16) {
     const r = png.data[i]!
     const g = png.data[i + 1]!
@@ -380,6 +401,9 @@ function runClient(
     }
     // 客户端会轮转日志；先删掉服务器阶段的 latest.log，避免把服务器 Done 误判为进世界
     rmSync(logPath, { force: true })
+    // 首启前落一份 options.txt：软件渲染下默认画质/背景模糊会把帧率压到无法推进世界加载
+    mkdirSync(runDir, { recursive: true })
+    writeFileSync(join(runDir, 'options.txt'), `${CLIENT_OPTIONS}\n`, 'utf-8')
 
     let log = ''
     const append = (text: string): void => {
