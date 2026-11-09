@@ -281,6 +281,8 @@ function stageWorld(root: string): { ok: boolean; reason?: string } {
     rmSync(savesDir, { recursive: true, force: true })
     mkdirSync(join(runDir, 'saves'), { recursive: true })
     cpSync(worldDir, savesDir, { recursive: true })
+    // 服务器进程已退出，锁文件无意义；删掉避免单人打开时被判为"世界正在使用"
+    rmSync(join(savesDir, 'session.lock'), { force: true })
   } catch (err) {
     return { ok: false, reason: `世界复制失败：${(err as Error).message}` }
   }
