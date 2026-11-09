@@ -224,8 +224,10 @@ AI 参考包 manifest 登记 13 种内容类型。
   - `legacy`：1.16.5 / 1.18.2 / 1.19.2（新建向导默认隐藏）。
 - **JDK 映射**：JDK 17（1.16.5~1.20.1 线）/ JDK 21（1.20.4 起）/ JDK 25
   （26.x 线），由环境引导器自动检测与下载。
-- **26.x 新年份线**：Fabric 26.x 起 Yarn 无构建，改用 Loom 默认 Mojang 官方
-  映射（模板不输出 mappings 行）；Forge 26.3 为 FG7 mavenizer 体系。
+- **映射体系**：Fabric 1.21.6 起跟随官方 MDK 改用 Mojang 官方映射
+  （`net.fabricmc.fabric-loom-remap` + `loom.officialMojangMappings()`，不再声明
+  `yarn_mappings`；资源位置类仍为 `ResourceLocation`，26.3 起改名 `Identifier`）；
+  26.x 改用 `net.fabricmc.fabric-loom` 且不写 mappings 行。Forge 26.3 为 FG7 mavenizer 体系。
 
 ---
 

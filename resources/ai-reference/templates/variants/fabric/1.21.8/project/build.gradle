@@ -1,0 +1,51 @@
+// ============================================================================
+// KunYuEcosystem AI Reference | fabric/1.21.8/project/build.gradle
+// 映射体系：Mojang 官方映射（官方 fabric-example-mod 1.21.8 分支逐项对齐）
+// ============================================================================
+plugins {
+    // 1.21.6 起官方改用 fabric-loom-remap（重映射版 Loom），配合官方 Mojang 映射
+    id 'net.fabricmc.fabric-loom-remap' version '1.19-SNAPSHOT'
+    id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    // 官方映射：不再使用 Yarn；1.21.6 的资源位置类名仍为 ResourceLocation
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 21
+}
+
+java {
+    withSourcesJar()
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+jar {
+    from("LICENSE") {
+        rename { "${it}_${project.base.archivesName.get()}" }
+    }
+}

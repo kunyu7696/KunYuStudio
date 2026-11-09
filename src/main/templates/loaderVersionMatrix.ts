@@ -68,6 +68,28 @@ export function isMojangEra(mcVersion: string): boolean {
   return !!m && Number(m[1]) > 1
 }
 
+/**
+ * Fabric 1.21.6+ 的 Mojang 映射时代（含 26.x）。
+ *
+ * 官方 fabric-example-mod 自 1.21.6 分支起改用
+ * `id 'net.fabricmc.fabric-loom-remap'` + `mappings loom.officialMojangMappings()`，
+ * 不再声明 yarn_mappings；1.21.6~1.21.11 与 26.x 的差别只在资源位置类名：
+ * 1.21.6 是 `ResourceLocation`，26.3 起改名为 `Identifier`。
+ */
+export function isMojmapFabric(mcVersion: string): boolean {
+  if (isMojangEra(mcVersion)) return true
+  const m = /^1\.(\d+)\.(\d+)$/.exec(mcVersion)
+  if (!m) return false
+  const minor = Number(m[1])
+  const patch = Number(m[2])
+  return minor === 21 && patch >= 6
+}
+
+/** Fabric Mojang 映射时代的资源位置类名（1.21.6~1.21.11 为 ResourceLocation，26.x 为 Identifier） */
+export function fabricIdentifierClass(mcVersion: string): 'ResourceLocation' | 'Identifier' {
+  return isMojangEra(mcVersion) ? 'Identifier' : 'ResourceLocation'
+}
+
 export interface FabricToolchain {
   loader: 'fabric'
   mcVersion: string
@@ -173,16 +195,17 @@ const FABRIC_MATRIX: Record<string, FabricToolchain> = {
     gradleVersion: '8.12', jdk: 21
   },
   // 1.21.6~1.21.11 坐标全部一手验证：
-  //   loader/yarn ← meta.fabricmc.net v2 API（HTTP 200，逐版本查询）；
-  //   fabric-api ← maven.fabricmc.net maven-metadata.xml（各线最新构建）；
-  //   loom 1.18 线 + Gradle 9.7.1 ← FabricMC/fabric-example-mod 官方模板分支
-  //   （1.21.6 与 1.21.11 分支 gradle.properties/wrapper 逐字节核对）。
-  // 宿主 JDK=25：loom 1.18.4 自身需要 JVM 25（构建期错误 "requires at least JVM runtime version 25"），
+  //   loader/fabric-api ← meta.fabricmc.net v2 API / maven.fabricmc.net maven-metadata.xml；
+  //   loom / Gradle ← FabricMC/fabric-example-mod 官方分支（1.21.6 与 1.21.11 逐字节核对）。
+  // 映射体系：官方自 1.21.6 起改用 `net.fabricmc.fabric-loom-remap` +
+  //   `mappings loom.officialMojangMappings()`，gradle.properties 不再声明 yarn_mappings，
+  //   故 yarnVersion 全部留空（与 MDK 快照一致，不再是"被豁免的分叉"）。
+  // 宿主 JDK=25：loom 1.19-SNAPSHOT 自身需要 JVM 25（构建期错误 "requires at least JVM runtime version 25"），
   // 但编译目标仍是 Java 21（游戏侧需求），故 jdk 字段保持 21、新增 hostJdk=25 表示宿主。
   '1.21.6': {
     loader: 'fabric', mcVersion: '1.21.6',
     // REFRESH: loaderVersion 0.19.5 → 0.20.1
-    loaderVersion: '0.20.1', yarnVersion: '1.21.6+build.1',
+    loaderVersion: '0.20.1', yarnVersion: '',
     // REFRESH: loomVersion 1.18.4 → 1.19-SNAPSHOT
     fabricVersion: '0.128.2+1.21.6', loomVersion: '1.19-SNAPSHOT',
     // REFRESH: gradleVersion 9.7.1 → 9.8.2
@@ -191,7 +214,7 @@ const FABRIC_MATRIX: Record<string, FabricToolchain> = {
   '1.21.7': {
     loader: 'fabric', mcVersion: '1.21.7',
     // REFRESH: loaderVersion 0.19.5 → 0.20.1
-    loaderVersion: '0.20.1', yarnVersion: '1.21.7+build.8',
+    loaderVersion: '0.20.1', yarnVersion: '',
     // REFRESH: loomVersion 1.18.4 → 1.19-SNAPSHOT
     fabricVersion: '0.129.0+1.21.7', loomVersion: '1.19-SNAPSHOT',
     // REFRESH: gradleVersion 9.7.1 → 9.8.2
@@ -200,7 +223,7 @@ const FABRIC_MATRIX: Record<string, FabricToolchain> = {
   '1.21.8': {
     loader: 'fabric', mcVersion: '1.21.8',
     // REFRESH: loaderVersion 0.19.5 → 0.20.1
-    loaderVersion: '0.20.1', yarnVersion: '1.21.8+build.1',
+    loaderVersion: '0.20.1', yarnVersion: '',
     // REFRESH: loomVersion 1.18.4 → 1.19-SNAPSHOT
     fabricVersion: '0.136.1+1.21.8', loomVersion: '1.19-SNAPSHOT',
     // REFRESH: gradleVersion 9.7.1 → 9.8.2
@@ -209,7 +232,7 @@ const FABRIC_MATRIX: Record<string, FabricToolchain> = {
   '1.21.9': {
     loader: 'fabric', mcVersion: '1.21.9',
     // REFRESH: loaderVersion 0.19.5 → 0.20.1
-    loaderVersion: '0.20.1', yarnVersion: '1.21.9+build.1',
+    loaderVersion: '0.20.1', yarnVersion: '',
     // REFRESH: loomVersion 1.18.4 → 1.19-SNAPSHOT
     fabricVersion: '0.134.1+1.21.9', loomVersion: '1.19-SNAPSHOT',
     // REFRESH: gradleVersion 9.7.1 → 9.8.2
@@ -218,7 +241,7 @@ const FABRIC_MATRIX: Record<string, FabricToolchain> = {
   '1.21.10': {
     loader: 'fabric', mcVersion: '1.21.10',
     // REFRESH: loaderVersion 0.19.5 → 0.20.1
-    loaderVersion: '0.20.1', yarnVersion: '1.21.10+build.3',
+    loaderVersion: '0.20.1', yarnVersion: '',
     // REFRESH: loomVersion 1.18.4 → 1.19-SNAPSHOT
     fabricVersion: '0.138.4+1.21.10', loomVersion: '1.19-SNAPSHOT',
     // REFRESH: gradleVersion 9.7.1 → 9.8.2
@@ -227,7 +250,7 @@ const FABRIC_MATRIX: Record<string, FabricToolchain> = {
   '1.21.11': {
     loader: 'fabric', mcVersion: '1.21.11',
     // REFRESH: loaderVersion 0.19.5 → 0.20.1
-    loaderVersion: '0.20.1', yarnVersion: '1.21.11+build.6',
+    loaderVersion: '0.20.1', yarnVersion: '',
     // REFRESH: loomVersion 1.18.4 → 1.19-SNAPSHOT
     fabricVersion: '0.141.6+1.21.11', loomVersion: '1.19-SNAPSHOT',
     // REFRESH: gradleVersion 9.7.1 → 9.8.2

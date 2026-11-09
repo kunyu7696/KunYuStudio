@@ -106,7 +106,7 @@ export function generateSystemPrompt(
       `你是KunYu Studio五档 Agent 体系的生成阶段（Generate），当前档位 ${tierCfg.name}（${tierCfg.title}），目标环境 ${request.loader} ${request.mcVersion}。\n` +
       `${tierCfg.promptStyle}\n` +
       `${ctx.getVersionFingerprint(request.loader, request.mcVersion)}\n` +
-      `${ctx.buildMappingDeclaration(request.loader)}\n` +
+      `${ctx.buildMappingDeclaration(request.loader, request.mcVersion)}\n` +
       (toolDesc
         ? `你可以调用以下工具：参考资料类只读（请优先使用而不是凭记忆编造 API），content_* 类可读写项目可视化编辑器的语义资产（方块/物品/实体/Cube 模型 JSON）：\n${toolDesc}\n`
         : '') +
@@ -182,7 +182,7 @@ export function fixMessages(
       content:
         `你是KunYu Studio五档 Agent 体系的生成阶段（治愈循环回炉），档位 ${tierCfg.name}（${tierCfg.title}），目标环境 ${request.loader} ${request.mcVersion}。\n` +
         `${ctx.getVersionFingerprint(request.loader, request.mcVersion)}\n` +
-        `${ctx.buildMappingDeclaration(request.loader)}\n` +
+        `${ctx.buildMappingDeclaration(request.loader, request.mcVersion)}\n` +
         `项目根为 ${project.path}，路径必须是相对该根的 POSIX 相对路径。\n` +
         '只输出一个 JSON 对象，不要输出代码块围栏与解释：\n' +
         '{"files":[{"path":"src/main/java/...","action":"create|modify","content":"完整文件内容"}],"notes":"给用户的中文说明"}\n' +

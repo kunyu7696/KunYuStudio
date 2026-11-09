@@ -25,7 +25,7 @@ import {
   setIdCallExpr,
   stackCountCall
 } from '../../templates/fabricTemplates'
-import { isMojangEra } from '../../templates/loaderVersionMatrix'
+import { isMojmapFabric } from '../../templates/loaderVersionMatrix'
 import type { ItemSpriteKind } from '../../templates/textureSynthesizer'
 import type { ModContext } from './context'
 import { fmtFloat, toJavaConst } from './javaBlocks'
@@ -39,7 +39,7 @@ export function generateModItemsJava(
   entities: EntitySchema[] = []
 ): string {
   return ctx.loader === 'fabric'
-    ? isMojangEra(ctx.mcVersion)
+    ? isMojmapFabric(ctx.mcVersion)
       ? fabricMojmapModItemsJava(ctx, blocks, items, entities)
       : fabricModItemsJava(ctx, blocks, items, entities)
     : mojmapModItemsJava(ctx, blocks, items, entities)

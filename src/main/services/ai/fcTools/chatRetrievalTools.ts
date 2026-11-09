@@ -380,7 +380,7 @@ export function builtinRetrievalTools(deps: ToolRegistryDeps): RegisteredTool[] 
       const text =
         (issues.length > 0 ? `发现 ${issues.length} 个问题：\n${issues.map((i) => `- ${i}`).join('\n')}` : '未发现明显规则问题。') +
         `\n\n版本指纹：${cb.getVersionFingerprint(ctx.loader, ctx.mcVersion) || '（无）'}\n` +
-        `映射声明：${cb.buildMappingDeclaration(ctx.loader)}`
+        `映射声明：${cb.buildMappingDeclaration(ctx.loader, ctx.mcVersion)}`
       return { ok: issues.length === 0, text: clipToolText(text), data: { issues } }
     }
   })

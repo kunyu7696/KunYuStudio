@@ -1,12 +1,12 @@
 /**
- * Fabric 最小可编译模组模板（版本分派：1.16.5~1.21.11 走 Yarn 命名，
- * 26.x（major>1）起 Yarn 无构建、Loom 默认 Mojang 官方映射——isMojangEra 切换
- * registry/Identifier/BlockSettings 全套命名；legacy（<1.19.3）另有
+ * Fabric 最小可编译模组模板（版本分派：1.16.5~1.21.5 走 Yarn 命名；
+ * 1.21.6 起官方 MDK 改用 `fabric-loom-remap` + Mojang 官方映射——isMojmapFabric 切换
+ * registry/ResourceLocation(or Identifier)/BlockSettings 全套命名；legacy（<1.19.3）另有
  * isLegacyRegistry/registryImports/registriesConst 分支）。
  * 所有文本模板使用 {{变量}} 占位，由 generateFabricProject 替换。
  * 二进制资源（gradle-wrapper.jar、贴图）在生成时程序化处理。
  */
-import { isMojangEra } from './loaderVersionMatrix'
+import { fabricIdentifierClass, isMojangEra, isMojmapFabric } from './loaderVersionMatrix'
 
 export interface FabricTemplateVars {
   modId: string
@@ -38,7 +38,7 @@ export type MirrorRegion = 'china' | 'official'
  * 26.x（Mojang 映射）类名为 BlockBehaviour.Properties.of()，由 blockSettingsExpr 单独分派。
  */
 export function isModernBlockSettings(mcVersion: string): boolean {
-  if (isMojangEra(mcVersion)) return true
+  if (isMojmapFabric(mcVersion)) return true
   const m = /^1\.(\d+)\.(\d+)/.exec(mcVersion ?? '')
   if (!m) return false
   const minor = Number(m[1])
@@ -51,7 +51,7 @@ export function isModernBlockSettings(mcVersion: string): boolean {
 /** BlockSettings 相关 import 行（1.21.4+ 不需要 FabricBlockSettings；legacy（<1.19.3）还需 Material；
  *  26.x Mojang 映射：net.minecraft.world.level.block.state.BlockBehaviour） */
 export function blockSettingsImport(mcVersion: string): string {
-  if (isMojangEra(mcVersion)) {
+  if (isMojmapFabric(mcVersion)) {
     return 'import net.minecraft.world.level.block.state.BlockBehaviour;\n'
   }
   if (isModernBlockSettings(mcVersion)) return ''
@@ -65,7 +65,7 @@ export function blockSettingsImport(mcVersion: string): string {
  *  - 1.21.4+ Yarn：Block.Settings.create()
  *  - legacy（<1.19.3）无 create() 工厂，走 of(Material) */
 export function blockSettingsExpr(mcVersion: string): string {
-  if (isMojangEra(mcVersion)) return 'BlockBehaviour.Properties.of()'
+  if (isMojmapFabric(mcVersion)) return 'BlockBehaviour.Properties.of()'
   if (isModernBlockSettings(mcVersion)) return 'Block.Settings.create()'
   return isLegacyRegistry(mcVersion)
     ? 'FabricBlockSettings.of(Material.STONE)'
@@ -92,7 +92,7 @@ export function isLegacyRegistry(mcVersion: string): boolean {
  *    （注册方块/物品还需 ResourceKey，由 ModBlocks/ModItems 模板自行补 resources.ResourceKey）
  *  - legacy 只有 net.minecraft.util.registry.Registry 一个类 */
 export function registryImports(mcVersion: string): string {
-  if (isMojangEra(mcVersion)) {
+  if (isMojmapFabric(mcVersion)) {
     return (
       'import net.minecraft.core.Registry;\n' +
       'import net.minecraft.core.registries.BuiltInRegistries;\n' +
@@ -111,7 +111,7 @@ export function registriesConst(
   mcVersion: string,
   registry: 'BLOCK' | 'ITEM' | 'ENTITY_TYPE' | 'ENCHANTMENT'
 ): string {
-  if (isMojangEra(mcVersion)) return `BuiltInRegistries.${registry}`
+  if (isMojmapFabric(mcVersion)) return `BuiltInRegistries.${registry}`
   return isLegacyRegistry(mcVersion) ? `Registry.${registry}` : `Registries.${registry}`
 }
 
@@ -119,7 +119,7 @@ export function registriesConst(
  *  - 26.x Mojang 映射：noOcclusion()
  *  - Yarn 1.19.4 起 notSolid() 更名 nonOpaque() */
 export function nonOpaqueCall(mcVersion: string): string {
-  if (isMojangEra(mcVersion)) return '.noOcclusion()'
+  if (isMojmapFabric(mcVersion)) return '.noOcclusion()'
   const m = /^1\.(\d+)\.(\d+)/.exec(mcVersion ?? '')
   if (!m) return '.nonOpaque()'
   const minor = Number(m[1])
@@ -135,21 +135,21 @@ export function nonOpaqueCall(mcVersion: string): string {
 
 /** 方块主类 import：26.x Mojmap world.level.block.Block / Yarn block.Block */
 export function blockClassImport(mcVersion: string): string {
-  return isMojangEra(mcVersion)
+  return isMojmapFabric(mcVersion)
     ? 'import net.minecraft.world.level.block.Block;\n'
     : 'import net.minecraft.block.Block;\n'
 }
 
 /** 方块物品类 import：26.x Mojmap world.item.BlockItem（Yarn: item.BlockItem） */
 export function blockItemClassImport(mcVersion: string): string {
-  return isMojangEra(mcVersion)
+  return isMojmapFabric(mcVersion)
     ? 'import net.minecraft.world.item.BlockItem;\n'
     : 'import net.minecraft.item.BlockItem;\n'
 }
 
 /** 物品主类 import：26.x Mojmap world.item.Item / Yarn item.Item */
 export function itemClassImport(mcVersion: string): string {
-  return isMojangEra(mcVersion)
+  return isMojmapFabric(mcVersion)
     ? 'import net.minecraft.world.item.Item;\n'
     : 'import net.minecraft.item.Item;\n'
 }
@@ -159,7 +159,7 @@ export function itemClassImport(mcVersion: string): string {
  * Yarn 时代无此要求（注册键由 Registry.register 直接接收），返回空串。
  */
 export function resourceKeyImport(mcVersion: string): string {
-  return isMojangEra(mcVersion) ? 'import net.minecraft.resources.ResourceKey;\n' : ''
+  return isMojmapFabric(mcVersion) ? 'import net.minecraft.resources.ResourceKey;\n' : ''
 }
 
 /**
@@ -173,52 +173,52 @@ export function setIdCallExpr(
   modClassName: string,
   id: string
 ): string {
-  if (!isMojangEra(mcVersion)) return ''
+  if (!isMojmapFabric(mcVersion)) return ''
   return `.setId(ResourceKey.create(Registries.${registry}, ${modClassName}.id("${id}")))`
 }
 
 /** 方块音效组 import：26.x Mojmap world.level.block.SoundType（枚举）/ Yarn sound.BlockSoundGroup */
 export function blockSoundImport(mcVersion: string): string {
-  return isMojangEra(mcVersion)
+  return isMojmapFabric(mcVersion)
     ? 'import net.minecraft.world.level.block.SoundType;\n'
     : 'import net.minecraft.sound.BlockSoundGroup;\n'
 }
 
 /** 方块音效组表达式：26.x SoundType.STONE / Yarn BlockSoundGroup.STONE */
 export function blockSoundExpr(mcVersion: string, soundGroup: string): string {
-  const prefix = isMojangEra(mcVersion) ? 'SoundType' : 'BlockSoundGroup'
+  const prefix = isMojmapFabric(mcVersion) ? 'SoundType' : 'BlockSoundGroup'
   return `${prefix}.${soundGroup.toUpperCase()}`
 }
 
 /** 方块音效链：26.x `sound(SoundType.X)` / Yarn `sounds(BlockSoundGroup.X)`（方法名不同） */
 export function blockSoundCall(mcVersion: string, soundGroup: string): string {
-  const method = isMojangEra(mcVersion) ? 'sound' : 'sounds'
+  const method = isMojmapFabric(mcVersion) ? 'sound' : 'sounds'
   return `.${method}(${blockSoundExpr(mcVersion, soundGroup)})`
 }
 
 /** 需要正确工具才掉落：26.x requiresCorrectToolForDrops() / Yarn requiresTool() */
 export function requiresToolCall(mcVersion: string): string {
-  return isMojangEra(mcVersion) ? '.requiresCorrectToolForDrops()' : '.requiresTool()'
+  return isMojmapFabric(mcVersion) ? '.requiresCorrectToolForDrops()' : '.requiresTool()'
 }
 
 /** 发光等级链：26.x lightLevel(...) / Yarn luminance(...) */
 export function luminanceCall(mcVersion: string, level: number): string {
-  return isMojangEra(mcVersion) ? `.lightLevel(state -> ${level})` : `.luminance(state -> ${level})`
+  return isMojmapFabric(mcVersion) ? `.lightLevel(state -> ${level})` : `.luminance(state -> ${level})`
 }
 
 /** Item 属性对象：26.x new Item.Properties() / Yarn new Item.Settings() */
 export function itemPropertiesExpr(mcVersion: string): string {
-  return isMojangEra(mcVersion) ? 'new Item.Properties()' : 'new Item.Settings()'
+  return isMojmapFabric(mcVersion) ? 'new Item.Properties()' : 'new Item.Settings()'
 }
 
 /** 堆叠数链：26.x stacksTo(...) / Yarn maxCount(...) */
 export function stackCountCall(mcVersion: string, count: number): string {
-  return `.${isMojangEra(mcVersion) ? 'stacksTo' : 'maxCount'}(${count})`
+  return `.${isMojmapFabric(mcVersion) ? 'stacksTo' : 'maxCount'}(${count})`
 }
 
 /** 稀有度 import：26.x world.item.Rarity / Yarn util.Rarity */
 export function rarityImport(mcVersion: string): string {
-  return isMojangEra(mcVersion) ? 'import net.minecraft.world.item.Rarity;\n' : 'import net.minecraft.util.Rarity;\n'
+  return isMojmapFabric(mcVersion) ? 'import net.minecraft.world.item.Rarity;\n' : 'import net.minecraft.util.Rarity;\n'
 }
 
 export const FABRIC_DEFAULTS = {
@@ -284,16 +284,23 @@ export function buildGradle(v: FabricTemplateVars, mirror: MirrorRegion = 'china
   // 原硬编码 1.20.6+ 列表与矩阵漂移，新增 1.21.6+ 时漏改会导致 17 编译）
   const jdk = v.jdk
   const javaVersion = `VERSION_${jdk === 8 ? '1_8' : jdk}`
-  // 26.x（Mojang 映射时代）：
-  //  - 插件 id 带 net.fabricmc 前缀（官方 26.3 MDK：net.fabricmc.fabric-loom）
-  //  - 无 mappings 行（26.x 无 Yarn 构建，Loom 1.18 默认 Mojang 官方映射）
-  //  - loader/fabric-api 用 implementation（官方 26.3 MDK 写法，Loom 1.18 自动重映射）
-  const mojang = isMojangEra(v.mcVersion)
-  const loomPluginId = mojang ? 'net.fabricmc.fabric-loom' : 'fabric-loom'
+  // 1.21.6+（Mojang 映射时代）：
+  //  - 1.21.6~1.21.11：官方 MDK 用 net.fabricmc.fabric-loom-remap + mappings loom.officialMojangMappings()
+  //  - 26.x：官方 MDK 用 net.fabricmc.fabric-loom，且不再写 mappings 行（Loom 默认官方映射）
+  //  - loader/fabric-api：26.x 用 implementation，1.21.6+ 仍用 modImplementation（官方分支写法）
+  const mojmap = isMojmapFabric(v.mcVersion)
+  const mojang26 = isMojangEra(v.mcVersion)
+  const loomPluginId = mojang26
+    ? 'net.fabricmc.fabric-loom'
+    : mojmap
+      ? 'net.fabricmc.fabric-loom-remap'
+      : 'fabric-loom'
   const mappingsLine = v.yarnVersion
     ? `    mappings "net.fabricmc:yarn:\${project.yarn_mappings}:v2"\n`
-    : ''
-  const loaderConfiguration = mojang ? 'implementation' : 'modImplementation'
+    : mojmap && !mojang26
+      ? '    mappings loom.officialMojangMappings()\n'
+      : ''
+  const loaderConfiguration = mojang26 ? 'implementation' : 'modImplementation'
   return `plugins {
     id '${loomPluginId}' version '${v.loomVersion}'
     id 'maven-publish'
@@ -568,12 +575,12 @@ export function fabricModJson(v: FabricTemplateVars): string {
   )
 }
 
-/** Identifier 构造分派：
- *  - 26.x Mojang 映射：net.minecraft.resources.Identifier.fromNamespaceAndPath（ResourceLocation 更名 Identifier）
+/** 资源位置构造分派：
+ *  - Mojang 映射（1.21.6+）：ResourceLocation.fromNamespaceAndPath（26.x 起类名改为 Identifier）
  *  - 1.21+ Yarn：构造器私有化，改用静态工厂 Identifier.of（javap 实证 1.20.6 仍公开）
  *  - 旧版：new Identifier */
 export function identifierFactoryCall(mcVersion: string): string {
-  if (isMojangEra(mcVersion)) return 'Identifier.fromNamespaceAndPath'
+  if (isMojmapFabric(mcVersion)) return `${fabricIdentifierClass(mcVersion)}.fromNamespaceAndPath`
   const [major = 0, minor = 0] = mcVersion.split('.').map((x) => Number.parseInt(x, 10) || 0)
   return major > 1 || minor >= 21 ? 'Identifier.of' : 'new Identifier'
 }
@@ -589,10 +596,13 @@ import org.apache.logging.log4j.Logger;`
 import org.slf4j.LoggerFactory;`
   const logFactory = legacyLog ? 'LogManager' : 'LoggerFactory'
   const newIdentifier = identifierFactoryCall(v.mcVersion)
-  // 26.x Mojang 映射：Identifier 迁至 net.minecraft.resources（旧 Yarn 为 net.minecraft.util）
-  const identifierImport = isMojangEra(v.mcVersion)
-    ? 'import net.minecraft.resources.Identifier;'
+  // Mojang 映射：资源位置迁至 net.minecraft.resources（旧 Yarn 为 net.minecraft.util）
+  const identifierImport = isMojmapFabric(v.mcVersion)
+    ? `import net.minecraft.resources.${fabricIdentifierClass(v.mcVersion)};`
     : 'import net.minecraft.util.Identifier;'
+  const identifierType = isMojmapFabric(v.mcVersion)
+    ? fabricIdentifierClass(v.mcVersion)
+    : 'Identifier'
   return `package ${v.packageName};
 
 import ${v.packageName}.registry.ModBlocks;
@@ -612,7 +622,7 @@ public class ${className} implements ModInitializer {
         LOGGER.info("${v.modName} initialized!");
     }
 
-    public static Identifier id(String path) {
+    public static ${identifierType} id(String path) {
         return ${newIdentifier}(MOD_ID, path);
     }
 }
@@ -624,7 +634,7 @@ export function modBlocksClass(v: FabricTemplateVars): string {
   const registry = registriesConst(v.mcVersion, 'BLOCK')
   // 26.x Mojang 映射：BlockBehaviour.Properties + 强制 setId(ResourceKey)（与 Fabric API 26.3
   // testmod 写法逐一对齐：Properties 不挂 ResourceKey 会在注册期抛异常）
-  if (isMojangEra(v.mcVersion)) {
+  if (isMojmapFabric(v.mcVersion)) {
     return `package ${v.packageName}.registry;
 
 import ${v.packageName}.${modClass};
@@ -672,7 +682,7 @@ export function modItemsClass(v: FabricTemplateVars): string {
   const modClass = `${v.modId.charAt(0).toUpperCase()}${v.modId.slice(1)}Mod`
   const registry = registriesConst(v.mcVersion, 'ITEM')
   // 26.x Mojang 映射：Item.Properties 同样强制 setId(ResourceKey)
-  if (isMojangEra(v.mcVersion)) {
+  if (isMojmapFabric(v.mcVersion)) {
     return `package ${v.packageName}.registry;
 
 import ${v.packageName}.${modClass};

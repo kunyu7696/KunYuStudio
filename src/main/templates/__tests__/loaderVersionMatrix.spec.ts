@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
   compareMcVersion,
+  fabricIdentifierClass,
   fabricTargetJdk,
   getToolchain,
   isBetaBlocked,
   isMojangEra,
+  isMojmapFabric,
   isSupportedCombo,
   jdkRequirementsFor,
   jdkRequirementsForMcVersion,
@@ -12,6 +14,7 @@ import {
   tierOfMcVersion,
   type FabricToolchain
 } from '../loaderVersionMatrix'
+import { buildGradle } from '../fabricTemplates'
 import { judgeJdkCompatibility, LEGACY_JDK_REQUIREMENTS } from '../../../shared/types/build'
 import MDK_SNAPSHOT from '../mdkSnapshot.json'
 
@@ -90,6 +93,70 @@ describe('V-02 矩阵补 1.21.6~1.21.11（坐标一手验证）', () => {
     // 直接断言模板产物含 release 21（旧硬编码列表漏改时此断言失败）
     const tc = getToolchain('fabric', '1.21.11')
     expect('jdk' in tc ? tc.jdk : null).toBe(21)
+  })
+})
+
+describe('Fabric 1.21.6~1.21.11 映射策略对齐官方 MDK（Mojang 官方映射）', () => {
+  const MOJMAP_VERS = ['1.21.6', '1.21.7', '1.21.8', '1.21.9', '1.21.10', '1.21.11']
+
+  function vars(mc: string): Parameters<typeof buildGradle>[0] {
+    const tc = getToolchain('fabric', mc) as FabricToolchain
+    return {
+      modId: 'demo',
+      modName: 'Demo',
+      version: '1.0.0',
+      packageName: 'com.demo',
+      mcVersion: tc.mcVersion,
+      loaderVersion: tc.loaderVersion,
+      fabricVersion: tc.fabricVersion,
+      yarnVersion: tc.yarnVersion,
+      loomVersion: tc.loomVersion,
+      gradleVersion: tc.gradleVersion,
+      jdk: tc.jdk
+    }
+  }
+
+  it('映射世代判定：1.21.6~1.21.11 与 26.x 同为 Mojmap，1.21.5 仍为 Yarn', () => {
+    for (const v of MOJMAP_VERS) expect(isMojmapFabric(v), v).toBe(true)
+    expect(isMojmapFabric('26.3')).toBe(true)
+    expect(isMojmapFabric('1.21.5')).toBe(false)
+    // isMojangEra 语义保持 26.x（Forge/迁移告警依赖），不被 1.21.6 污染
+    expect(isMojangEra('1.21.6')).toBe(false)
+    // 资源位置类名差异：1.21.6 是 ResourceLocation，26.3 起改名 Identifier
+    expect(fabricIdentifierClass('1.21.6')).toBe('ResourceLocation')
+    expect(fabricIdentifierClass('26.3')).toBe('Identifier')
+  })
+
+  it('矩阵 yarnVersion 全部留空（官方 MDK 不再声明 yarn_mappings）', () => {
+    for (const v of MOJMAP_VERS) {
+      const tc = getToolchain('fabric', v) as FabricToolchain
+      expect(tc.yarnVersion, v).toBe('')
+    }
+  })
+
+  it('build.gradle：fabric-loom-remap + officialMojangMappings + modImplementation', () => {
+    for (const v of MOJMAP_VERS) {
+      const text = buildGradle(vars(v), 'official')
+      expect(text, v).toContain("id 'net.fabricmc.fabric-loom-remap'")
+      expect(text, v).toContain('mappings loom.officialMojangMappings()')
+      expect(text, v).toContain('modImplementation "net.fabricmc:fabric-loader:')
+      expect(text, v).not.toContain('yarn_mappings')
+    }
+  })
+
+  it('26.3 保持官方写法：fabric-loom + implementation，且无 mappings 行', () => {
+    const text = buildGradle(vars('26.3'), 'official')
+    expect(text).toContain("id 'net.fabricmc.fabric-loom'")
+    expect(text).not.toContain('fabric-loom-remap')
+    expect(text).not.toContain('officialMojangMappings')
+    expect(text).toContain('implementation "net.fabricmc:fabric-loader:')
+  })
+
+  it('1.21.5 仍是 Yarn：fabric-loom + yarn mappings + modImplementation', () => {
+    const text = buildGradle(vars('1.21.5'), 'official')
+    expect(text).toContain("id 'fabric-loom'")
+    expect(text).toContain('mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"')
+    expect(text).toContain('modImplementation "net.fabricmc:fabric-loader:')
   })
 })
 
@@ -244,8 +311,20 @@ describe('MDK 坐标一致性（防止 loader/loom 半更新）', () => {
     for (const [mc, entry] of Object.entries(snapshot)) {
       if (!matrix[mc]) continue // 快照可能有矩阵已移除的历史条目，跳过
       for (const field of fields) {
-        // 快照为空 = 官方 MDK 未声明该字段（如 26.x 无 yarn、个别分支无 wrapper），矩阵自行处置
-        if (!entry[field]) continue
+        // 快照为空 = 官方 MDK 未声明该字段（如个别分支无 wrapper），矩阵自行处置。
+        // 但 yarnVersion 为空有明确语义：官方自 1.21.6 起改用 Mojang 官方映射，
+        // 不再声明 yarn_mappings。此时矩阵必须同样留空——否则就是"绕过官方映射策略"
+        // 的隐式分叉（此前正是被这里整体跳过而无人发现）。
+        if (!entry[field]) {
+          if (field === 'yarnVersion') {
+            expect(
+              matrix[mc][field],
+              `${mc} 的官方 MDK 无 yarn_mappings（Mojang 映射），矩阵 yarnVersion 必须留空，` +
+                `实际为 ${String(matrix[mc][field])}`
+            ).toBe('')
+          }
+          continue
+        }
         expect(
           matrix[mc][field],
           `${mc} 的 ${field} 与官方 MDK 快照不一致（矩阵=${String(matrix[mc][field])}，` +

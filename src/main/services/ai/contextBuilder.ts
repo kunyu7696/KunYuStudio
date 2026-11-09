@@ -17,6 +17,7 @@ import type {
 import type { ComboHealth } from '../../../shared/types/monitor'
 import type { ProjectEdition } from '../../../shared/types/project'
 import { resolveEditionProfile } from '../../../shared/types/edition'
+import { fabricIdentifierClass, isMojmapFabric } from '../../templates/loaderVersionMatrix'
 
 /** 单次注入模板硬上限（PDF p433：MAX_INJECTION_TEMPLATES = 5） */
 export const MAX_INJECTION_TEMPLATES = 5
@@ -120,7 +121,7 @@ export interface ContextBuilder {
   getVersionFingerprint(loader: LoaderId, version: string): string
   getHealthStatus(loader: LoaderId, version: string): ComboHealth
   buildDriftWarning(loader: LoaderId, version: string): string
-  buildMappingDeclaration(loader: LoaderId): string
+  buildMappingDeclaration(loader: LoaderId, mcVersion?: string): string
   buildSystemPrompt(ctx: PromptContext): string
 }
 
@@ -280,8 +281,12 @@ export function createContextBuilder(service: ReferenceService): ContextBuilder 
       ]
       if (pin) {
         if (fp.loader === 'fabric') {
+          // 1.21.6+ 官方 MDK 改用 Mojang 官方映射，不再有 yarnMappings
+          const mappingPart = pin.yarnMappings
+            ? `Yarn ${pin.yarnMappings}`
+            : 'Mojang 官方映射（官方 MDK 不再声明 yarn_mappings）'
           lines.push(
-            `- 模板钉版工具链：Yarn ${pin.yarnMappings} / Loader ${pin.loaderVersion} / Fabric API ${pin.fabricApi} / Loom ${pin.loom} / Gradle ${pin.gradle}`
+            `- 模板钉版工具链：${mappingPart} / Loader ${pin.loaderVersion} / Fabric API ${pin.fabricApi} / Loom ${pin.loom} / Gradle ${pin.gradle}`
           )
         } else {
           const plugin = fp.loader === 'forge' ? 'ForgeGradle' : 'ModDevGradle'
@@ -316,10 +321,20 @@ export function createContextBuilder(service: ReferenceService): ContextBuilder 
       return `ℹ 待验证：${loader} ${version} 尚未进行真实编译回测（health=unknown）。模板来自参考包快照，建议回测签字后再作为「已验证」交付。`
     },
 
-    buildMappingDeclaration(loader) {
+    buildMappingDeclaration(loader, mcVersion) {
       const manifest = service.getManifest()
       const info = manifest?.mappingTypes[loader]
       if (!info) return `映射声明：未在参考包中找到 ${loader} 的映射信息。`
+      // Fabric 自 1.21.6 起跟随官方 MDK 改用 Mojang 映射，映射声明必须按版本分派，
+      // 否则会继续告诉模型"本项目使用 Yarn"，生成必然编译不过的代码。
+      if (loader === 'fabric' && mcVersion && isMojmapFabric(mcVersion)) {
+        return [
+          `本项目使用 Mojang 官方映射（Fabric ${mcVersion} 起官方 MDK 改用 fabric-loom-remap + loom.officialMojangMappings）。`,
+          `- 标识符类：net.minecraft.resources.${fabricIdentifierClass(mcVersion)}`,
+          '- 注册表类：net.minecraft.core.registries.BuiltInRegistries',
+          '- 禁止混用 Yarn 命名（Identifier.of / net.minecraft.registry.Registries / yarn_mappings）。'
+        ].join('\n')
+      }
       const peers = manifest?.mappingTypes
       return [
         `本项目使用 ${info.type === 'yarn' ? 'Yarn（Fabric 官方）' : 'Mojang 官方'}映射。`,
@@ -397,7 +412,7 @@ export function createContextBuilder(service: ReferenceService): ContextBuilder 
         MOD_ID: modId,
         PACKAGE_NAME: packageName,
         MAPPING_DECLARATION: edition.hasMappings
-          ? this.buildMappingDeclaration(ctx.loader)
+          ? this.buildMappingDeclaration(ctx.loader, ctx.mcVersion)
           : '本版本无字节码映射体系（基岩预留分支，当前不可达）。',
         PROJECT_CONTEXT: projectContext,
         VERSION_FINGERPRINT: this.getVersionFingerprint(ctx.loader, ctx.mcVersion),

@@ -56,6 +56,7 @@ import {
   synthesizeBlockTexture,
   synthesizeItemTexture
 } from '../../templates/textureSynthesizer'
+import { isMojmapFabric } from '../../templates/loaderVersionMatrix'
 import { getCustomMcpManager } from '../ai/mcpClient'
 import { generateGameTestClasses, gameTestJavaRelPath } from '../gameTestGenerator'
 import { assertWithinRoot } from '../fsService'
@@ -258,6 +259,16 @@ function runGeneration(
     (e) => e.customClass && !resolveEntityCube(e, modelMap) && !resolveEntityGeo(e)
   )
   const modeledEntities = [...cubeModeledEntities, ...geoModeledEntities, ...customClassEntities]
+  // Fabric 1.21.6+ 自官方 MDK 起改用 Mojang 官方映射（fabric-loom-remap），
+  // 而实体注册/渲染生成仍是 Yarn 路径（Mojmap 实体生成目前只服务 Forge/NeoForge 的
+  // DeferredRegister）。这里显式失败，避免生成必然编译不过的工程。
+  if (modeledEntities.length > 0 && ctx.loader === 'fabric' && isMojmapFabric(ctx.mcVersion)) {
+    throw new Error(
+      `Fabric ${ctx.mcVersion} 使用 Mojang 官方映射，实体生成尚未迁移（待后续阶段）：` +
+        `涉及 ${modeledEntities.map((e) => e.id).join(', ')}。` +
+        '请删除这些实体，或改用 1.21.5 及更早版本。'
+    )
+  }
   const enchantments = definitions.filter((d): d is EnchantmentSchema => d.kind === 'enchantment')
   // 1.21+ NeoForge 附魔数据驱动（JSON），其余加载器走 Java 注册类
   const dataDrivenEnchantments = isDataDrivenEnchantment(ctx)
