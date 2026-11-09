@@ -101,6 +101,23 @@ export interface LoadRecordInput {
   note?: string
 }
 
+/** 客户端运行阶段回写（客户端进入世界；pass 时 note 记截图证据路径） */
+export interface RuntimeRecordInput {
+  comboId: string
+  pass: boolean
+  at: string
+  /** 失败摘要（渲染/启动首因）或通过时的截图证据路径 */
+  note?: string
+}
+
+/** load/runtime 共用的阶段记录入参 */
+interface StageRecordInput {
+  comboId: string
+  pass: boolean
+  at: string
+  note?: string
+}
+
 export interface MatrixHealthStore {
   readonly path: string
   /** 当前 overlay 快照（读取前自动 syncFromDisk） */
@@ -119,6 +136,8 @@ export interface MatrixHealthStore {
   recordGateResult(input: GateRecordInput): void
   /** 运行时加载阶段回写：只更新 stages.load，保留编译统计与其它阶段 */
   recordLoadResult(input: LoadRecordInput): void
+  /** 客户端运行阶段回写：只更新 stages.runtime，保留编译统计与其它阶段 */
+  recordRuntimeResult(input: RuntimeRecordInput): void
   /**
    * 一次性种子迁移：overlay 无记录的组合从 manifest 基线灌入（幂等）。
    * 已有运行时记录的组合绝不覆盖（运行时层优先级恒高于基线）。
@@ -177,6 +196,36 @@ export function createMatrixHealthStore(deps: { path: string }): MatrixHealthSto
     if (mtime === lastMtime) return
     overlay = loadFromDisk(deps.path)
     lastMtime = mtime
+  }
+
+  /** load/runtime 共用：只替换指定阶段，编译统计与其它阶段原样保留 */
+  function recordStage(stage: 'load' | 'runtime', input: StageRecordInput): void {
+    syncFromDisk()
+    overlay = structuredClone(overlay)
+    const prev = overlay.combos[input.comboId]
+    const prevHealth = prev?.matrixHealth
+    overlay.combos[input.comboId] = {
+      // 阶段结果不改灯色（灯色是编译/探针结论），仅补三态报告
+      health: prev?.health ?? 'unknown',
+      verifiedAt: prev?.verifiedAt ?? null,
+      latestLoaderVersion: prev?.latestLoaderVersion,
+      coveredByGate: prev?.coveredByGate,
+      matrixHealth: {
+        templateCount: prevHealth?.templateCount ?? 0,
+        verifiedCount: prevHealth?.verifiedCount ?? 0,
+        passRate: prevHealth?.passRate ?? 0,
+        lastVerifiedAt: prevHealth?.lastVerifiedAt ?? null,
+        stages: {
+          ...prevHealth?.stages,
+          [stage]: {
+            pass: input.pass,
+            at: input.at,
+            ...(input.note ? { note: input.note } : {})
+          }
+        }
+      }
+    }
+    persist()
   }
 
   return {
@@ -276,32 +325,11 @@ export function createMatrixHealthStore(deps: { path: string }): MatrixHealthSto
     },
 
     recordLoadResult(input) {
-      syncFromDisk()
-      overlay = structuredClone(overlay)
-      const prev = overlay.combos[input.comboId]
-      const prevHealth = prev?.matrixHealth
-      overlay.combos[input.comboId] = {
-        // 加载结果不改灯色（灯色是编译/探针结论），仅补三态报告
-        health: prev?.health ?? 'unknown',
-        verifiedAt: prev?.verifiedAt ?? null,
-        latestLoaderVersion: prev?.latestLoaderVersion,
-        coveredByGate: prev?.coveredByGate,
-        matrixHealth: {
-          templateCount: prevHealth?.templateCount ?? 0,
-          verifiedCount: prevHealth?.verifiedCount ?? 0,
-          passRate: prevHealth?.passRate ?? 0,
-          lastVerifiedAt: prevHealth?.lastVerifiedAt ?? null,
-          stages: {
-            ...prevHealth?.stages,
-            load: {
-              pass: input.pass,
-              at: input.at,
-              ...(input.note ? { note: input.note } : {})
-            }
-          }
-        }
-      }
-      persist()
+      recordStage('load', input)
+    },
+
+    recordRuntimeResult(input) {
+      recordStage('runtime', input)
     },
 
     seedFromBaseline(manifest) {

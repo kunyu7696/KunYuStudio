@@ -1,0 +1,131 @@
+name: 客户端进游戏门禁（Stage 2）
+
+# 三态门禁 Stage 2：加载通过 ≠ 能玩。
+# 在「版本族代表组」上执行 createProject → generateContent（含实体）→
+# gradlew runServer 生成平地世界 → gradlew runClient --quickPlaySingleplayer，
+# 在 Xvfb + Mesa 软件渲染下等待集成服务器 Done，抓屏留证后写回
+# matrixHealth.stages.runtime，再由 workflow 导出并提交 manifest
+# （设置页三态报告的第三枚状态点）。
+#
+# 覆盖策略：代表组而非全量 35 组合（单组含世界生成 + 客户端首启，以十分钟计；
+# 客户端差异是族级的：Yarn/Mojmap 客户端入口、实体渲染器 API、Forge/NeoForge
+# 客户端事件）。当前 6 组：fabric 1.20.1/1.21.11/26.3、forge 1.20.1、
+# neoforge 1.21.11/26.3。
+#
+# 定位：advisory（不阻塞合并/发布）。稳定后再纳入发布前检查单。
+# 触发：每周一 05:35 UTC（北京时间 13:35），避开 matrix-refresh(03:00)、
+#       CI 全量(周一 03:23)、nightly(16:00)、失败守夜(01:00)、runtime-gate(04:10)。
+on:
+  schedule:
+    - cron: '35 5 * * 1'
+  workflow_dispatch:
+    inputs:
+      combos:
+        description: '只跑指定组合（逗号分隔，如 fabric-1.21.11）；留空 = 全部代表组'
+        required: false
+        default: ''
+
+# Unix LF 换行符必须保留（项目硬约束）
+jobs:
+  client-gate:
+    name: 客户端进游戏（代表组）
+    runs-on: ubuntu-latest
+    # 6 组合 × 单组上限 30 分钟；留足资源下载/软件渲染余量
+    timeout-minutes: 300
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: |
+            17
+            21
+            25
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('src/main/templates/mdkSnapshot.json') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      - name: 安装虚拟显示与抓屏依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb xauth x11-utils imagemagick \
+            libgl1-mesa-dri libglu1-mesa libgl1 libglx-mesa0 \
+            libx11-6 libxext6 libxrandr2 libxcursor1 libxi6 libxxf86vm1 libxinerama1
+
+      - run: npm ci
+
+      - name: 客户端进游戏（Xvfb + 软件渲染）
+        id: client
+        env:
+          KY_CLIENT_COMBOS: ${{ github.event.inputs.combos }}
+          KY_CLIENT_VIDEO_SIZE: 1280x720
+          LIBGL_ALWAYS_SOFTWARE: '1'
+          GALLIUM_DRIVER: llvmpipe
+          MESA_GL_VERSION_OVERRIDE: '4.5'
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -o pipefail
+          xvfb-run -a --server-args="-screen 0 1280x720x24" npm run test:client 2>&1 | tee "$RUNNER_TEMP/client-gate.log"
+          ec=${PIPESTATUS[0]}
+          if [ "$ec" -eq 0 ]; then exit 0; fi
+
+          # 失败留痕：日志尾部写进步骤摘要 + issue（无人订阅时红等于静默）
+          tail -c 9000 "$RUNNER_TEMP/client-gate.log" > "$RUNNER_TEMP/client-gate-excerpt.txt"
+          {
+            echo "客户端进游戏门禁失败（commit $GITHUB_SHA）"
+            echo "运行：$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo
+            cat "$RUNNER_TEMP/client-gate-excerpt.txt"
+          } > "$RUNNER_TEMP/client-gate-issue.md"
+          cat "$RUNNER_TEMP/client-gate-issue.md" >> "$GITHUB_STEP_SUMMARY"
+          existing=$(gh issue list --state open --search "客户端进游戏门禁失败 in:title" --json number --jq '.[0].number')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body-file "$RUNNER_TEMP/client-gate-issue.md" || true
+          else
+            gh issue create --title "客户端进游戏门禁失败（Stage 2）" --body-file "$RUNNER_TEMP/client-gate-issue.md" || true
+          fi
+          exit "$ec"
+
+      # 截图是「编译绿 ≠ 能玩」的证据：无论成败都上传
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: client-gate-screenshots
+          path: .dev-userdata/client-gate
+          if-no-files-found: warn
+
+      # 定向复跑（combos 非空）不写回仓库：只用于诊断，避免部分结果覆盖基线
+      - name: matrixHealth 快照导出 manifest
+        if: always() && github.event.inputs.combos == ''
+        run: node scripts/exportMatrixHealth.mjs
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: client-manifest
+          path: resources/ai-reference/manifest.json
+
+      - name: stages.runtime 落回仓库 manifest
+        if: always() && github.event.inputs.combos == ''
+        run: |
+          git config user.name "kunyu-ci-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add resources/ai-reference/manifest.json
+          git diff --cached --quiet || git commit -m "chore(matrix): 每周客户端进游戏门禁刷新 stages.runtime"
+          git push

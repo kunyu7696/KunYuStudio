@@ -101,6 +101,41 @@ describe('三态报告（stages）', () => {
     expect(combo?.matrixHealth?.stages?.load?.pass).toBe(true)
     expect(combo?.matrixHealth?.stages?.compile).toBeUndefined()
   })
+
+  it('recordRuntimeResult 写 runtime 阶段，compile/load 均保留', () => {
+    const store = createMatrixHealthStore({ path })
+    store.recordGateResult({
+      comboId: 'fabric-1.20.1',
+      pass: true,
+      templateCount: 5,
+      at: '2026-11-09T00:00:00.000Z'
+    })
+    store.recordLoadResult({
+      comboId: 'fabric-1.20.1',
+      pass: true,
+      at: '2026-11-09T01:00:00.000Z'
+    })
+    store.recordRuntimeResult({
+      comboId: 'fabric-1.20.1',
+      pass: false,
+      at: '2026-11-09T02:00:00.000Z',
+      note: 'GLFW error 65544: X11: The DISPLAY environment variable is missing'
+    })
+    // 编译刷新不得清掉运行阶段结果
+    store.recordGateResult({
+      comboId: 'fabric-1.20.1',
+      pass: true,
+      templateCount: 6,
+      at: '2026-11-09T03:00:00.000Z'
+    })
+    const combo = store.getCombo('fabric-1.20.1')
+    expect(combo?.matrixHealth?.stages?.load?.pass).toBe(true)
+    expect(combo?.matrixHealth?.stages?.runtime).toEqual({
+      pass: false,
+      at: '2026-11-09T02:00:00.000Z',
+      note: 'GLFW error 65544: X11: The DISPLAY environment variable is missing'
+    })
+  })
 })
 
 describe('mergeFromBaseline（矩阵健康度刷新）', () => {
