@@ -78,6 +78,8 @@ export interface MojmapFlavor {
   toolMaterialEra: boolean
   /** 1.21.5+ NeoForge 移除 DeferredSpawnEggItem，刷怪蛋回归原版 SpawnEggItem(EntityType, Properties) */
   spawnEggVanilla: boolean
+  /** 1.21.9+ 原版 SpawnEggItem 构造器收窄为 (Properties)，实体类型改由 Properties.spawnEgg(type) 指定 */
+  spawnEggPropsBased: boolean
   /** 属性修饰符 ID 表达式（1.20.5/6 为 String 字面量；1.21 起改用 ResourceLocation） */
   attributeModifierId: (name: string) => string
   /** 属性修饰符 ID 所需 import（1.21+ 为 ResourceLocation；否则 null） */
@@ -140,6 +142,7 @@ export function resolveMojmapFlavor(loader: 'forge' | 'neoforge', mcVersion: str
       toolMaterialEra,
       // Forge 侧刷怪蛋类（ForgeSpawnEggItem）26.x 变迁待门禁定位，暂保留旧路径
       spawnEggVanilla: false,
+      spawnEggPropsBased: compareMcVersions(mcVersion, '1.21.9') >= 0,
       attributeModifierId: (name) =>
         gte121 ? `${locCls}.withDefaultNamespace("${name}")` : `"${name}"`,
       attributeModifierIdImport: gte121 ? `net.minecraft.resources.${locCls}` : null,
@@ -186,6 +189,7 @@ export function resolveMojmapFlavor(loader: 'forge' | 'neoforge', mcVersion: str
     toolMaterialEra,
     // NeoForge 21.5+ 移除 DeferredSpawnEggItem（universal jar 实证无此类），回归原版 SpawnEggItem
     spawnEggVanilla: compareMcVersions(mcVersion, '1.21.5') >= 0,
+    spawnEggPropsBased: compareMcVersions(mcVersion, '1.21.9') >= 0,
     attributeModifierId: (name) =>
       gte121 ? `${locCls}.withDefaultNamespace("${name}")` : `"${name}"`,
     attributeModifierIdImport: gte121 ? `net.minecraft.resources.${locCls}` : null,
@@ -499,6 +503,13 @@ export function mojmapModItemsJava(
     const primary = parseInt((e.properties.primaryColor ?? '#000000').replace('#', ''), 16)
     const secondary = parseInt((e.properties.secondaryColor ?? '#000000').replace('#', ''), 16)
     const name = oneLine(e.displayName.zh_cn || e.id)
+    if (f.spawnEggPropsBased) {
+      // 1.21.9+：原版 SpawnEggItem(Properties)，实体类型经 Properties.spawnEgg(type) 指定；
+      // Forge/NeoForge 的 ModEntities 是 holder，需 .get() 取 EntityType
+      return `    /** ${name}刷怪蛋 */
+    public static final ${f.itemHolder}<Item> ${toJavaConst(e.id)}_SPAWN_EGG = ITEMS.register("${e.id}_spawn_egg",
+        () -> new SpawnEggItem(new Item.Properties().spawnEgg(ModEntities.${toJavaConst(e.id)}.get())));`
+    }
     if (f.spawnEggVanilla) {
       // 1.21.5+（NeoForge）：DeferredSpawnEggItem 移除，原版 SpawnEggItem(EntityType, Properties)，颜色数据驱动化
       return `    /** ${name}刷怪蛋 */

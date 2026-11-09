@@ -14,7 +14,11 @@
 import type { CubeElement } from '../../shared/types/content'
 import type { EntitySchema, AiGoal, AiTarget } from '../../shared/schemas/entity.schema'
 import { autoUvAllBox } from '../../shared/utils/cubeModel'
-import { fabricIdentifierClass, isMojangEra } from '../templates/loaderVersionMatrix'
+import {
+  fabricIdentifierClass,
+  isEntityRenderStateEra,
+  isMojangEra
+} from '../templates/loaderVersionMatrix'
 import { resolveMojmapFlavor } from './mojmapCodegen'
 import type { ModContext } from './contentGenerator'
 
@@ -109,6 +113,14 @@ function mojmapMobCategory(e: EntitySchema): string {
 
 export function mojmapModEntitiesJava(ctx: ModContext, entities: EntitySchema[]): string {
   const f = resolveMojmapFlavor(ctx.loader === 'neoforge' ? 'neoforge' : 'forge', ctx.mcVersion)
+  // 1.21.2 起 EntityType.Builder.build 必须携带注册键（与 Fabric Mojmap 分支同一断点）
+  const renderStateEra = isEntityRenderStateEra(ctx.mcVersion)
+  const locCls = fabricIdentifierClass(ctx.mcVersion)
+
+  const buildArg = (id: string): string =>
+    renderStateEra
+      ? `ResourceKey.create(Registries.ENTITY_TYPE, ${locCls}.fromNamespaceAndPath(${ctx.modClassName}.MOD_ID, "${id}"))`
+      : `"${id}"`
 
   const fields = entities
     .map((e) => {
@@ -118,7 +130,7 @@ export function mojmapModEntitiesJava(ctx: ModContext, entities: EntitySchema[])
     public static final ${f.entityHolder(entCls)} ${toJavaConst(e.id)} = ENTITIES.register("${e.id}",
         () -> EntityType.Builder.of(${entCls}::new, MobCategory.${mojmapMobCategory(e)})
             .sized(${fmtFloat(e.properties.width)}, ${fmtFloat(e.properties.height)})
-            .build("${e.id}"));`
+            .build(${buildArg(e.id)}));`
     })
     .join('\n\n')
 
@@ -126,13 +138,21 @@ export function mojmapModEntitiesJava(ctx: ModContext, entities: EntitySchema[])
     .map((e) => `import ${ctx.packageName}.entity.${mojmapEntityClassName(e)};`)
     .join('\n')
 
+  // 1.21.2+ 的 build(ResourceKey) 需要原版注册表键与资源位置类
+  const buildImports = renderStateEra
+    ? `import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.${locCls};
+`
+    : ''
+
   return `package ${ctx.packageName}.registry;
 
 import ${ctx.packageName}.${ctx.modClassName};
 ${entityImports}
 ${f.registriesImport.map((i) => `import ${i};`).join('\n')}
 import ${f.entityHolderImport};
-import net.minecraft.world.entity.EntityType;
+${buildImports}import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 
 /**

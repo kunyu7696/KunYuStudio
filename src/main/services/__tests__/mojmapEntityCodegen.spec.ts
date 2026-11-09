@@ -590,5 +590,18 @@ describe('Mojmap 实体生成（NeoForge 26.3，RenderState 体系）', () => {
     expect(java).toContain(
       'public static final DeferredHolder<EntityType<?>, EntityType<SpriteEntity>> SPRITE'
     )
+    // 1.21.2 起 build 必须携带 ResourceKey（26.x 资源位置类为 Identifier）
+    expect(java).toContain(
+      'ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath(TestmodMod.MOD_ID, "sprite"))'
+    )
+  })
+
+  it('刷怪蛋：1.21.9+ 原版 SpawnEggItem(Properties.spawnEgg(type))', () => {
+    generateContent(root, [passiveSprite()])
+    const java = readRel('src/main/java/com/kunyu/testmod/registry/ModItems.java')
+    expect(java).toContain(
+      'new SpawnEggItem(new Item.Properties().spawnEgg(ModEntities.SPRITE.get()))'
+    )
+    expect(java).not.toContain('DeferredSpawnEggItem')
   })
 })
