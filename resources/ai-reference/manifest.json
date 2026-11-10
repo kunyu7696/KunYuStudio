@@ -196,7 +196,7 @@
         "stages": {
           "runtime": {
             "pass": true,
-            "at": "2026-11-09T22:49:16.583Z",
+            "at": "2026-11-10T00:39:51.227Z",
             "note": "已进入世界并截图：.dev-userdata/client-gate/fabric-1.20.1.png"
           }
         }
@@ -454,9 +454,9 @@
         "lastVerifiedAt": null,
         "stages": {
           "runtime": {
-            "pass": false,
-            "at": "2026-11-09T23:10:24.966Z",
-            "note": "未进入世界：客户端已启动但未进入世界（渲染/加载阻塞）；已留证：forge-1.20.1-latest.log、forge-1.20.1-cmdline.txt"
+            "pass": true,
+            "at": "2026-11-10T00:45:09.468Z",
+            "note": "已进入世界并截图：.dev-userdata/client-gate/forge-1.20.1.png"
           }
         }
       }
@@ -856,7 +856,7 @@
         "stages": {
           "runtime": {
             "pass": true,
-            "at": "2026-11-09T22:50:51.755Z",
+            "at": "2026-11-10T00:41:21.854Z",
             "note": "已进入世界并截图：.dev-userdata/client-gate/fabric-1.21.11.png"
           }
         }
@@ -1006,9 +1006,9 @@
         "lastVerifiedAt": null,
         "stages": {
           "runtime": {
-            "pass": false,
-            "at": "2026-11-09T23:12:19.133Z",
-            "note": "世界生成失败：服务器提前退出（exit=1）"
+            "pass": true,
+            "at": "2026-11-10T00:47:37.247Z",
+            "note": "已进入世界并截图：.dev-userdata/client-gate/neoforge-1.21.11.png"
           }
         }
       }
@@ -1039,7 +1039,7 @@
         "stages": {
           "runtime": {
             "pass": true,
-            "at": "2026-11-09T22:52:13.629Z",
+            "at": "2026-11-10T00:42:40.800Z",
             "note": "已进入世界并截图：.dev-userdata/client-gate/fabric-26.3.png"
           }
         }
@@ -1094,7 +1094,7 @@
         "stages": {
           "runtime": {
             "pass": true,
-            "at": "2026-11-09T23:14:34.040Z",
+            "at": "2026-11-10T00:49:45.567Z",
             "note": "已进入世界并截图：.dev-userdata/client-gate/neoforge-26.3.png"
           }
         }
