@@ -21,7 +21,7 @@ import {
   type ToolKind
 } from '../../shared/schemas/item.schema'
 // 资源位置类名与 Fabric 模板同源：1.21.11 / 26.x 官方映射把 ResourceLocation 改名为 Identifier
-import { fabricIdentifierClass, isEntityRenderStateEra } from '../templates/loaderVersionMatrix'
+import { fabricIdentifierClass, isEntityRenderStateEra, isMojangEra } from '../templates/loaderVersionMatrix'
 
 /**
  * 盔甲耐久 multiplier 表（Mojmap 1.20.5+：ArmorItem.Type.getDurability(multiplier)；
@@ -127,6 +127,9 @@ export function resolveMojmapFlavor(loader: 'forge' | 'neoforge', mcVersion: str
   const gte121 = compareMcVersions(mcVersion, '1.21') >= 0
   const locCls = fabricIdentifierClass(mcVersion)
   const saturation = itemComponentRefactor ? 'saturationModifier' : 'saturationMod'
+  // 26.x（Forge 66）：@SubscribeEvent 迁至 net.minecraftforge.eventbus.api.listener；
+  // 自动订阅注解不再显式写 bus；ForgeSpawnEggItem 已移除（刷怪蛋走原版 SpawnEggItem）
+  const forgeMojang = isMojangEra(mcVersion)
   if (loader === 'forge') {
     return {
       loader,
@@ -140,8 +143,8 @@ export function resolveMojmapFlavor(loader: 'forge' | 'neoforge', mcVersion: str
       armorViaEquipmentSlot: compareMcVersions(mcVersion, '1.20') < 0,
       dataComponentItems: compareMcVersions(mcVersion, '1.21.5') >= 0,
       toolMaterialEra,
-      // Forge 侧刷怪蛋类（ForgeSpawnEggItem）26.x 变迁待门禁定位，暂保留旧路径
-      spawnEggVanilla: false,
+      // Forge 26.x 移除 ForgeSpawnEggItem（编译门禁实证：cannot find symbol），刷怪蛋回到原版
+      spawnEggVanilla: forgeMojang,
       spawnEggPropsBased: compareMcVersions(mcVersion, '1.21.9') >= 0,
       attributeModifierId: (name) =>
         gte121 ? `${locCls}.withDefaultNamespace("${name}")` : `"${name}"`,
@@ -162,13 +165,18 @@ export function resolveMojmapFlavor(loader: 'forge' | 'neoforge', mcVersion: str
       // 包名对照 forgeTemplates.ts 主类/客户端类已有 import
       eventImports: {
         busSubscriber: 'net.minecraftforge.fml.common.Mod',
-        subscribeEvent: 'net.minecraftforge.eventbus.api.SubscribeEvent',
+        subscribeEvent: forgeMojang
+          ? 'net.minecraftforge.eventbus.api.listener.SubscribeEvent'
+          : 'net.minecraftforge.eventbus.api.SubscribeEvent',
         dist: 'net.minecraftforge.api.distmarker.Dist',
         attributeCreation: 'net.minecraftforge.event.entity.EntityAttributeCreationEvent',
         entityRenderers: 'net.minecraftforge.client.event.EntityRenderersEvent'
       },
+      // 26.x：EventBusSubscriber 移除 bus 属性（事件按类型自动路由，官方 forge-26.3 写法）
       modBusSubscriber: (mod, clientOnly) =>
-        `@Mod.EventBusSubscriber(modid = ${mod}.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD${clientOnly ? ', value = Dist.CLIENT' : ''})`
+        forgeMojang
+          ? `@Mod.EventBusSubscriber(modid = ${mod}.MOD_ID${clientOnly ? ', value = Dist.CLIENT' : ''})`
+          : `@Mod.EventBusSubscriber(modid = ${mod}.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD${clientOnly ? ', value = Dist.CLIENT' : ''})`
     }
   }
   // F4-01：FML 版本断点。FML 2.x（NeoForge 1.20.4 及更早）只有嵌套类

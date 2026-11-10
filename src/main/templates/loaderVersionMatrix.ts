@@ -12,8 +12,11 @@
  *  - [Fabric] yarnVersion / fabricVersion / loomVersion
  *  - [Forge]  forgeGradleVersion（插件版本区间）
  *  - [NeoForge] modDevGradleVersion
- *  - forgeConstructorStyle: 'classic'(1.20.1-: 无参构造器+FMLJavaModLoadingContext.get())
- *                            'injected'(1.20.4+: 构造器注入 IEventBus)
+ *  - forgeConstructorStyle: 'classic'(≤1.20.4: 无参构造器+FMLJavaModLoadingContext.get()，
+ *                                      FML 47/49 的 FMLModContainer 只反射无参构造器)
+ *                            'context'(1.21.1+: 构造器注入 FMLJavaModLoadingContext，
+ *                                      总线经 context.getModEventBus() 取；FML 52 只认
+ *                                      FMLJavaModLoadingContext/无参两种签名)
  *                            'modbusgroup'(26.x FG7: 构造器注入 FMLJavaModLoadingContext，
  *                                          DeferredRegister.register(ModBusGroup))
  *  - stability: 'beta' 表示上游仍处 Beta（登记仅为向导展示/矩阵可见），
@@ -34,7 +37,7 @@
 import { GRADLE_MAX_MAJOR, type JdkRequirements } from '../../shared/types/build'
 import type { ModLoader } from '../../shared/types/project'
 
-export type ForgeConstructorStyle = 'classic' | 'injected' | 'modbusgroup'
+export type ForgeConstructorStyle = 'classic' | 'context' | 'modbusgroup'
 
 /** 组合稳定度：缺省 stable；beta=上游仍 Beta（登记可见但禁止创建，如 NeoForge 26.3） */
 export type ComboStability = 'stable' | 'beta'
@@ -329,15 +332,17 @@ const FORGE_MATRIX: Record<string, ForgeToolchain> = {
   '1.20.4': {
     loader: 'forge', mcVersion: '1.20.4',
     // REFRESH: forgeVersion 49.0.53 → 49.2.13
+    // 构造器风格回退 classic：FML 49 的 FMLModContainer 只反射无参构造器（javap 实证）
     forgeVersion: '49.2.13', forgeGradleVersion: '[6.0,6.2)',
-    gradleVersion: '8.10.2', jdk: 17, forgeConstructorStyle: 'injected'
+    gradleVersion: '8.10.2', jdk: 17, forgeConstructorStyle: 'classic'
   },
   '1.21.1': {
     loader: 'forge', mcVersion: '1.21.1',
     // 官方 1.21.1-52.0.57 MDK 锁定 FG [6.0.24,6.2) + Gradle 8.x（M23 探针实测 FG7/Gradle9 组合不兼容）
     // REFRESH: forgeVersion 52.0.57 → 52.1.20
+    // 构造器风格 context：FML 52 只认 (FMLJavaModLoadingContext) 或无参（javap 实证）
     forgeVersion: '52.1.20', forgeGradleVersion: '[6.0.24,6.2)',
-    gradleVersion: '8.10.2', jdk: 21, forgeConstructorStyle: 'injected'
+    gradleVersion: '8.10.2', jdk: 21, forgeConstructorStyle: 'context'
   },
   // MC 26.3（正式版，Java 25）：Forge 66.0.11 已为正式版
   // （promotions_slim.json 的 26.3-latest 频道；用户提及的 66.0.9 已被 66.0.11 取代）。

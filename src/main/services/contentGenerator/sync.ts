@@ -323,15 +323,24 @@ export function syncMojmapEnchantmentMainClass(
         out = out.replace(/^(package [^;]+;\n)/m, `$1\n${importLine}\n`)
       }
     }
-    if (!out.includes('ModEnchantments.ENCHANTMENTS.register(modEventBus);')) {
+    if (
+      !out.includes('ModEnchantments.ENCHANTMENTS.register(modEventBus);') &&
+      !out.includes('ModEnchantments.ENCHANTMENTS.register(modBusGroup);')
+    ) {
       if (out.includes('        ModItems.ITEMS.register(modEventBus);')) {
         out = out.replace(
           '        ModItems.ITEMS.register(modEventBus);',
           `        ModItems.ITEMS.register(modEventBus);\n${callLine}`
         )
       } else if (/IEventBus\s+modEventBus\s*=/.test(out)) {
-        // 47.x 无参构造器：总线声明之后挂载
+        // 47.x/52.x：总线声明之后挂载
         out = out.replace(/(IEventBus\s+modEventBus\s*=[^\n]*\n)/, `$1${callLine}\n`)
+      } else if (out.includes('        ModItems.ITEMS.register(modBusGroup);')) {
+        // 26.x（FG7/Forge 66）：DeferredRegister 挂在 ModBusGroup 上
+        out = out.replace(
+          '        ModItems.ITEMS.register(modBusGroup);',
+          '        ModItems.ITEMS.register(modBusGroup);\n        ModEnchantments.ENCHANTMENTS.register(modBusGroup);'
+        )
       } else {
         // 20.2+ 注入构造器：构造器体首行挂载
         out = out.replace(
@@ -346,7 +355,8 @@ export function syncMojmapEnchantmentMainClass(
       .filter(
         (l) =>
           l.trim() !== importLine &&
-          l.trim() !== 'ModEnchantments.ENCHANTMENTS.register(modEventBus);'
+          l.trim() !== 'ModEnchantments.ENCHANTMENTS.register(modEventBus);' &&
+          l.trim() !== 'ModEnchantments.ENCHANTMENTS.register(modBusGroup);'
       )
       .join('\n')
   }
@@ -376,15 +386,24 @@ export function syncMojmapEntitiesMainClass(ctx: ModContext, active: boolean, si
         out = out.replace(/^(package [^;]+;\n)/m, `$1\n${importLine}\n`)
       }
     }
-    if (!out.includes('ModEntities.ENTITIES.register(modEventBus);')) {
+    if (
+      !out.includes('ModEntities.ENTITIES.register(modEventBus);') &&
+      !out.includes('ModEntities.ENTITIES.register(modBusGroup);')
+    ) {
       if (out.includes('        ModItems.ITEMS.register(modEventBus);')) {
         out = out.replace(
           '        ModItems.ITEMS.register(modEventBus);',
           `        ModItems.ITEMS.register(modEventBus);\n${callLine}`
         )
       } else if (/IEventBus\s+modEventBus\s*=/.test(out)) {
-        // 47.x 无参构造器：总线声明之后挂载
+        // 47.x/52.x：总线声明之后挂载
         out = out.replace(/(IEventBus\s+modEventBus\s*=[^\n]*\n)/, `$1${callLine}\n`)
+      } else if (out.includes('        ModItems.ITEMS.register(modBusGroup);')) {
+        // 26.x（FG7/Forge 66）：DeferredRegister 挂在 ModBusGroup 上
+        out = out.replace(
+          '        ModItems.ITEMS.register(modBusGroup);',
+          '        ModItems.ITEMS.register(modBusGroup);\n        ModEntities.ENTITIES.register(modBusGroup);'
+        )
       } else {
         // 20.2+ 注入构造器：构造器体首行挂载
         out = out.replace(
@@ -399,7 +418,8 @@ export function syncMojmapEntitiesMainClass(ctx: ModContext, active: boolean, si
       .filter(
         (l) =>
           l.trim() !== importLine &&
-          l.trim() !== 'ModEntities.ENTITIES.register(modEventBus);'
+          l.trim() !== 'ModEntities.ENTITIES.register(modEventBus);' &&
+          l.trim() !== 'ModEntities.ENTITIES.register(modBusGroup);'
       )
       .join('\n')
   }

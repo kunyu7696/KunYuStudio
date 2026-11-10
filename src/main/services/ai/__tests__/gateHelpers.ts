@@ -38,7 +38,10 @@ export const SERVER_FATAL_PATTERNS: RegExp[] = [
   /Missing or unsupported mandatory dependencies/,
   /Mod resolution failed/i,
   /Registry remapping failed/i,
-  /java\.lang\.NoClassDefFoundError/,
+  // 排除 netty 原生传输探测：Forge 26.3（FG7）在 Windows 上会把 epoll/kqueue 原生包一并放进
+  // classpath，初始化时必然抛 "Only supported on Linux/OSX"，但服务端会继续启动到 Done
+  // （forge-26.3 门禁实测：日志有此异常但随后 Done）——不属于 mod 加载失败。
+  /java\.lang\.NoClassDefFoundError(?!.*io\.netty)/,
   /Could not execute entrypoint/,
   /A fatal error has been detected/,
   /You need to agree to the EULA/,
@@ -132,6 +135,9 @@ export function runServer(
     let sawDone = false
     let stopRequested = false
     let finished = false
+    // 记录真正触发取消的失败模式：日志只保留尾部 32KB，事后在全量 log 上重扫
+    // 可能因关键行被截断而找不到（曾把「端口占用」误报成 exit=0）
+    let fatalHit: RegExp | undefined
     const finish = (pass: boolean, reason?: string): void => {
       if (finished) return
       finished = true
@@ -158,15 +164,17 @@ export function runServer(
               }
               return
             }
-            if (!sawDone && SERVER_FATAL_PATTERNS.some((re) => re.test(ev.text)) && !stopRequested) {
+            const hit = SERVER_FATAL_PATTERNS.find((re) => re.test(ev.text))
+            if (!sawDone && hit && !stopRequested) {
               stopRequested = true
+              fatalHit = hit
               cancelGradle(runId)
             }
             return
           }
           if (ev.type === 'phase' && ev.phase === 'done') {
             if (sawDone) return finish(true)
-            const hit = SERVER_FATAL_PATTERNS.find((re) => re.test(log))
+            const hit = fatalHit ?? SERVER_FATAL_PATTERNS.find((re) => re.test(log))
             finish(
               false,
               ev.timedOut

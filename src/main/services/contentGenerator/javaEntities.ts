@@ -24,11 +24,13 @@ function fabricIdExpr(ctx: ModContext, path: string): string {
 }
 
 /**
- * 1.21.0 / 1.21.1 的浮动颜色参数断档：这两版 ModelPart.render 只有
- * (MatrixStack, VertexConsumer, int, int) 与 (…, int) 两个重载，
- * 8 参（r,g,b,a）版本不存在；1.20.x 与 1.21.2+（RenderState 体系）都仍可用 8 参。
+ * 1.21.0 / 1.21.1 的渲染颜色断档：这两版 ModelPart.render / EntityModel.render 的签名是
+ * (MatrixStack, VertexConsumer, int light, int overlay, int color)——浮点 rgba 重载不存在；
+ * 1.20.x 与 1.21.2+ 均仍是 8 参浮点颜色（Stage 1 门禁 javac 实证：
+ * "GateSpriteModel is not abstract and does not override abstract method
+ * render(MatrixStack,VertexConsumer,int,int,int)"）。
  */
-function floatColorRemoved(mcVersion: string): boolean {
+function intColorRender(mcVersion: string): boolean {
   return compareMcVersion(mcVersion, '1.21') >= 0 && compareMcVersion(mcVersion, '1.21.2') < 0
 }
 
@@ -460,12 +462,12 @@ ${childLines}
 
     @Override
     public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay${
-      floatColorRemoved(ctx.mcVersion)
-        ? ''
+      intColorRender(ctx.mcVersion)
+        ? ', int color'
         : ',\n                       float red, float green, float blue, float alpha'
     }) {
         this.root.render(matrices, vertices, light, overlay${
-          floatColorRemoved(ctx.mcVersion) ? '' : ', red, green, blue, alpha'
+          intColorRender(ctx.mcVersion) ? ', color' : ', red, green, blue, alpha'
         });
     }
 }
@@ -732,12 +734,12 @@ public class ${cls} extends EntityModel<${entCls}> {
 
     @Override
     public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay${
-      floatColorRemoved(ctx.mcVersion)
-        ? ''
+      intColorRender(ctx.mcVersion)
+        ? ', int color'
         : ',\n                       float red, float green, float blue, float alpha'
     }) {
         this.root.render(matrices, vertices, light, overlay${
-          floatColorRemoved(ctx.mcVersion) ? '' : ', red, green, blue, alpha'
+          intColorRender(ctx.mcVersion) ? ', color' : ', red, green, blue, alpha'
         });
     }
 }
@@ -793,7 +795,7 @@ public class ${rdrCls} extends EntityRenderer<${entCls}> {
         matrices.translate(0.0f, -1.501f, 0.0f);
         VertexConsumer vertices = vertexConsumers.getBuffer(RenderLayer.getEntityCutoutNoCull(TEXTURE));
         this.model.render(matrices, vertices, light, OverlayTexture.DEFAULT_UV${
-          floatColorRemoved(ctx.mcVersion) ? '' : ', 1.0f, 1.0f, 1.0f, 1.0f'
+          intColorRender(ctx.mcVersion) ? ', 0xFFFFFFFF' : ', 1.0f, 1.0f, 1.0f, 1.0f'
         });
         matrices.pop();
         super.render(entity, yaw, tickDelta, matrices, vertexConsumers, light);

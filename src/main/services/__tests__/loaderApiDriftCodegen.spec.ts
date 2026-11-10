@@ -363,25 +363,35 @@ const NEO_BASE_VARS: NeoForgeTemplateVars = {
 }
 
 describe('NeoForge 元数据/构建脚本按版本分派', () => {
-  it('1.20.4：mods.toml 旧 schema（modLoader/loaderVersion 必填 + mandatory 依赖）', () => {
+  it('1.20.4：mods.toml 旧 schema（modLoader/loaderVersion 必填 + type 依赖）', () => {
     expect(neoForgeMetadataRelPath('1.20.4')).toBe('META-INF/mods.toml')
     const toml = neoForgeModsToml(NEO_BASE_VARS)
     expect(toml).toContain('modLoader="javafml"')
     expect(toml).toContain('loaderVersion="[2,)"')
     expect(toml).toContain('license="MIT"')
-    expect(toml).toContain('mandatory=true')
+    // FML 2.0.17 起 mandatory 已废弃（InvalidModFileException），依赖必须用 type
+    expect(toml).toContain('type="required"')
+    expect(toml).not.toContain('mandatory=')
     expect(toml).toContain('versionRange="[20.4,)"')
-    expect(toml).not.toContain('type="required"')
     expect(toml).not.toContain('neoforge.mods.toml')
   })
 
-  it('1.21.1：neoforge.mods.toml 新 schema（license + type="required"）', () => {
+  it('1.21.1：neoforge.mods.toml 新 schema（loader 4.x 仍要求 modLoader + type="required"）', () => {
     expect(neoForgeMetadataRelPath('1.21.1')).toBe('META-INF/neoforge.mods.toml')
     const toml = neoForgeModsToml({ ...NEO_BASE_VARS, mcVersion: '1.21.1', neoForgeVersion: '21.1.250', jdk: 21 })
-    expect(toml).not.toContain('modLoader=')
-    expect(toml).not.toContain('loaderVersion=')
+    // FML 4.0.x 缺 modLoader 会抛 InvalidModFileException: Missing ModLoader in file（门禁实证）
+    expect(toml).toContain('modLoader="javafml"')
+    expect(toml).toContain('loaderVersion="[2,)"')
     expect(toml).toContain('type="required"')
     expect(toml).toContain('versionRange="[21.1,)"')
+  })
+
+  it('1.21.6+：neoforge.mods.toml 省略 modLoader/loaderVersion（官方 MDK 不再输出）', () => {
+    for (const mcVersion of ['1.21.11', '26.3']) {
+      const toml = neoForgeModsToml({ ...NEO_BASE_VARS, mcVersion, neoForgeVersion: '21.11.0', jdk: 21 })
+      expect(toml).not.toContain('modLoader=')
+      expect(toml).not.toContain('loaderVersion=')
+    }
   })
 
   it('build.gradle：国内源 + 1.21.6 之前钉死 log4j（bmclapi metadata 403 规避）', () => {

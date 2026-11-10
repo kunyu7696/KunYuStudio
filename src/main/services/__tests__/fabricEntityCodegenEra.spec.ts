@@ -28,10 +28,12 @@ const cube = { textureSize: 16, elements: [createDefaultCube('body')] }
 const entity = createDefaultEntity('sprite')
 
 describe('Fabric 实体代码的版本断档', () => {
-  it('1.21.1：ModelPart.render 用 4 参（无浮点颜色）', () => {
+  it('1.21.1：render 用 5 参（末位 int 颜色，无浮点 rgba）', () => {
     const java = fabricEntityModelJava(ctx('1.21.1'), entity, cube)
-    expect(java).toContain('public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay) {')
-    expect(java).toContain('this.root.render(matrices, vertices, light, overlay);')
+    expect(java).toContain(
+      'public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color) {'
+    )
+    expect(java).toContain('this.root.render(matrices, vertices, light, overlay, color);')
     expect(java).not.toContain('float red, float green, float blue, float alpha')
   })
 

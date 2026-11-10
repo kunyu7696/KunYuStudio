@@ -198,7 +198,9 @@ export function neoForgeModsToml(v: NeoForgeTemplateVars): string {
   const neoBase = `${parts[0]}.${parts[1] ?? '0'}`
   // minecraft 区间覆盖同一 minor：下界为选定版本，上界为下一 minor
   const mcUpper = nextMinorMc(v.mcVersion)
-  // ≤1.20.4 旧 schema：modLoader/loaderVersion 必填 + 依赖用 mandatory=true
+  // ≤1.20.4 旧 schema：modLoader/loaderVersion 必填；依赖项必须用 type（FML 2.0.17 起
+  // `mandatory` 会抛 InvalidModFileException: Deprecated 'mandatory' field is used in dependency
+  // ——neoforge-1.20.4 门禁实证）
   if (compareMcVersion(v.mcVersion, '1.20.5') < 0) {
     return `modLoader="javafml"
 loaderVersion="[2,)"
@@ -208,25 +210,33 @@ license="MIT"
 modId="${v.modId}"
 version="\${file.jarVersion}"
 displayName="${v.modName}"
-authors="KunYu Studio"
+authors="Kun Yu Studio"
 description='''${v.modName}（由 KunYu Studio 生成）'''
 
 [[dependencies.${v.modId}]]
 modId="neoforge"
-mandatory=true
+type="required"
 versionRange="[${neoBase},)"
 ordering="NONE"
 side="BOTH"
 
 [[dependencies.${v.modId}]]
 modId="minecraft"
-mandatory=true
+type="required"
 versionRange="[${v.mcVersion},${mcUpper})"
 ordering="NONE"
 side="BOTH"
 `
   }
-  return `license="MIT"
+  // 1.21.6+（FML 9 / loader 7）起 modLoader/loaderVersion 已可省略（官方 MDK 不再输出）；
+  // 更早的 loader（1.20.5~1.21.5 的 3.x/4.x）仍会把缺省视为 InvalidModFileException:
+  // Missing ModLoader in file（neoforge-1.21.1 门禁实证），故按版本断点输出。
+  const loaderHeader = compareMcVersion(v.mcVersion, '1.21.6') < 0
+    ? `modLoader="javafml"
+loaderVersion="[2,)"
+`
+    : ''
+  return `${loaderHeader}license="MIT"
 
 [[mods]]
 modId="${v.modId}"

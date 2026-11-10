@@ -375,10 +375,11 @@ function modClassNameOf(modId: string): string {
 }
 
 /**
- * 探针最小主类（Forge 1.20.1）：不引用任何 registry 类（最小工程不含 ModBlocks/ModItems），
- * 构造器写法对齐 Forge 47.x 官方 MDK（无参 + FMLJavaModLoadingContext.get()，
- * 构造器注入 FMLJavaModLoadingContext 是 49.x/1.20.4+ 特性，47.x 不支持；
- * 26.x/Forge 66.x 为 ModBusGroup 构造风格）。
+ * 探针最小主类（Forge）：不引用任何 registry 类（最小工程不含 ModBlocks/ModItems）。
+ * 构造器写法按 FML 反射规则分派：
+ *  - classic（47/49，≤1.20.4）：只认无参构造器 → FMLJavaModLoadingContext.get()
+ *  - context（52，1.21.1+）：只认 (FMLJavaModLoadingContext) 或无参 → 构造器注入
+ *  - modbusgroup（66，26.x）：构造器注入 + ModBusGroup
  */
 function forgeProbeMainClass(style: ForgeConstructorStyle = 'classic'): string {
   if (style === 'modbusgroup') {
@@ -406,9 +407,9 @@ public class KyprobeMod {
 }
 `
   }
-  const injected = style === 'injected'
-  const ctor = injected
-    ? `    public KyprobeMod(IEventBus modEventBus) {
+  const ctor = style === 'context'
+    ? `    public KyprobeMod(FMLJavaModLoadingContext context) {
+        IEventBus modEventBus = context.getModEventBus();
         modEventBus.addListener(this::commonSetup);
         MinecraftForge.EVENT_BUS.register(this);
     }`
@@ -417,7 +418,7 @@ public class KyprobeMod {
         modEventBus.addListener(this::commonSetup);
         MinecraftForge.EVENT_BUS.register(this);
     }`
-  const fmlImport = injected ? '' : 'import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;\n'
+  const fmlImport = 'import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;\n'
   return `package com.kunyu.kyprobe;
 
 import com.mojang.logging.LogUtils;

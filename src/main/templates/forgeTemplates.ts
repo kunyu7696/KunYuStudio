@@ -7,7 +7,7 @@
  *    implementation minecraft.dependency(...) + eventbus-validator 注解处理器，
  *    主类构造器注入 FMLJavaModLoadingContext（ModBusGroup）。
  */
-import { isMojangEra, nextMinorMc, type ForgeConstructorStyle } from './loaderVersionMatrix'
+import { compareMcVersion, isMojangEra, nextMinorMc, type ForgeConstructorStyle } from './loaderVersionMatrix'
 
 export interface ForgeTemplateVars {
   modId: string
@@ -62,6 +62,16 @@ ${fg7Props}`
 }
 
 export function forgeBuildGradle(v: ForgeTemplateVars, mirror: 'china' | 'official' = 'china'): string {
+  // Forge 1.21.1+（FML 52/66）dev 运行：FML 的 ClasspathLocator 把含 META-INF/mods.toml 的
+  // classpath 目录整体当作一个 mod 文件，并在该目录内扫描 @Mod 类。Gradle 默认把 classes 与
+  // resources 拆成两个输出目录（元数据在 build/resources/main、类在 build/classes/java/main），
+  // FML 因此报 "The Mod File ...build/resources/main has mods that were not found"（门禁实证）。
+  // 把资源输出并入 classes 目录，使同一目录内同时含元数据与类；jar 产物内容不变（已实测 build 通过）。
+  const resourceMerge = compareMcVersion(v.mcVersion, '1.21.1') >= 0
+    ? `// FML 52+ 的 mod 文件扫描要求元数据与类同目录（dev 运行）
+sourceSets.main.output.resourcesDir = sourceSets.main.output.classesDirs.first()
+`
+    : ''
   // 26.x：ForgeGradle 7 mavenizer 全新体系（官方 forge-26.3 MDK 逐段对齐）
   if (isMojangEra(v.mcVersion)) {
     const fg7ChinaRepos = mirror === 'china'
@@ -115,6 +125,7 @@ minecraft {
     }
 }
 
+${resourceMerge}
 repositories {
     // FG7 mavenizer：Minecraft/Mojang 依赖管道，官方 MDK 要求置于首位
     minecraft.mavenizer(it)
@@ -255,6 +266,7 @@ ${isGradle6
     }`}
 }
 
+${resourceMerge}
 repositories {
 ${repos}
 }
@@ -343,8 +355,8 @@ side="BOTH"
 }
 
 /** 主类：@Mod + DeferredRegister 注册。
- *  - classic（1.20.1-）：无参构造器 + FMLJavaModLoadingContext.get()
- *  - injected（1.20.4+）：构造器注入 IEventBus（Forge 49.x+ 官方写法）
+ *  - classic（≤1.20.4）：无参构造器 + FMLJavaModLoadingContext.get()（FML 47/49 只反射无参构造器）
+ *  - context（1.21.1+ FG6）：构造器注入 FMLJavaModLoadingContext，再取 mod 事件总线
  *  - modbusgroup（26.x FG7 / Forge 66.x）：构造器注入 FMLJavaModLoadingContext，
  *    DeferredRegister 与 setup 监听统一经 ModBusGroup（官方 forge-26.3 MDK 写法）
  */
@@ -382,10 +394,12 @@ public class ${modClassName} {
 }
 `
   }
-  const injected = style === 'injected'
-  const ctor = injected
-    ? `    public ${modClassName}(IEventBus modEventBus) {
-        // DeferredRegister 挂载到 mod 事件总线（构造器注入，Forge 1.20.4+）
+  const ctor = style === 'context'
+    ? `    public ${modClassName}(FMLJavaModLoadingContext context) {
+        // 构造器注入 FMLJavaModLoadingContext（FML 52 起 @Mod 唯一支持的单参签名）
+        IEventBus modEventBus = context.getModEventBus();
+
+        // DeferredRegister 挂载到 mod 事件总线
         ModBlocks.BLOCKS.register(modEventBus);
         ModItems.ITEMS.register(modEventBus);
 
@@ -402,7 +416,7 @@ public class ${modClassName} {
         modEventBus.addListener(this::commonSetup);
         MinecraftForge.EVENT_BUS.register(this);
     }`
-  const fmlImport = injected ? '' : 'import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;\n'
+  const fmlImport = 'import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;\n'
   return `package ${v.packageName};
 
 import com.mojang.logging.LogUtils;
