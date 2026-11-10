@@ -107,7 +107,7 @@
   "26.3": {
     "loaderVersion": "0.20.1",
     "yarnVersion": "",
-    "fabricVersion": "0.165.0+26.3",
+    "fabricVersion": "0.165.2+26.3",
     "loomVersion": "1.19-SNAPSHOT",
     "gradleVersion": "9.8.2"
   }
