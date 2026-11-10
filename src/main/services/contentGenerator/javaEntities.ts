@@ -8,10 +8,29 @@ import type { EntitySchema } from '../../../shared/schemas/entity.schema'
 import type { ModContext } from './context'
 import type { GenSink } from './sink'
 import { fmtFloat, toJavaConst } from './javaBlocks'
-import { registryImports, registriesConst } from '../../templates/fabricTemplates'
+import { registryImports, registriesConst, identifierFactoryCall } from '../../templates/fabricTemplates'
+import { compareMcVersion } from '../../templates/loaderVersionMatrix'
 import { GENERATED_BANNER, pascal } from './utils'
 
 /* ============ 实体 Java 生成（Fabric / Yarn 1.20.1） ============ */
+
+/**
+ * 跨版本资源位置构造：1.21+ Yarn 构造器已私有化（改 Identifier.of），
+ * 1.21.6+ 官方映射走…fromNamespaceAndPath（identifierFactoryCall 统一分派）。
+ * 直接写 new Identifier(ns, path) 只在 1.20.x 及更早成立。
+ */
+function fabricIdExpr(ctx: ModContext, path: string): string {
+  return `${identifierFactoryCall(ctx.mcVersion)}("${ctx.modId}", "${path}")`
+}
+
+/**
+ * 1.21.0 / 1.21.1 的浮动颜色参数断档：这两版 ModelPart.render 只有
+ * (MatrixStack, VertexConsumer, int, int) 与 (…, int) 两个重载，
+ * 8 参（r,g,b,a）版本不存在；1.20.x 与 1.21.2+（RenderState 体系）都仍可用 8 参。
+ */
+function floatColorRemoved(mcVersion: string): boolean {
+  return compareMcVersion(mcVersion, '1.21') >= 0 && compareMcVersion(mcVersion, '1.21.2') < 0
+}
 
 type EntityJavaBase = 'AnimalEntity' | 'PathAwareEntity' | 'HostileEntity' | 'MobEntity'
 
@@ -440,9 +459,14 @@ ${childLines}
     }
 
     @Override
-    public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay,
-                       float red, float green, float blue, float alpha) {
-        this.root.render(matrices, vertices, light, overlay, red, green, blue, alpha);
+    public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay${
+      floatColorRemoved(ctx.mcVersion)
+        ? ''
+        : ',\n                       float red, float green, float blue, float alpha'
+    }) {
+        this.root.render(matrices, vertices, light, overlay${
+          floatColorRemoved(ctx.mcVersion) ? '' : ', red, green, blue, alpha'
+        });
     }
 }
 `
@@ -466,7 +490,7 @@ import net.minecraft.util.Identifier;
  */
 public class ${cls} extends MobEntityRenderer<${entCls}, ${modelCls}> {
     private static final Identifier TEXTURE =
-        new Identifier("${ctx.modId}", "textures/entity/${e.id}.png");
+        ${fabricIdExpr(ctx, `textures/entity/${e.id}.png`)};
 
     public ${cls}(EntityRendererFactory.Context context) {
         super(context, new ${modelCls}(context.getPart(${ctx.modClassName}Client.${layerConst})), 0.5f);
@@ -494,11 +518,11 @@ import software.bernie.geckolib.model.GeoModel;
  */
 public class ${cls} extends GeoModel<${entCls}> {
     private static final Identifier MODEL =
-        new Identifier("${ctx.modId}", "geo/entity/${e.id}.geo.json");
+        ${fabricIdExpr(ctx, `geo/entity/${e.id}.geo.json`)};
     private static final Identifier TEXTURE =
-        new Identifier("${ctx.modId}", "textures/entity/${e.id}.png");
+        ${fabricIdExpr(ctx, `textures/entity/${e.id}.png`)};
     private static final Identifier ANIMATION =
-        new Identifier("${ctx.modId}", "animations/entity/${e.id}.animation.json");
+        ${fabricIdExpr(ctx, `animations/entity/${e.id}.animation.json`)};
 
     @Override
     public Identifier getModelResource(${entCls} animatable) {
@@ -616,7 +640,7 @@ export function fabricClientJava(
     .map(
       (e) =>
         `    public static final EntityModelLayer ${toJavaConst(e.id)}_LAYER =
-        new EntityModelLayer(new Identifier("${ctx.modId}", "${e.id}"), "main");`
+        new EntityModelLayer(${fabricIdExpr(ctx, e.id)}, "main");`
     )
     .join('\n')
   const rendererRegs = [...modelEntities, ...geoEntities]
@@ -707,9 +731,14 @@ public class ${cls} extends EntityModel<${entCls}> {
     }
 
     @Override
-    public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay,
-                       float red, float green, float blue, float alpha) {
-        this.root.render(matrices, vertices, light, overlay, red, green, blue, alpha);
+    public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay${
+      floatColorRemoved(ctx.mcVersion)
+        ? ''
+        : ',\n                       float red, float green, float blue, float alpha'
+    }) {
+        this.root.render(matrices, vertices, light, overlay${
+          floatColorRemoved(ctx.mcVersion) ? '' : ', red, green, blue, alpha'
+        });
     }
 }
 `
@@ -743,7 +772,7 @@ import net.minecraft.util.Identifier;
  */
 @Environment(EnvType.CLIENT)
 public class ${rdrCls} extends EntityRenderer<${entCls}> {
-    private static final Identifier TEXTURE = new Identifier("${ctx.modId}", "textures/entity/${e.id}.png");
+    private static final Identifier TEXTURE = ${fabricIdExpr(ctx, `textures/entity/${e.id}.png`)};
     private final ${modelCls} model;
 
     public ${rdrCls}(EntityRendererFactory.Context context) {
@@ -763,7 +792,9 @@ public class ${rdrCls} extends EntityRenderer<${entCls}> {
         matrices.scale(-1.0f, -1.0f, 1.0f);
         matrices.translate(0.0f, -1.501f, 0.0f);
         VertexConsumer vertices = vertexConsumers.getBuffer(RenderLayer.getEntityCutoutNoCull(TEXTURE));
-        this.model.render(matrices, vertices, light, OverlayTexture.DEFAULT_UV, 1.0f, 1.0f, 1.0f, 1.0f);
+        this.model.render(matrices, vertices, light, OverlayTexture.DEFAULT_UV${
+          floatColorRemoved(ctx.mcVersion) ? '' : ', 1.0f, 1.0f, 1.0f, 1.0f'
+        });
         matrices.pop();
         super.render(entity, yaw, tickDelta, matrices, vertexConsumers, light);
     }
