@@ -81,7 +81,8 @@ const enUS: Messages = {
     menuHelpAbout: 'About KunYu Studio',
     aboutBody:
       'Version {version}\nVisual development tool for Minecraft mods and modpacks\nFormerly known as KunYuEcosystem',
-    aboutConfirm: 'Got it'
+    aboutConfirm: 'Got it',
+    aboutGroupLabel: 'QQ group'
   },
   activity: {
     label: 'Activity bar',

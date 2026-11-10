@@ -76,7 +76,8 @@ const zhCN = {
     menuHelpDsh: 'DSH 插件与桌宠',
     menuHelpAbout: '关于 KunYu Studio',
     aboutBody: '版本 {version}\nMinecraft 模组与整合包可视化开发工具\n曾用名：KunYuEcosystem',
-    aboutConfirm: '知道了'
+    aboutConfirm: '知道了',
+    aboutGroupLabel: 'QQ 交流群'
   },
   activity: {
     label: '活动栏',

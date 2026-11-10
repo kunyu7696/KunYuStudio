@@ -167,6 +167,19 @@ const editorStore = useEditorStore()
 const explorerStore = useExplorerStore()
 const build = useBuildStore()
 
+/** 关于对话框里的交流入口：href 由 window.open 交给主进程 setWindowOpenHandler 用系统浏览器打开 */
+const KUNYU_QQ_GROUP_URL = 'https://qm.qq.com/q/fTdLJLLgVU'
+const KUNYU_REPO_URL = 'https://github.com/kunyu7696/KunYuStudio'
+
+/** 对话框允许渲染受控 HTML（换行与链接）：i18n 文本必须先转义，URL 只用上面的常量 */
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
 const projectName = computed(() => projectStore.currentProject?.name ?? null)
 const hasProject = computed(() => Boolean(projectStore.currentProject))
 
@@ -274,13 +287,23 @@ function runMenuCommand(cmd: string): void {
       // 首启 DSH 提醒关闭后的再发现入口：直接落到 DSH 页（安装仍需用户在页内显式触发）
       ui.setActiveModule('dsh-plugins')
       break
-    case 'help:about':
-      ElMessageBox.alert(
-        t('topbar.aboutBody', { version: appVersion.value || '…' }),
-        'KunYu Studio',
-        { confirmButtonText: t('topbar.aboutConfirm') }
-      )
+    case 'help:about': {
+      // 正文含换行与链接：转义后再渲染受控 HTML；链接走 target=_blank →
+      // 主进程 setWindowOpenHandler 用系统浏览器打开（不会在应用内导航）
+      const body = escapeHtml(
+        t('topbar.aboutBody', { version: appVersion.value || '…' })
+      ).replace(/\n/g, '<br />')
+      const links =
+        `<a href="${KUNYU_QQ_GROUP_URL}" target="_blank" rel="noopener noreferrer">${escapeHtml(
+          t('topbar.aboutGroupLabel')
+        )} 963335581</a> · ` +
+        `<a href="${KUNYU_REPO_URL}" target="_blank" rel="noopener noreferrer">GitHub</a>`
+      ElMessageBox.alert(`${body}<br /><br />${links}`, 'KunYu Studio', {
+        dangerouslyUseHTMLString: true,
+        confirmButtonText: t('topbar.aboutConfirm')
+      })
       break
+    }
   }
 }
 

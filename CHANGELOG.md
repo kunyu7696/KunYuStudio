@@ -24,6 +24,7 @@
   - 连续 3 天失败自动开/追加 issue，避免"job 红但没人订阅 CI"等于静默。
   - Forge / NeoForge 仍为版本号 patch 级刷新；`jdk / hostJdk / forgeConstructorStyle / FG 区间 / MDG 版本` 不自动推导，需人工核对。
 - **既有项目不会被矩阵刷新追溯修改**：加载器/映射/API 版本在创建项目时就写进了工程自己的 `gradle.properties`，矩阵自动刷新只影响之后新建的项目。需要升级老项目目前只能手工改这几个版本号（项目级「升级到最新工具链」入口尚未实现）
+- **关于对话框加入交流入口**：「帮助 → 关于 KunYu Studio」现在直接给出 QQ 交流群（963335581）与 GitHub 仓库链接，点击交给系统浏览器打开、不在应用内导航；README / CONTRIBUTING 同步补上群入口与反馈指引。
 
 ### 修复
 
