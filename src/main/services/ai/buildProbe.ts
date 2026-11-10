@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { app } from 'electron'
 import {
@@ -7,6 +7,7 @@ import {
   generateMinimalNeoForgeProject
 } from '../projectService'
 import { compareMcVersion, fabricTargetJdk, getToolchain, isBetaBlocked, supportedMcVersions, type FabricToolchain, type ForgeToolchain, type NeoForgeToolchain } from '../../templates/loaderVersionMatrix'
+import { systemProxyForGradle } from '../httpUtil'
 import type { FabricTemplateVars } from '../../templates/fabricTemplates'
 import type { ForgeTemplateVars } from '../../templates/forgeTemplates'
 import type { NeoForgeTemplateVars } from '../../templates/neoForgeTemplates'
@@ -86,13 +87,45 @@ function probeLayout(loader: ModLoader, mcVersion = ''): ProbeLayout {
   }
 }
 
+/**
+ * 探针模板修订号：探针工程生成内容（build.gradle / gradle.properties 等）有变更时递增。
+ * 既有探针工程靠它失配后重写构建脚本，否则复用会导致模板修复永远不生效。
+ */
+const PROBE_TEMPLATE_REV = 2
+
+/**
+ * 探针工程的配置签名：模板修订号 + 当前生效的代理。
+ * 代理配置也会写进 gradle.properties，所以改设置同样要触发重写。
+ */
+function probeTemplateKey(): string {
+  const proxy = systemProxyForGradle()
+  return `${PROBE_TEMPLATE_REV}|${proxy ? `${proxy.host}:${proxy.port}` : 'none'}`
+}
+
+function templateRevPath(dir: string): string {
+  return join(dir, '.probe-template-rev')
+}
+
+function readTemplateKey(dir: string): string {
+  try {
+    return readFileSync(templateRevPath(dir), 'utf8').trim()
+  } catch {
+    return ''
+  }
+}
+
+function writeTemplateKey(dir: string): void {
+  writeFileSync(templateRevPath(dir), `${probeTemplateKey()}\n`, 'utf8')
+}
+
 function isProbeProjectReady(dir: string, loader: ModLoader, mcVersion: string): boolean {
   const wrapper = process.platform === 'win32' ? 'gradlew.bat' : 'gradlew'
   const layout = probeLayout(loader, mcVersion)
   return (
     existsSync(join(dir, wrapper)) &&
     existsSync(join(dir, layout.mainClass)) &&
-    existsSync(join(dir, layout.descriptorRelPath))
+    existsSync(join(dir, layout.descriptorRelPath)) &&
+    readTemplateKey(dir) === probeTemplateKey()
   )
 }
 
@@ -167,5 +200,6 @@ export function ensureProbeProject(comboId: string, dir: string = defaultProbeDi
       vars = generateMinimalNeoForgeProject(dir, def.mcVersion)
       break
   }
+  writeTemplateKey(dir)
   return { dir, created: true, loader: def.loader, mcVersion: def.mcVersion, vars }
 }

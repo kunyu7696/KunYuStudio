@@ -28,6 +28,10 @@
 
 ### 修复
 
+- **NeoForge 编译探针卡在 `maven.neoforged.net` 下载**：NFRT 2.0.31 的 binaryPatch 阶段需要 `binarypatcher` 的 fatjar，而 ModDevGradle 的 `neoFormRuntimeExternalTools` 只声明了 thin jar。NFRT 找不到就绕过 Gradle 仓库直连官方源下载，国内 20s 超时后 `createMinecraftArtifacts` 失败，探针把网络问题记成「真实编译失败（exit 1）」（26.3 组合实测 4 分半后失败，且不含日志）。两处修复：
+  - 模板按 MDG 版本补 `neoFormRuntimeExternalTools 'net.neoforged.installertools:binarypatcher:4.0.17:fatjar'`，fatjar 经 Gradle 仓库（含镜像）解析并写入 NFRT 的 artifact manifest，binaryPatch 直接复用、不再联网（实测由 `DL` 变 `RUN external tool`，完整 `build` 通过）
+  - `gradle.properties` 按网络设置写入 `systemProp.http(s).proxyHost/Port`：ModDevGradle 会把 `http.* / https.*` 系统属性透传给 NFRT 子进程，故自定义代理与 Windows 系统代理都能覆盖这条链路（NFRT 不读 Gradle 的 `repositories`，只能走系统属性）
+  - 探针工程加配置签名 `.probe-template-rev`（模板修订号 + 当前生效代理）：模板或代理设置变化后既有探针工程会重写构建脚本（此前命中 `isProbeProjectReady` 就直接复用，导致这类修复永远进不到已生成过的工程）
 - **门禁导出把编译统计清零**：runtime / client 门禁导出手写把 `matrixHealth` 整体覆盖成只含本阶段的 summary，`templateCount / verifiedCount / passRate` 全被清零——结果「证据最全的 6 个组合」反而显示 unknown / 0%，与同一条目里绿色的 runtime 点自相矛盾。改为**阶段合并**：`stages` 按阶段累加，只有 `stages.compile` 有权改写统计与灯色；补 4 条回归用例锁死语义，并从历史版本恢复被清零的 6 条指纹。
 - **定时门禁永不写回仓库**：导出/提交步骤的条件写成 `github.event.inputs.combos == ''`，在 `schedule` 事件下恒为假，夜间跑再成功也只是把结论留在本地 overlay，manifest 里 `stages.load` 全是 null。改为按事件名放行（`dispatch` 且指定组合时仍不写回，避免部分结果覆盖基线），随后全量跑已把 11 组 `stages.load` 落库。
 - **Linux 虚拟显示下 26.x 客户端起不来窗口**：FML 的 `GlRenderer.configureWindowHints()` 会设 `SDL_GL_FRAMEBUFFER_SRGB_CAPABLE=1`，SDL 的 GLX 后端据此要求 `GLX_FRAMEBUFFER_SRGB_CAPABLE_ARB=True` 的 FBConfig，而 Xvfb + llvmpipe 没有这类配置，直接报 `Couldn't find matching GLX visual`。改为强制 SDL 走 EGL（`SDL_VIDEO_FORCE_EGL=1`，SDL3 的 hint 名不是 `SDL_VIDEO_X11_FORCE_EGL`）+ `MESA_LOADER_DRIVER_OVERRIDE=llvmpipe` + Xvfb `+extension GLX +render`；EGL 后端把 sRGB 放在 surface 属性（`EGL_GL_COLORSPACE`）而非 config 选择上，llvmpipe 下可用。`glxinfo -B` / `glxinfo -t` / `eglinfo -B` 的输出写进步骤摘要并随截图 artifact 上传，下次能一眼区分「GLX 缺 sRGB」与「EGL 不可用」。

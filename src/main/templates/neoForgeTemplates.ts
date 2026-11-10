@@ -28,12 +28,39 @@ export const NEOFORGE_DEFAULTS = {
   gradleVersion: '8.10.2'
 }
 
-export function neoForgeGradleProperties(v: NeoForgeTemplateVars, mirror: 'china' | 'official' = 'china'): string {
+/**
+ * ModDevGradle 内置的 NeoFormRuntime 在 binaryPatch 阶段需要 binarypatcher 的 fatjar，
+ * 但 neoFormRuntimeExternalTools 配置只声明了 thin jar。NFRT 找不到时会绕过 Gradle 仓库
+ * 直连 maven.neoforged.net 下载（国内必超时，表现为 createMinecraftArtifacts 失败）。
+ * 这里按 MDG 版本显式补 fatjar 依赖，让它经 Gradle 仓库（含镜像）解析并写入 NFRT 的
+ * artifact manifest，binaryPatch 直接复用该文件、不再联网。
+ */
+const BINARY_PATCHER_FATJAR: Record<string, string> = {
+  '2.0.147': '4.0.17'
+}
+
+export function neoForgeGradleProperties(
+  v: NeoForgeTemplateVars,
+  mirror: 'china' | 'official' = 'china',
+  proxy?: { host: string; port: number } | null
+): string {
   // 国内环境下，NeoForm 直连 libraries.minecraft.net 常被 SSL 重置；
   // 通过 BMCLAPI 镜像的 version manifest，使库下载 URL 指向 bmclapi2.bangbang93.com/maven。
   const launcherManifest = mirror === 'china'
     ? `# NeoForm 启动器清单镜像（BMCLAPI）：规避国内直连 libraries.minecraft.net 的 SSL 重置
 neoForge.neoFormRuntime.launcherManifestUrl=https://bmclapi2.bangbang93.com/mc/game/version_manifest_v2.json
+`
+    : ''
+  // 代理同时覆盖两条链路：Gradle 自身的依赖下载，以及 ModDevGradle 透传给 NFRT 子进程的
+  // http.* / https.* 系统属性（NFRT 的 java.net.http 默认 ProxySelector 读取它们）。
+  const proxyBlock = proxy
+    ? `# HTTP 代理（Gradle 与 NeoFormRuntime 子进程共用；NFRT 不走 Gradle 仓库配置，只能靠系统属性）
+systemProp.http.proxyHost=${proxy.host}
+systemProp.http.proxyPort=${proxy.port}
+systemProp.https.proxyHost=${proxy.host}
+systemProp.https.proxyPort=${proxy.port}
+systemProp.http.nonProxyHosts=localhost|127.*|[::1]
+systemProp.https.nonProxyHosts=localhost|127.*|[::1]
 `
     : ''
   return `# NeoForge Properties
@@ -48,7 +75,7 @@ archives_base_name=${v.modId}
 # Gradle
 org.gradle.jvmargs=-Xmx3G
 org.gradle.daemon=false
-${launcherManifest}`
+${launcherManifest}${proxyBlock}`
 }
 
 export function neoForgeBuildGradle(v: NeoForgeTemplateVars, mirror: 'china' | 'official' = 'china'): string {
@@ -74,6 +101,7 @@ export function neoForgeBuildGradle(v: NeoForgeTemplateVars, mirror: 'china' | '
     mavenCentral()`
   // Java 工具链版本由版本矩阵注入（NeoForge 1.20.4=17，1.20.6+=21）
   const jdk = v.jdk
+  const bpFatjar = BINARY_PATCHER_FATJAR[v.modDevGradleVersion]
   return `plugins {
     id 'java'
     // plugins 块在 project 创建前求值，不支持 \${project.*} 插值，版本必须字面量
@@ -157,6 +185,14 @@ neoFormRuntime {
     // 使 Minecraft 库/客户端下载指向 bmclapi2.bangbang93.com，规避直连 libraries.minecraft.net 的 SSL 重置。
     ${mirror === 'china' ? `launcherManifestUrl = 'https://bmclapi2.bangbang93.com/mc/game/version_manifest_v2.json'` : ''}
 }
+${bpFatjar ? `
+// 补上 NFRT binaryPatch 阶段需要的 binarypatcher fatjar（外部工具配置只有 thin jar）。
+// 声明后由 Gradle 仓库（含镜像）解析并写入 NFRT 的 artifact manifest，避免 NFRT 直连
+// maven.neoforged.net 下载导致 createMinecraftArtifacts 失败。
+dependencies {
+    neoFormRuntimeExternalTools 'net.neoforged.installertools:binarypatcher:${bpFatjar}:fatjar'
+}
+` : ''}
 `
 }
 

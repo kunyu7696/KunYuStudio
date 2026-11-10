@@ -5,6 +5,7 @@
  * M9 扩展：httpGetJson（GET + JSON 解析）、httpDownload（流式下载到文件，用于 jar）。
  */
 import { request, ProxyAgent, FormData, getGlobalDispatcher, interceptors, type Dispatcher } from 'undici'
+import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { createReadStream, createWriteStream } from 'node:fs'
 import { mkdir, open, stat, unlink } from 'node:fs/promises'
@@ -89,6 +90,48 @@ export async function resolveDispatcher(targetUrl: string): Promise<Dispatcher |
     if (authority) return new ProxyAgent(`http://${authority}`)
   }
   return undefined
+}
+
+/**
+ * 供 Gradle / NeoFormRuntime 使用的代理（Gradle 不读 Electron 的 PAC 结果）：
+ * custom 直接取设置；system 时读 Windows 注册表 ProxyEnable/ProxyServer。
+ * 返回 null 表示不注入（none / 未配置 / 解析失败）。
+ */
+export function systemProxyForGradle(): { host: string; port: number } | null {
+  const net = getSection('network')
+  if (net.proxyMode === 'custom' && net.proxyHost) {
+    return { host: net.proxyHost, port: net.proxyPort > 0 ? net.proxyPort : 8080 }
+  }
+  if (net.proxyMode !== 'system' || process.platform !== 'win32') return null
+  try {
+    const key = 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings'
+    const enabled = execFileSync('reg', ['query', key, '/v', 'ProxyEnable'], {
+      encoding: 'utf8',
+      timeout: 3000
+    })
+    if (!/ProxyEnable\s+REG_DWORD\s+0x1/i.test(enabled)) return null
+    const server = execFileSync('reg', ['query', key, '/v', 'ProxyServer'], {
+      encoding: 'utf8',
+      timeout: 3000
+    })
+    const raw = (server.match(/ProxyServer\s+REG_SZ\s+(.+)/i)?.[1] ?? '').trim()
+    if (!raw) return null
+    // 形如 "127.0.0.1:7890" 或 "http=127.0.0.1:7890;https=127.0.0.1:7890"
+    const entry = raw.includes('=')
+      ? raw
+          .split(';')
+          .map((s) => s.trim())
+          .find((s) => /^https?=/i.test(s))
+          ?.split('=')[1]
+      : raw
+    const idx = entry ? entry.lastIndexOf(':') : -1
+    if (!entry || idx <= 0) return null
+    const port = Number(entry.slice(idx + 1))
+    if (!Number.isInteger(port) || port < 1 || port > 65535) return null
+    return { host: entry.slice(0, idx), port }
+  } catch {
+    return null
+  }
 }
 
 /**

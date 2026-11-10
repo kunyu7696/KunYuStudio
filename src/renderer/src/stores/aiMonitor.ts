@@ -86,7 +86,13 @@ export const useAiMonitorStore = defineStore('aiMonitor', {
     handleEvent(event: MonitorEvent, status?: ProbeStatus): void {
       this.eventSeq = event.seq
       if (status) this.probe = status
-      if (event.type === 'check-finished' || event.type === 'combo-drift') {
+      // probe-finished 也要重拉：探针可能由脚本/Agent 工具触发而非本 store 的 runActiveProbe，
+      // 不重拉会让矩阵灯色停留在上一次结果（出现「回测通过但红灯」的自相矛盾）
+      if (
+        event.type === 'check-finished' ||
+        event.type === 'combo-drift' ||
+        event.type === 'probe-finished'
+      ) {
         void this.refreshState()
       }
     },

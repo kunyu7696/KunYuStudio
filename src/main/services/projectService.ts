@@ -68,6 +68,7 @@ import {
   updateProject
 } from './projectDAL'
 import { getSection } from './settingsService'
+import { systemProxyForGradle } from './httpUtil'
 import { migrateObserverAgentVmArg, repairLegacyS05LoomBlock } from './gradleService'
 import { initDataPack } from './datapackService'
 import { initShaderPack } from './shaderpackService'
@@ -526,7 +527,7 @@ export function generateMinimalNeoForgeProject(dir: string, mcVersion = NEOFORGE
   const mirror = getSection('network').mirror
   writeFileSync(join(dir, 'build.gradle'), neoForgeBuildGradle(v, mirror))
   writeCommonRootFiles(dir, 'neoforge', v)
-  writeFileSync(join(dir, 'gradle.properties'), neoForgeGradleProperties(v))
+  writeFileSync(join(dir, 'gradle.properties'), neoForgeGradleProperties(v, mirror, systemProxyForGradle()))
   writeFileSync(join(dir, 'settings.gradle'), neoForgeSettingsGradle(mirror))
   writeGradleWrapper(dir, v.gradleVersion, mirror)
 
@@ -590,7 +591,7 @@ function generateNeoForgeProject(dir: string, v: NeoForgeTemplateVars): void {
   const mirror = getSection('network').mirror
   writeFileSync(join(dir, 'build.gradle'), neoForgeBuildGradle(v, mirror))
   writeCommonRootFiles(dir, 'neoforge', v)
-  writeFileSync(join(dir, 'gradle.properties'), neoForgeGradleProperties(v))
+  writeFileSync(join(dir, 'gradle.properties'), neoForgeGradleProperties(v, mirror, systemProxyForGradle()))
   writeFileSync(join(dir, 'settings.gradle'), neoForgeSettingsGradle(mirror))
   writeGradleWrapper(dir, v.gradleVersion, mirror)
 
