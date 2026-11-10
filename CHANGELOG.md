@@ -2,8 +2,11 @@
 
 ## Unreleased
 
+## 0.1.9 - 2026-11-11
+
 ### 新增
 
+- **顶栏「赞助鸣谢」**：与「帮助」并列的一级入口，点开即见三类致谢——赞助者名单（留空时引导成为第一位）、上游开源生态（NeoForge / Forge / Fabric / ModDevGradle 等项目）、社区入口（QQ 群与 GitHub）；「前往爱发电赞助」按钮交给系统浏览器打开赞助页。
 - **三态门禁：编译 → 加载 → 进游戏**：参考包 `matrixHealth.stages` 新增 `load` / `runtime` 两态记录，设置页「版本矩阵健康度」对应展示三枚状态点，悬停可见结论与失败首因，把「编译绿」和「真能跑」分开表达。
   - Stage 1（专用服务器加载）：`.github/workflows/runtime-gate.yml` 每日定时在 11 个版本族代表组合上执行 `createProject → generateContent（含方块/物品/实体）→ gradlew runServer`，日志出现 `Done (…)` 记为通过；javac 报错、mod 解析失败、启动异常等首因写进 `stages.load`。
   - Stage 2（客户端进游戏）：`.github/workflows/client-gate.yml` 每周在 6 组上先起服生成平地世界，再 `gradlew runClient --quickPlaySingleplayer`，进入世界后**抓屏留证**——截图非全黑、无新 crash-report、进程存活三者同时满足才算通过，截图与显示环境自检结果随 artifact 上传（编译绿 ≠ 能玩）。结论写回 `stages.runtime`。
