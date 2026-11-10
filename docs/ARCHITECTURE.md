@@ -2,7 +2,7 @@
 
 > 原名称 KunYuEcosystem
 >
-> 本文描述 KunYuStudio 的技术架构：进程模型、目录分层、IPC 约定、核心数据模型、
+> 本文描述 KunYu Studio 的技术架构：进程模型、目录分层、IPC 约定、核心数据模型、
 > 端到端数据流、版本矩阵与安全模型。功能清单见 [FEATURES.md](FEATURES.md)，
 > AI 子系统详见 [AI-PIPELINE.md](AI-PIPELINE.md)。
 
@@ -29,10 +29,10 @@ KunYu 是面向 Minecraft 模组与整合包开发者的桌面工作台，把代
 | 前端框架 | Vue | 3.5 |
 | 状态管理 | Pinia | 4.x |
 | UI 组件 | Element Plus | 2.14 |
-| 代码编辑 | Monaco Editor | 0.56 |
+| 代码编辑 | Monaco Editor | 0.57 |
 | 3D 渲染 | Three.js | 0.186 |
 | 构建 | electron-vite / Vite / TypeScript | 5.x / 7.x / 5.9 |
-| 打包 | electron-builder | 26.x（Windows NSIS + 绿色包） |
+| 打包 | electron-builder | 26.x（Windows NSIS / macOS dmg / Linux AppImage） |
 | 网络 | undici | 8.x |
 | 本地库 | better-sqlite3 | 13.x |
 | AI / 嵌入 | MCP SDK 1.x、@xenova/transformers（bge-small-zh 离线嵌入） | — |
@@ -86,7 +86,7 @@ src/
 │  └─ utils/                  #   主进程通用工具
 ├─ preload/                   # contextBridge 白名单（声明式 API + 推送通道）
 ├─ renderer/src/
-│  ├─ modules/                #   19 个活动栏模块（视图 + 注册表）
+│  ├─ modules/                #   24 个活动栏模块（视图 + 注册表）
 │  ├─ components/             #   跨模块组件（AI 面板、设置面板等）
 │  ├─ stores/                 #   Pinia 状态
 │  ├─ monaco/                 #   Monaco 集成与 CUE 内联补全
@@ -103,7 +103,7 @@ resources/
 │  ├─ templates/              #   压缩布局：canonical 正文 + versions 组合声明 + variants 真实差异
 │  ├─ community/              #   社区参考片段
 │  └─ manifest.json           #   清单（模板、指纹、来源统计；file 仍是 templates/<loader>/<mc>/<slot> 虚拟路径）
-├─ knowledge/                 # 离线知识库（30 篇 Markdown，RAG 语料）
+├─ knowledge/                 # 离线知识库（35 篇 Markdown，RAG 语料）
 ├─ mcdata/                    # minecraft-data 静态数据
 ├─ observer-mod/              # 游戏内观察 mod（Gradle 工程，随包分发 jar）
 ├─ observer-agent/            # 观察者 agent 资源
@@ -115,7 +115,7 @@ resources/
 ## 五、IPC 通信层
 
 - 全部通道集中定义在 `src/shared/types/ipc.ts` 的 `IpcChannels` 常量表，
-  共 **252 个**，命名约定 `领域:动作`，按业务域前缀分组：
+  共 **337 个**，命名约定 `领域:动作`，按业务域前缀分组：
 
 | 前缀 | 域 |
 | --- | --- |
@@ -154,7 +154,7 @@ resources/
 
 渲染层用扁平表单编辑，主进程负责组装成完整 schema 并落盘——表单与 schema
 之间由 `src/shared/schemas/` 的适配器双向转换，保证「编辑器所见 = 构建所用」。
-AI 参考包 manifest 登记 13 种内容类型。
+AI 参考包 manifest 登记 12 种内容类型。
 
 ### 6.2 模型文档（ModelDocument）
 
@@ -172,11 +172,11 @@ AI 参考包 manifest 登记 13 种内容类型。
 
 ## 七、渲染层
 
-- **工作台外壳**：左侧活动栏（19 个模块，按项目类型与场景动态可见）+
+- **工作台外壳**：左侧活动栏（24 个模块，按项目类型与场景动态可见）+
   主编辑区 + 右侧 AI 助手面板（可折叠调宽）+ 底部终端/问题面板 + 状态栏；
 - **模块注册表**：`src/renderer/src/modules/index.ts` 声明式注册，
   模块携带可见性条件（全局 / 按项目类型 / 仅主页）；
-- **统一编辑器**：工坊五类内容对象（方块/物品/实体/生物群系/进度）共用同一
+- **统一编辑器**：工坊七类内容对象（物品/方块/实体/生物群系/进度/附魔/标签）共用同一
   编辑骨架，分区面板（基础表单、配方、战利品表、贴图、AI 重绘、3D 预览）；
 - **Monaco**：Java/JSON/GLSL 编辑，CUE 内联补全（FIM 协议，可注入仓库上下文）。
 
@@ -216,13 +216,13 @@ AI 参考包 manifest 登记 13 种内容类型。
 
 - **覆盖**：35 个登记组合——Fabric 16 条（1.16.5 ~ 26.3）、Forge 6 条
   （1.18.2 ~ 26.3）、NeoForge 13 条（1.20.4 ~ 26.3），全部可创建
-  （NeoForge 26.3 已于 2026-11 随上游转正解除 beta 禁用，真机验证待补）；
+  （NeoForge 26.3 已于 2026-11 随上游转正解除 beta 禁用，编译探针与真机加载/进世界门禁均已通过）；
   Forge 1.16.5 因 FG4 + official mappings 框架级不兼容已冻结，不计入组合。
 - **版本分层**：
   - `core`：1.20.1 / 1.21.1（三加载器主力，发布前强制真机验证门槛）；
-  - `extended`：1.20.4 / 1.20.6 / 1.21.3+ 与 26.x 新年份线；
+  - `extended`：1.20.4 / 1.20.6 / 1.21.3+（1.21.3 仅 NeoForge）与 26.x 新年份线；
   - `legacy`：1.16.5 / 1.18.2 / 1.19.2（新建向导默认隐藏）。
-- **JDK 映射**：JDK 17（1.16.5~1.20.1 线）/ JDK 21（1.20.4 起）/ JDK 25
+- **JDK 映射**：JDK 17（1.16.5~1.20.4 线）/ JDK 21（1.20.6 起）/ JDK 25
   （26.x 线），由环境引导器自动检测与下载。
 - **映射体系**：Fabric 1.21.6 起跟随官方 MDK 改用 Mojang 官方映射
   （`net.fabricmc.fabric-loom-remap` + `loom.officialMojangMappings()`，不再声明

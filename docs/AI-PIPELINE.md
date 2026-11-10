@@ -1,6 +1,6 @@
 # KunYu AI 子系统（AI Pipeline）
 
-> 本文描述 KunYuStudio 的 AI 链路：对话入口、五档编排、工具注册表、上下文管理、
+> 本文描述 KunYu Studio 的 AI 链路：对话入口、五档编排、工具注册表、上下文管理、
 > RAG 与三态验收。模块视角的功能清单见 [FEATURES.md](FEATURES.md)。
 
 ---
@@ -119,7 +119,7 @@ build/test（`src/main/services/ai/orchestrator/independentReview.ts`）。
 
 | 手段 | 说明 |
 | --- | --- |
-| 历史预算随窗口缩放 | `resolveContextBudget`：预算 = min(固定上限, 模型窗口 × 50%)。固定上限：聊天 48k tokens（`aiChat.ts`）、Agent 64k tokens（`historyBudget.ts`） |
+| 历史预算随窗口缩放 | `resolveContextBudget`：预算 = min(固定上限, 模型窗口 × 50%)。固定上限：聊天 128k tokens（窗口未知回退 48k）、Agent 192k tokens（窗口未知回退 64k），常量见 `src/shared/types/ai.ts`；聊天入口为 `ipc/handlers/aiChatHandlers.ts` |
 | 三层压缩 | Agent 历史超预算时：旧轮次摘要化 → 工具结果折叠 → 系统提示精简；被丢弃的轮次由模型先行总结（`summarizeDroppedRounds`），摘要留在上下文里 |
 | 单条工具结果截断 | 超长输出按域常量截断，保留头部关键信息 |
 | 工具 schema 预算 | 工具 schema 本身占窗口：无项目约 6.9k tokens、有项目约 16.8k tokens；按项目类型与档位过滤可见工具，控制 schema 开销 |
@@ -143,7 +143,7 @@ build/test（`src/main/services/ai/orchestrator/independentReview.ts`）。
   `__tests__/templateStore.spec.ts` 的 sha1 基线断言）。
   模板来源以社区公开成果为基础重写/适配，谨向 Fabric、Forge、NeoForge
   社区与 minecraft-data 等数据来源致谢。
-- **知识库**（`resources/knowledge/`）：30 篇离线 Markdown，公开教程的知识
+- **知识库**（`resources/knowledge/`）：35 篇离线 Markdown，公开教程的知识
   点蒸馏——条目注明灵感来源并基于官方文档重写，不逐字搬运原创内容。
 - **语料版本指纹与过期提示**：`resources/knowledge/manifest.json` 记录每个文件
   的 sha256、整体指纹、语料版本与登记日期；运行时扫描比对，设置页「AI」区展示

@@ -29,6 +29,12 @@
 | `npm run test:runtime` | 三态门禁 Stage 1：代表组起专用服务器，验证「能加载」 |
 | `npm run test:client` | 三态门禁 Stage 2：代表组进游戏并抓屏，验证「能玩」（Linux + Xvfb） |
 | `npm run lint` | ESLint（`--max-warnings 0`） |
+| `npm run typecheck:node` / `typecheck:web` | 单独跑主进程 / 渲染层类型检查 |
+| `npm run build:mac` / `build:linux` | 对应平台安装包（dmg / AppImage） |
+| `npm run tools:inventory` | 重新生成 `docs/TOOLS-INVENTORY.json`（工具增删后执行） |
+| `npm run matrix:refresh` | 刷新版本矩阵健康度统计 |
+| `npm run models:refresh` | 重建离线嵌入模型索引 |
+| `npm run kb:manifest` | 刷新知识库语料指纹（改 `resources/knowledge` 后执行） |
 | `npm run fetch-models` | 预拉 bge-small-zh 离线嵌入模型（打包用） |
 | `npm run verify:enchant` | 附魔构建产物校验 |
 
@@ -47,7 +53,7 @@ node scripts/run-vitest.cjs run src/shared/modeler/__tests__/mesh.spec.ts
 
 - **分层环境**：`src/main` / `src/shared` 跑 node 环境，`src/renderer` 跑
   jsdom 环境；
-- **规模**：276 个测试文件；AI 服务、建模器核心（`shared/modeler`）、schema
+- **规模**：325 个测试文件；AI 服务、建模器核心（`shared/modeler`）、schema
   适配器、主进程服务覆盖较密；
 - **风格**：主进程服务以纯函数 + 模拟上下文单测为主；渲染层对 composable 与
   store 做行为测试；属性测试用 fast-check；
@@ -84,7 +90,7 @@ node scripts/run-vitest.cjs run src/shared/modeler/__tests__/mesh.spec.ts
   版本日期除外）；
 - 署名统一「kunyu (睏欤)」，不用真实姓名；
 - 涉及开源社区（Fabric / Forge / NeoForge / Blockbench / minecraft-data 等）
-  的表述保持谦逊、充分致谢；KunYuStudio 大量受益于这些社区的开放成果；
+  的表述保持谦逊、充分致谢；KunYu Studio 大量受益于这些社区的开放成果；
 - 建模器相关实现遵循 clean-room：不读不抄 Blockbench 源码，只依据官方 wiki
   与公开格式规范独立实现；
 - 文档以代码实测为准：数字（通道数、工具数、模板数）改动后同步更新文档。

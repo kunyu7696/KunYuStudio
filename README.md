@@ -53,8 +53,9 @@
 - **启动体验**：两幕启动动画（品牌亮相 → 方块世界），期间真实执行初始化并逐行显示
   6 个步骤的耗时与成败（设置 / 主题语言 / 模块装载 / 环境自检 / 项目恢复 / 运行环境）；
   进度条只认完成度，点击任意处可跳过，跳过不打断初始化。
-- **工坊（统一可视化编辑器）**：物品 / 方块 / 实体 / 食物 / 工具 / 护甲 / 附魔 / 药水 /
-  生物群系 / 进度，同一份语义模型驱动 Java、资源包、数据包三端，实时预览。
+- **工坊（统一可视化编辑器）**：物品 / 方块 / 实体 / 生物群系 / 进度 / 附魔 / 标签
+  七类内容对象（食物、工具、护甲、药水等是物品下的子类型模板），同一份语义模型
+  驱动 Java、资源包、数据包三端，实时预览。
 - **代码手工编写**：可视化不是唯一路径——打开项目即是完整代码工作区（侧边栏文件树
   + Monaco 编辑器），可直接手写 / 修改 Java、JSON、Gradle 等产物，多标签页、
   自动保存、错误行跳转、运行前后 diff；生成器会保留你在表单里填的「自定义代码片段」。
@@ -133,7 +134,7 @@ electron-vite build → 产物新鲜度断言 → electron-builder → 打包后
 src/
   main/       Electron 主进程：IPC、构建流水线、市场、MCP、AI 服务
   preload/    contextBridge 白名单
-  renderer/   Vue 3 + Pinia + Element Plus 界面（23 个活动栏模块 + 灵感台）
+  renderer/   Vue 3 + Pinia + Element Plus 界面（24 个活动栏模块 + 灵感台）
   shared/     双端共享：类型 / schema / 建模器核心（单一事实源）
 resources/    AI 参考包（1576 个活跃模板）、知识库、observer javaagent、
               mcdata 版本数据、插件与 DSH 插件包、离线嵌入模型
@@ -146,7 +147,7 @@ docs/         设计文档（见下）
 | 文档 | 内容 |
 | --- | --- |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 进程模型、目录结构、IPC、数据流、安全模型 |
-| [docs/FEATURES.md](docs/FEATURES.md) | 23 个活动栏模块与工程链路能力清单 |
+| [docs/FEATURES.md](docs/FEATURES.md) | 24 个活动栏模块与工程链路能力清单 |
 | [docs/AI-PIPELINE.md](docs/AI-PIPELINE.md) | AI 子系统：五档编排、内置工具（数量见 [TOOLS-INVENTORY.json](docs/TOOLS-INVENTORY.json)）、上下文管理、RAG、三态验收 |
 | [docs/MODELER.md](docs/MODELER.md) | 建模器：架构、文档模型、格式矩阵、操作说明 |
 | [docs/PLUGINS.md](docs/PLUGINS.md) | 插件体系：清单格式、权限模型、语言插件与 DSH 兼容宿主 |
@@ -158,9 +159,11 @@ docs/         设计文档（见下）
 | --- | --- |
 | Fabric | 1.16.5 · 1.18.2 · 1.19.2 · 1.20.1 · 1.20.4 · 1.20.6 · 1.21.1 · 1.21.4~1.21.11 · 26.3 |
 | Forge | 1.18.2 · 1.19.2 · 1.20.1 · 1.20.4 · 1.21.1 · 26.3（1.16.5 因 FG4 + official mappings 框架级不兼容已冻结） |
-| NeoForge | 1.20.4 · 1.20.6 · 1.21.1 · 1.21.3~1.21.11 · 26.3（官方仍 Beta，暂禁用，待 GA 解除） |
+| NeoForge | 1.20.4 · 1.20.6 · 1.21.1 · 1.21.3~1.21.11 · 26.3 |
 
-共 35 个可生成组合（Fabric 16 · Forge 6 · NeoForge 13），分层验证：**core**（1.20.1 / 1.21.1，PR 与 push 均强制编译
+共 35 个可生成组合（Fabric 16 · Forge 6 · NeoForge 13），无禁用组合：三个加载器的
+26.3 均已转正（NeoForge 26.3.0.76 起上游去除 `-beta` 后缀），NeoForge 26.3 的编译
+探针已在真机通过并回写绿灯。分层验证：**core**（1.20.1 / 1.21.1，PR 与 push 均强制编译
 验证）→ **extended**（1.20.4 / 1.20.6 / 1.21.3+ / 26.x，PR 档全量）→
 **legacy**（1.16.5 / 1.18.2 / 1.19.2，新建向导默认隐藏，仅定时真机构建覆盖）。
 JDK 17 / 21 / 25 按矩阵自动匹配（1.21.6+ 宿主需 25，26.x 起编译目标即 Java 25）；
@@ -170,7 +173,7 @@ Fabric 26.x 起无 Yarn 构建，自动切换 Mojang 官方映射。工具链坐
 
 ## 测试与质量
 
-- PR 门禁：双端 typecheck + ESLint 零告警 + 全量单测（310 个测试文件）。
+- PR 门禁：双端 typecheck + ESLint 零告警 + 全量单测（325 个测试文件）。
 - 矩阵门禁：`test:matrix` / `test:matrix-pr` 按上表加载器 × MC 版本组合验证模板。
 - **三态门禁（advisory，不阻塞合并/发布）**：编译通过 ≠ 能加载 ≠ 能玩。
   `npm run test:runtime` 在 11 个版本族代表组合上起专用服务器，日志出现 `Done (…)` 才算「能加载」；
@@ -238,7 +241,7 @@ KunYu Studio 是独立开发的开源项目。如果它对你有帮助，欢迎�
 本项目自 2026-10-21 起以 [GNU Affero General Public License v3.0](LICENSE)（AGPL-3.0-only）授权。
 此前发布的版本仍为 MIT，已经取得的权利不受影响。
 
-改协议的想法很简单：KunYuStudio 大量受益于 Minecraft 模组社区与开源生态的开放成果，
+改协议的想法很简单：KunYu Studio 大量受益于 Minecraft 模组社区与开源生态的开放成果，
 我们也希望自己的改进能同样留在开放的地方。AGPLv3 不限制商业使用、修改与分发，
 只要求在分发或对外提供网络服务时一并开放改过的源码。
 
@@ -246,9 +249,9 @@ KunYu Studio 是独立开发的开源项目。如果它对你有帮助，欢迎�
 我们愿意在合理范围内一起商量别的授权方式。也谢谢一路提交 issue、反馈问题、
 分享经验的社区朋友。
 
-**边界说明：AGPLv3 保护的是 KunYuStudio 本身，不涉及你的开发产物。**
-你用 KunYuStudio 写出来的模组、整合包、资源包、数据包、模型、贴图、脚本、生成的工程模板
-以及 `.kyshare` 分享包，版权归你，许可证由你自己决定；这些产物不因使用了 KunYuStudio 而
+**边界说明：AGPLv3 保护的是 KunYu Studio 本身，不涉及你的开发产物。**
+你用 KunYu Studio 写出来的模组、整合包、资源包、数据包、模型、贴图、脚本、生成的工程模板
+以及 `.kyshare` 分享包，版权归你，许可证由你自己决定；这些产物不因使用了 KunYu Studio 而
 被要求开源。随工具生成的项目模板自带 MIT `LICENSE`，可自由改写为你需要的任何协议。
 （该例外以 AGPLv3 第 7 条附加许可的形式写在 [LICENSE](LICENSE) 中。）
 
