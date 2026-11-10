@@ -31,7 +31,7 @@ import {
   writeFileSync
 } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, relative } from 'node:path'
 import { PNG } from 'pngjs'
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
@@ -100,6 +100,12 @@ const CLIENT_TIMEOUT = Math.min(
   parseTimeoutMs(process.env.KY_CLIENT_TIMEOUT, 16 * 60 * 1000),
   VITEST_TIMEOUT - 150_000
 )
+/**
+ * 窗口就绪后仍未进入世界的兜底等待。
+ * Forge 在资源加载有错误时会停在 LoadingErrorScreen（无任何后续日志、也不退出），
+ * 只按总超时等会白耗十几分钟且拿不到有效结论，故单独设更短的判据。
+ */
+const WORLD_WAIT_MS = parseTimeoutMs(process.env.KY_CLIENT_WORLD_WAIT, 6 * 60 * 1000)
 const LOG_TAIL = 64 * 1024
 const REPORT_TAIL = 12 * 1024
 /** 世界加载完成后等待画面稳定（区块渲染/光照）再抓屏 */
@@ -339,10 +345,36 @@ function readNewCrash(runDir: string, known: Set<string>): string | null {
   return fresh.length > 0 ? join(dir, fresh[fresh.length - 1]!) : null
 }
 
+/** 递归列目录（限深 4、限条数 400），用于对比"生成了什么"与"进程实际拷了什么" */
+function listTree(dir: string, depth = 0): string[] {
+  if (depth > 4 || !existsSync(dir)) return []
+  const out: string[] = []
+  let entries: string[] = []
+  try {
+    entries = readdirSync(dir).sort()
+  } catch {
+    return []
+  }
+  for (const name of entries) {
+    const full = join(dir, name)
+    let isDir = false
+    try {
+      isDir = statSync(full).isDirectory()
+    } catch {
+      continue
+    }
+    if (isDir) out.push(...listTree(full, depth + 1))
+    else out.push(relative(dir, full))
+    if (out.length > 400) return out
+  }
+  return out
+}
+
 /**
- * 失败留证：完整客户端日志 + Java 进程命令行 + JVM 线程栈。
+ * 失败留证：完整客户端日志 + Java 进程命令行 + JVM 线程栈 + 资源树清单。
  * 只给日志尾部无法区分「渲染线程卡在 native 调用」与「加载只是极慢」；
  * 超时瞬间的 jstack 加上 ps 命令行（可确认 quickPlay 参数是否真的注入）能直接定位。
+ * 资源树清单用于区分「生成器没写模型」与「processResources 没把模型带进运行时」。
  */
 function dumpClientDiagnostics(runDir: string, comboId: string): string {
   const outDir = join(process.cwd(), '.dev-userdata', 'client-gate')
@@ -358,6 +390,20 @@ function dumpClientDiagnostics(runDir: string, comboId: string): string {
     } catch {
       /* 日志可能正被写入，忽略 */
     }
+  }
+
+  const projectRoot = runDir.replace(/[\\/]run$/, '')
+  const resourcesRel = join(outDir, `${comboId}-resources.txt`)
+  try {
+    const lines: string[] = []
+    for (const rel of ['src/main/resources/assets', 'build/resources/main/assets']) {
+      lines.push(`== ${rel} ==`)
+      lines.push(...listTree(join(projectRoot, rel)))
+    }
+    writeFileSync(resourcesRel, lines.join('\n'), 'utf-8')
+    saved.push(resourcesRel)
+  } catch {
+    /* 忽略 */
   }
 
   if (process.platform === 'linux') {
@@ -432,6 +478,7 @@ function runClient(
     let settleTimer: NodeJS.Timeout | null = null
     let pollTimer: NodeJS.Timeout | null = null
     let timeoutTimer: NodeJS.Timeout | null = null
+    let worldTimer: NodeJS.Timeout | null = null
 
     const finish = (result: ClientRunResult): void => {
       if (finished) return
@@ -439,6 +486,7 @@ function runClient(
       if (settleTimer) clearTimeout(settleTimer)
       if (pollTimer) clearInterval(pollTimer)
       if (timeoutTimer) clearTimeout(timeoutTimer)
+      if (worldTimer) clearTimeout(worldTimer)
       const child = activeChild
       activeChild = null
       if (child) {
@@ -488,7 +536,17 @@ function runClient(
 
     /** 增量日志统一处理：窗口就绪标记、致命首因（优先）、进世界 */
     const scan = (text: string): void => {
+      const wasReady = clientReady
       if (CLIENT_READY_RE.test(text)) clientReady = true
+      // 窗口就绪即开始计时：Forge 的加载错误屏不会推进世界，也没有日志可等
+      if (!wasReady && clientReady && worldTimer === null) {
+        worldTimer = setTimeout(() => {
+          if (finished || worldReady) return
+          fail(
+            `客户端已就绪但 ${Math.round(WORLD_WAIT_MS / 1000)}s 内未进入世界（可能停在加载错误屏）`
+          )
+        }, WORLD_WAIT_MS)
+      }
       if (!stopping && !worldReady) {
         const fatal = CLIENT_FATAL_PATTERNS.find((re) => re.test(text))
         if (fatal) {
