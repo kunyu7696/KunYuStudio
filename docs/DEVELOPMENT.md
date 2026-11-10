@@ -26,6 +26,8 @@
 | `npm run test:watch` | watch 模式 |
 | `npm run test:coverage` | 覆盖率 |
 | `npm run test:matrix` / `test:matrix-pr` | 加载器 × MC 版本模板矩阵门禁 |
+| `npm run test:runtime` | 三态门禁 Stage 1：代表组起专用服务器，验证「能加载」 |
+| `npm run test:client` | 三态门禁 Stage 2：代表组进游戏并抓屏，验证「能玩」（Linux + Xvfb） |
 | `npm run lint` | ESLint（`--max-warnings 0`） |
 | `npm run fetch-models` | 预拉 bge-small-zh 离线嵌入模型（打包用） |
 | `npm run verify:enchant` | 附魔构建产物校验 |
@@ -51,6 +53,16 @@ node scripts/run-vitest.cjs run src/shared/modeler/__tests__/mesh.spec.ts
   store 做行为测试；属性测试用 fast-check；
 - **门禁**：PR 需过 双端 typecheck + lint 零告警 + 全量单测；矩阵门禁按
   加载器 × 版本组合验证模板可生成；
+- **三态门禁（advisory）**：编译 → 加载 → 进游戏，三态结论落在参考包
+  `matrixHealth.stages.{load,runtime}`（编译态仍由 `health / passRate` 表达）。
+  `test:runtime` 在 11 个版本族代表组合上 `createProject → generateContent → gradlew runServer`，
+  日志出现 `Done (…)` 即通过；`test:client` 在 6 组上先起服生成平地世界，
+  再 `runClient --quickPlaySingleplayer`，进入世界后抓屏，截图非全黑 + 无新
+  crash-report + 进程存活三者同时满足才通过（仅 Linux：Xvfb + Mesa 软件渲染，
+  SDL 强制走 EGL 以绕开 Xvfb 缺 sRGB FBConfig）。两套门禁都是 advisory，
+  由 `.github/workflows/runtime-gate.yml` / `client-gate.yml` 定时跑到代表组上，
+  结果导出并提交回 `resources/ai-reference/manifest.json`；只对单个组合定向复跑时不写回，
+  避免部分结果覆盖基线；
 - **产物新鲜度**：构建后断言产物为本次生成，杜绝陈旧包。
 
 ## 四、代码约定

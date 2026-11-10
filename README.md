@@ -14,6 +14,7 @@
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-e7653f" alt="license" /></a>
     <a href="https://github.com/kunyu7696/KunYuStudio/actions/workflows/ci.yml"><img src="https://github.com/kunyu7696/KunYuStudio/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
     <img src="https://img.shields.io/badge/platform-Windows%20%C2%B7%20macOS%20%C2%B7%20Linux-2d8a56" alt="platform" />
+    <a href="https://qm.qq.com/q/fTdLJLLgVU"><img src="https://img.shields.io/badge/QQ%20%E7%BE%A4-963335581-12b7f5" alt="QQ 群" /></a>
     <a href="https://afdian.com/a/KunYuStudio"><img src="https://img.shields.io/badge/%E7%88%B1%E5%8F%91%E7%94%B5-%E8%B5%9E%E5%8A%A9%E6%94%AF%E6%8C%81-946ce6" alt="爱发电" /></a>
   </p>
 
@@ -22,6 +23,7 @@
     <a href="#功能一览">功能一览</a> ·
     <a href="#快速开始">快速开始</a> ·
     <a href="#文档导航">文档</a> ·
+    <a href="#交流与反馈">交流群</a> ·
     <a href="#支持开发">爱发电</a>
   </p>
 </div>
@@ -170,6 +172,12 @@ Fabric 26.x 起无 Yarn 构建，自动切换 Mojang 官方映射。工具链坐
 
 - PR 门禁：双端 typecheck + ESLint 零告警 + 全量单测（310 个测试文件）。
 - 矩阵门禁：`test:matrix` / `test:matrix-pr` 按上表加载器 × MC 版本组合验证模板。
+- **三态门禁（advisory，不阻塞合并/发布）**：编译通过 ≠ 能加载 ≠ 能玩。
+  `npm run test:runtime` 在 11 个版本族代表组合上起专用服务器，日志出现 `Done (…)` 才算「能加载」；
+  `npm run test:client` 在 6 组上走虚拟显示（Xvfb + Mesa 软件渲染）进世界并抓屏，
+  截图非全黑、无新 crash-report、进程存活三者同时满足才算「能玩」（仅 Linux 可跑）。
+  结论写入参考包 `matrixHealth.stages.{load,runtime}`，设置页「版本矩阵健康度」以三态点展示；
+  两套门禁分别每日/每周定时执行，结果由 CI 提交回 `manifest`。
 - 测试环境分层：`src/main` / `src/shared` 跑 node，`src/renderer` 跑 jsdom。
 - 构建后断言产物为本次生成（新鲜度断言），杜绝陈旧包。
 
@@ -206,6 +214,12 @@ TEMP 并重定向），无需手动处理；如仍失败请查看 `scripts/run-e
 `default-src 'self'; script-src 'self'`（无 `unsafe-eval`），`style-src` 放行
 `'unsafe-inline'` 供 Element Plus 内联样式，`connect-src` 放行 `ws:` 与
 `127.0.0.1/localhost` 供 Vite HMR、observer 探针与本机 MCP 桥接。
+
+## 交流与反馈
+
+- **QQ 群（推荐）**：[KunYuStudio 交流群](https://qm.qq.com/q/fTdLJLLgVU)，群号 **963335581**。点链接或手机 QQ 扫码直接入群；使用问题、功能建议、版本兼容反馈都可以在这里先问一句。
+- **Issue**：[GitHub Issues](https://github.com/kunyu7696/KunYuStudio/issues)。功能缺陷请附版本号（设置页或安装包名）、平台与复现步骤，带日志最快定位。
+- **安全漏洞**：不要开公开 issue，按 [SECURITY.md](.github/SECURITY.md) 私密报告。
 
 ## 支持开发
 

@@ -72,4 +72,5 @@ npm run dev        # 开发模式（界面中文）
 ## 报告问题
 
 功能缺陷 / 使用问题走 issue，附上版本号（设置页或安装包名）、平台与复现步骤；
+也可以先加入 [KunYuStudio 交流群](https://qm.qq.com/q/fTdLJLLgVU)（QQ 群号 963335581）问一句。
 安全漏洞**不要**开公开 issue，按 [SECURITY.md](SECURITY.md) 私密报告。
