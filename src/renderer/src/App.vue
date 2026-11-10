@@ -92,6 +92,8 @@
     <CommandPalette />
     <!-- 首次启动引导 -->
     <OnboardingDialog />
+    <!-- 赞助鸣谢（顶栏入口触发） -->
+    <SponsorDialog />
     <!-- 首启 DSH 适配提醒（只提示不安装，dsh-pet 第三方插件按需用户显式获取） -->
     <DshFirstRunHint />
     <!-- 全局 MCP 桥接授权弹窗（外部 agent 写操作手动确认） -->
@@ -116,6 +118,7 @@ import StatusBar from './components/layout/StatusBar.vue'
 import NewProjectWizard from './components/project/NewProjectWizard.vue'
 import CommandPalette from './components/layout/CommandPalette.vue'
 import OnboardingDialog from './components/layout/OnboardingDialog.vue'
+import SponsorDialog from './components/layout/SponsorDialog.vue'
 import DshFirstRunHint from './components/layout/DshFirstRunHint.vue'
 import ModLibraryPanel from './components/modpack/ModLibraryPanel.vue'
 import AuthRequestDialog from './components/integration/AuthRequestDialog.vue'

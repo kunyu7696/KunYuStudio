@@ -37,6 +37,10 @@
             </el-dropdown-menu>
           </template>
         </el-dropdown>
+        <!-- 赞助鸣谢：与菜单平级的一级入口，点开即弹鸣谢名单 + 赞助跳转 -->
+        <button class="tb-menu-item" type="button" @click="ui.sponsorOpen = true">
+          {{ t('topbar.menuSponsor') }}
+        </button>
       </nav>
     </div>
 

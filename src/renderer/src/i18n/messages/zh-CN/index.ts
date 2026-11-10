@@ -75,9 +75,25 @@ const zhCN = {
     menuHelpOnboarding: '新手引导',
     menuHelpDsh: 'DSH 插件与桌宠',
     menuHelpAbout: '关于 KunYu Studio',
+    menuSponsor: '赞助鸣谢',
     aboutBody: '版本 {version}\nMinecraft 模组与整合包可视化开发工具\n曾用名：KunYuEcosystem',
     aboutConfirm: '知道了',
     aboutGroupLabel: 'QQ 交流群'
+  },
+  sponsor: {
+    title: '赞助鸣谢',
+    intro:
+      'KunYu Studio 由独立开发者维护，所有功能对所有人开放、不设付费墙。谢谢每一位愿意支持它继续走下去的人。',
+    sponsorsTitle: '赞助者',
+    sponsorsEmpty: '还没有赞助记录。如果你愿意，第一个名字可以是你。',
+    cta: '前往爱发电赞助',
+    upstreamTitle: '上游开源生态',
+    upstreamDesc: '这个工具直接建立在它们之上，按项目名列出，排名不分先后。',
+    communityTitle: '社区',
+    communityDesc: '问题反馈、兼容性验证与功能建议大多来自这里。',
+    qqGroup: 'QQ 交流群 963335581',
+    repo: 'GitHub 仓库',
+    close: '关闭'
   },
   activity: {
     label: '活动栏',

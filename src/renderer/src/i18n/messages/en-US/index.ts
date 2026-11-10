@@ -79,10 +79,26 @@ const enUS: Messages = {
     menuHelpOnboarding: 'Getting started',
     menuHelpDsh: 'DSH plugins & desktop pet',
     menuHelpAbout: 'About KunYu Studio',
+    menuSponsor: 'Sponsors',
     aboutBody:
       'Version {version}\nVisual development tool for Minecraft mods and modpacks\nFormerly known as KunYuEcosystem',
     aboutConfirm: 'Got it',
     aboutGroupLabel: 'QQ group'
+  },
+  sponsor: {
+    title: 'Sponsors & credits',
+    intro:
+      'KunYu Studio is maintained by an independent developer. Every feature is free for everyone — no paywall. Thanks to everyone who helps it keep going.',
+    sponsorsTitle: 'Sponsors',
+    sponsorsEmpty: 'No sponsors yet. If you like, the first name here could be yours.',
+    cta: 'Sponsor on Afdian',
+    upstreamTitle: 'Upstream open source',
+    upstreamDesc: 'This tool is built directly on them; listed by project name, in no particular order.',
+    communityTitle: 'Community',
+    communityDesc: 'Bug reports, compatibility checks and feature ideas mostly come from here.',
+    qqGroup: 'QQ group 963335581',
+    repo: 'GitHub repository',
+    close: 'Close'
   },
   activity: {
     label: 'Activity bar',

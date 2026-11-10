@@ -67,6 +67,8 @@ export const useUiStore = defineStore('ui', {
     commandPaletteOpen: false,
     /** 新手引导对话框：首次启动自动弹出，帮助菜单可再次打开 */
     onboardingOpen: false,
+    /** 赞助鸣谢对话框：顶栏「赞助鸣谢」入口触发 */
+    sponsorOpen: false,
     settingsCategory: 'general' as SettingsCategory,
     /** 进入设置前的模块 ID，用于「返回」按钮 */
     settingsReturnTo: null as string | null
