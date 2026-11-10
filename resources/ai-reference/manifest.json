@@ -198,6 +198,10 @@
             "pass": true,
             "at": "2026-11-10T00:39:51.227Z",
             "note": "已进入世界并截图：.dev-userdata/client-gate/fabric-1.20.1.png"
+          },
+          "load": {
+            "pass": true,
+            "at": "2026-11-10T01:24:38.205Z"
           }
         }
       }
@@ -355,7 +359,14 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T07:18:41.425Z"
+        "lastVerifiedAt": "2026-11-09T07:18:41.425Z",
+        "stages": {
+          "load": {
+            "pass": false,
+            "at": "2026-11-10T01:25:05.273Z",
+            "note": "服务器提前退出（exit=1）"
+          }
+        }
       }
     },
     {
@@ -457,6 +468,10 @@
             "pass": true,
             "at": "2026-11-10T00:45:09.468Z",
             "note": "已进入世界并截图：.dev-userdata/client-gate/forge-1.20.1.png"
+          },
+          "load": {
+            "pass": true,
+            "at": "2026-11-10T01:28:25.678Z"
           }
         }
       }
@@ -506,7 +521,14 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T07:33:48.970Z"
+        "lastVerifiedAt": "2026-11-09T07:33:48.970Z",
+        "stages": {
+          "load": {
+            "pass": false,
+            "at": "2026-11-10T01:29:04.211Z",
+            "note": "命中启动失败模式：Failed to start the minecraft server"
+          }
+        }
       }
     },
     {
@@ -530,7 +552,14 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T07:40:47.735Z"
+        "lastVerifiedAt": "2026-11-09T07:40:47.735Z",
+        "stages": {
+          "load": {
+            "pass": false,
+            "at": "2026-11-10T01:36:46.755Z",
+            "note": "命中启动失败模式：Exception in thread \"main\""
+          }
+        }
       }
     },
     {
@@ -578,7 +607,14 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T07:42:26.222Z"
+        "lastVerifiedAt": "2026-11-09T07:42:26.222Z",
+        "stages": {
+          "load": {
+            "pass": false,
+            "at": "2026-11-10T01:37:23.219Z",
+            "note": "命中启动失败模式：Failed to start the minecraft server"
+          }
+        }
       }
     },
     {
@@ -858,6 +894,10 @@
             "pass": true,
             "at": "2026-11-10T00:41:21.854Z",
             "note": "已进入世界并截图：.dev-userdata/client-gate/fabric-1.21.11.png"
+          },
+          "load": {
+            "pass": true,
+            "at": "2026-11-10T01:26:37.589Z"
           }
         }
       }
@@ -1009,6 +1049,10 @@
             "pass": true,
             "at": "2026-11-10T00:47:37.247Z",
             "note": "已进入世界并截图：.dev-userdata/client-gate/neoforge-1.21.11.png"
+          },
+          "load": {
+            "pass": true,
+            "at": "2026-11-10T01:39:42.940Z"
           }
         }
       }
@@ -1041,6 +1085,10 @@
             "pass": true,
             "at": "2026-11-10T00:42:40.800Z",
             "note": "已进入世界并截图：.dev-userdata/client-gate/fabric-26.3.png"
+          },
+          "load": {
+            "pass": true,
+            "at": "2026-11-10T01:27:32.464Z"
           }
         }
       }
@@ -1066,7 +1114,14 @@
         "templateCount": 5,
         "verifiedCount": 5,
         "passRate": 100,
-        "lastVerifiedAt": "2026-11-09T07:39:17.450Z"
+        "lastVerifiedAt": "2026-11-09T07:39:17.450Z",
+        "stages": {
+          "load": {
+            "pass": false,
+            "at": "2026-11-10T01:34:42.015Z",
+            "note": "服务器提前退出（exit=1）"
+          }
+        }
       }
     },
     {
@@ -1096,6 +1151,10 @@
             "pass": true,
             "at": "2026-11-10T00:49:45.567Z",
             "note": "已进入世界并截图：.dev-userdata/client-gate/neoforge-26.3.png"
+          },
+          "load": {
+            "pass": true,
+            "at": "2026-11-10T01:41:28.887Z"
           }
         }
       }
