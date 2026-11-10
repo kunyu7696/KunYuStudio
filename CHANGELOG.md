@@ -4,6 +4,10 @@
 
 ### 新增
 
+- **三态门禁：编译 → 加载 → 进游戏**：参考包 `matrixHealth.stages` 新增 `load` / `runtime` 两态记录，设置页「版本矩阵健康度」对应展示三枚状态点，悬停可见结论与失败首因，把「编译绿」和「真能跑」分开表达。
+  - Stage 1（专用服务器加载）：`.github/workflows/runtime-gate.yml` 每日定时在 11 个版本族代表组合上执行 `createProject → generateContent（含方块/物品/实体）→ gradlew runServer`，日志出现 `Done (…)` 记为通过；javac 报错、mod 解析失败、启动异常等首因写进 `stages.load`。
+  - Stage 2（客户端进游戏）：`.github/workflows/client-gate.yml` 每周在 6 组上先起服生成平地世界，再 `gradlew runClient --quickPlaySingleplayer`，进入世界后**抓屏留证**——截图非全黑、无新 crash-report、进程存活三者同时满足才算通过，截图与显示环境自检结果随 artifact 上传（编译绿 ≠ 能玩）。结论写回 `stages.runtime`。
+  - 编译态仍由 `health / passRate` 表达、不单独落 `stages.compile`；UI 在缺省时按统计派生（`green → 通过`、`yellow/red/deprecated → 失败`、`unknown/beta → 未跑`），tooltip 标注「由构建通过率派生」，避免「runtime 绿、compile 全灰」的自相矛盾。
 - **构建依赖（Maven 坐标）管理**：模组项目新增「构建依赖」模块，按 `group:artifact:version` 把编译期依赖写进项目 `build.gradle` 的 `repositories` / `dependencies`。
   - 只认自己写的行（行尾 `// kunyu:dep:<group>:<artifact>` / `// kunyu:maven:<url>` 标记），用户手写的仓库与依赖不读取、不修改、不展示
   - 幂等：重复添加同一坐标不产生重复行，改版本原地更新；撤销依赖/仓库即删对应标记行
@@ -23,6 +27,17 @@
 
 ### 修复
 
+- **门禁导出把编译统计清零**：runtime / client 门禁导出手写把 `matrixHealth` 整体覆盖成只含本阶段的 summary，`templateCount / verifiedCount / passRate` 全被清零——结果「证据最全的 6 个组合」反而显示 unknown / 0%，与同一条目里绿色的 runtime 点自相矛盾。改为**阶段合并**：`stages` 按阶段累加，只有 `stages.compile` 有权改写统计与灯色；补 4 条回归用例锁死语义，并从历史版本恢复被清零的 6 条指纹。
+- **定时门禁永不写回仓库**：导出/提交步骤的条件写成 `github.event.inputs.combos == ''`，在 `schedule` 事件下恒为假，夜间跑再成功也只是把结论留在本地 overlay，manifest 里 `stages.load` 全是 null。改为按事件名放行（`dispatch` 且指定组合时仍不写回，避免部分结果覆盖基线），随后全量跑已把 11 组 `stages.load` 落库。
+- **Linux 虚拟显示下 26.x 客户端起不来窗口**：FML 的 `GlRenderer.configureWindowHints()` 会设 `SDL_GL_FRAMEBUFFER_SRGB_CAPABLE=1`，SDL 的 GLX 后端据此要求 `GLX_FRAMEBUFFER_SRGB_CAPABLE_ARB=True` 的 FBConfig，而 Xvfb + llvmpipe 没有这类配置，直接报 `Couldn't find matching GLX visual`。改为强制 SDL 走 EGL（`SDL_VIDEO_FORCE_EGL=1`，SDL3 的 hint 名不是 `SDL_VIDEO_X11_FORCE_EGL`）+ `MESA_LOADER_DRIVER_OVERRIDE=llvmpipe` + Xvfb `+extension GLX +render`；EGL 后端把 sRGB 放在 surface 属性（`EGL_GL_COLORSPACE`）而非 config 选择上，llvmpipe 下可用。`glxinfo -B` / `glxinfo -t` / `eglinfo -B` 的输出写进步骤摘要并随截图 artifact 上传，下次能一眼区分「GLX 缺 sRGB」与「EGL 不可用」。
+- **代表组 5 个组合加载失败逐条修复**（修复前 Stage 1 为 6 通过 / 5 失败，修复后 11/11 通过）：
+  - `fabric 1.21.1`：`Model.render` 在这两版是 `(MatrixStack, VertexConsumer, int, int, int)`（末位 int 颜色），浮点 rgba 重载不存在；`Identifier` 构造器自 1.21 起私有，生成器改走 `Identifier.of`（1.21.6+ 官方映射走 `fromNamespaceAndPath`）。
+  - `forge 1.21.1`：FML 52 的 `FMLModContainer` 只反射 `(FMLJavaModLoadingContext)` 或无参构造器，原来的 `(IEventBus)` 直接 `NoSuchMethodException`（FML 49 同样只认无参，1.20.4 的构造器风格一并回退 `classic`）；同时 FML 52 的 `ClasspathLocator` 把含 `META-INF/mods.toml` 的 classpath 目录整体当 mod 文件、只在该目录内扫描 `@Mod` 类，Gradle 默认把 classes 与 resources 拆成两个目录会报 `has mods that were not found`，故对 Forge ≥1.21.1 把资源输出并入 classes 目录（`gradlew build` 产物不受影响）。
+  - `forge 26.3`：`@SubscribeEvent` 迁至 `net.minecraftforge.eventbus.api.listener`，`@Mod.EventBusSubscriber` 不再带 bus 属性，`ForgeSpawnEggItem` 已移除（刷怪蛋回到原版 `SpawnEggItem`）；补上 26.x 的 `ModBusGroup` 实体注册织入，此前会静默丢掉实体注册。
+  - `neoforge 1.20.4`：FML 2.0.17 起依赖项写 `mandatory=true` 会抛 `InvalidModFileException`，改为 `type="required"`。
+  - `neoforge 1.21.1`：loader 4.0.x 缺 `modLoader` 会抛 `Missing ModLoader in file`，按 1.21.6 断点补 `modLoader / loaderVersion`（更新的官方 MDK 已省略，保持不输出）。
+- **门禁把 netty 原生探测异常误判为致命错误**：Forge 26.3 在 Windows 上必然输出 epoll / kqueue 的 `NoClassDefFoundError` 探测噪声，但服务端随后会正常 `Done`；门禁的致命模式匹配把它当失败提前取消。已排除 `io.netty` 相关行，并记录真正触发取消的模式（此前日志尾部截断后会把「端口占用」误报成 `exit=0`）。
+- **失败追踪 issue 恢复后不自动关闭**：门禁 issue 只在失败时创建，恢复后按旧设计要人工确认，实际会积压成僵尸 issue。现改为成功后自动关闭对应 issue（runtime-gate / client-gate / 矩阵门禁 / 定时矩阵刷新 / CI 守夜五处），并回链恢复运行；定向复跑（只跑部分组合）不关闭，避免部分通过误判为基线恢复。
 - **五档预算与模型价格脱钩**：此前 `TIER_RUN_BUDGETS` 是硬编码常量（24/48/72/96/144 次），换贵模型照样跑满、换本地无限量模型也不会放宽，用户无法知道「哪个模型贵、哪个不限流」。新增 `src/shared/types/modelProfile.ts` 作为模型价格/上下文/能力/计费类型的单一数据源，数据来自 OpenRouter 公开模型 API 的真实价格快照（`src/shared/data/modelCatalog.json`，`npm run models:refresh` 刷新，运行时离线读取）；`resolveRunBudget(tier, profile)` 按「单次成本上限 × 档位份额 / 每次调用估算成本」推导调用次数，并在估算成本超限时熔断。零价/本地模型记为 `unlimited`，目录未收录的模型不猜价、回退固定上限并标注 `unknown`。设置页新增「单次任务成本上限」，运行日志逐条说明预算来源。
 - **自审不可信（生成者自己判断自己）**：此前 generate 后由同一模型、同一上下文复核自己的产出，看到的是自己的推理与自述，容易顺着结论打勾。新增独立审查阶段（`src/main/services/ai/orchestrator/independentReview.ts`）：审查者只接收变更前后的 unified diff、验收条件与项目类型，不接收生成过程/工具轨迹/模型自述；输出结构化「verdict + 问题清单（文件:行 + 理由）」。存在 blocker 时回滚本次写入并在 build 之前阻断，审查结论以 artifact 呈现；应答不可解析时降级为 skipped，不因审查自身不稳定误伤运行。设置页可指定独立审查模型（默认沿用生成模型但上下文完全隔离）或关闭该阶段。
 - **工具数量文档失真（无单一数据源）**：README 写「93 个」、AI-PIPELINE / ARCHITECTURE / FEATURES 写「66 个」，而注册表实测为 **35（无项目）/ 88（模组项目）/ 91（整合包项目）**——工具是按上下文门控动态暴露的，任何单一数字只对某个场景成立。新增 `src/main/services/ai/toolInventory.ts` 作为唯一口径，`npm run tools:inventory` 生成 `docs/TOOLS-INVENTORY.json`，`toolInventory.spec.ts` 守门（已注入错误计数验证会红）；四处文档改为引用该产物，不再手写数字
