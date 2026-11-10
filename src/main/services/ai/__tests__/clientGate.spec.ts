@@ -464,6 +464,15 @@ function runClient(
     // 首启前落一份 options.txt：软件渲染下默认画质/背景模糊会把帧率压到无法推进世界加载
     mkdirSync(runDir, { recursive: true })
     writeFileSync(join(runDir, 'options.txt'), `${CLIENT_OPTIONS}\n`, 'utf-8')
+    // Forge 1.20.1 实测：资源加载产生警告后停在 LoadingErrorScreen（不推进、不退出）。
+    // 该屏由 forge-client.toml 的 showLoadWarnings 控制；门禁只判「能否进世界」，
+    // 警告本身仍在日志里留痕，后续由日志扫描另行跟踪。
+    mkdirSync(join(runDir, 'config'), { recursive: true })
+    writeFileSync(
+      join(runDir, 'config', 'forge-client.toml'),
+      '[client]\n    showLoadWarnings = false\n',
+      'utf-8'
+    )
 
     let log = ''
     const append = (text: string): void => {
