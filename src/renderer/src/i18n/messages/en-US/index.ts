@@ -575,6 +575,7 @@ const enUS: Messages = {
         stagePass: 'pass',
         stageFail: 'fail',
         stagePending: 'not run',
+        stageCompileDerived: 'derived from build pass rate {rate}%',
         stageLabel: '{stage}: {state}{note}',
         healthGreen: 'Healthy',
         healthYellow: 'Needs retest',

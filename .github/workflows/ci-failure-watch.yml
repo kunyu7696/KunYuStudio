@@ -3,7 +3,7 @@ name: CI 失败守夜
 # 0 star 项目没人订阅 Actions 通知：CI 红了会一直红，没人知道。
 # 这里每天检查 master 上最近 3 个自然日（北京时间）的 CI 结论，
 # 连续 3 天都是失败就在 issue 里留痕；已有同名 open issue 时改为追加评论，避免刷屏。
-# CI 恢复后不会自动关闭 issue，需人工确认后手动关闭。
+# 恢复后（最近 3 天不再全红 / 矩阵健康度已刷新）自动关闭对应 issue，避免积压僵尸 issue。
 on:
   schedule:
     # 每天 01:00 UTC（北京时间 09:00）
@@ -98,7 +98,7 @@ jobs:
             "" \
             "本次检查：$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             "" \
-            "CI 恢复后请关闭本 issue；本工作流不会自动关闭。")
+            "CI 恢复后本工作流会自动关闭本 issue。")
           EXISTING=$(gh issue list --state open --search "CI 连续 3 天失败 in:title" --json number --jq '.[0].number // empty')
           if [ -n "$EXISTING" ]; then
             gh issue comment "$EXISTING" --body "$BODY"
@@ -106,6 +106,18 @@ jobs:
           else
             gh issue create --title "$TITLE" --body "$BODY"
             echo "已新建 issue"
+          fi
+
+      # 恢复即关闭：最近 3 天不再全红，自动关闭此前的失败追踪 issue
+      - name: CI 恢复 → 自动关闭失败追踪 issue
+        if: steps.check.outputs.hit != 'true' && github.event_name != 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXISTING=$(gh issue list --state open --search "CI 连续 3 天失败 in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            gh issue close "$EXISTING" --comment "最近 3 天 CI 已不再连续失败（检查运行：$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID），自动关闭。"
+            echo "已关闭 issue #$EXISTING"
           fi
 
       # 兜底：CI 的 schedule 曾出现「配置正确但从未被调度」（schedule_total=0），
@@ -175,7 +187,7 @@ jobs:
             "" \
             "本次检查：$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             "" \
-            "全量门禁恢复后请关闭本 issue；本工作流不会自动关闭。")
+            "全量门禁恢复后本工作流会自动关闭本 issue。")
           EXISTING=$(gh issue list --state open --search "矩阵健康度超过 8 天未刷新 in:title" --json number --jq '.[0].number // empty')
           if [ -n "$EXISTING" ]; then
             gh issue comment "$EXISTING" --body "$BODY"
@@ -183,4 +195,16 @@ jobs:
           else
             gh issue create --title "$TITLE" --body "$BODY"
             echo "已新建 issue"
+          fi
+
+      # 恢复即关闭：manifest 的 lastVerifiedAt 已回到 8 天内，自动关闭过期告警 issue
+      - name: 矩阵健康度恢复 → 自动关闭告警 issue
+        if: steps.freshness.outputs.stale != 'true' && github.event_name != 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXISTING=$(gh issue list --state open --search "矩阵健康度超过 8 天未刷新 in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            gh issue close "$EXISTING" --comment "矩阵健康度已刷新（${{ steps.freshness.outputs.newest }}，${{ steps.freshness.outputs.days }} 天前），自动关闭。"
+            echo "已关闭 issue #$EXISTING"
           fi

@@ -564,6 +564,7 @@ const zhCN = {
         stagePass: '通过',
         stageFail: '失败',
         stagePending: '未跑',
+        stageCompileDerived: '由构建通过率 {rate}% 派生',
         stageLabel: '{stage}：{state}{note}',
         healthGreen: '健康',
         healthYellow: '待重测',

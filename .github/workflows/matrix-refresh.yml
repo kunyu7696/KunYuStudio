@@ -145,7 +145,7 @@ jobs:
             "" \
             "本次运行：$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
             "" \
-            "处理完上游问题后可关闭本 issue；后续成功运行不会自动关闭。")
+            "处理完上游问题后可关闭本 issue；后续成功运行会自动关闭。")
           EXISTING=$(gh issue list --state open --search "定时刷新加载器版本矩阵连续失败 in:title" --json number --jq '.[0].number // empty')
           if [ -n "$EXISTING" ]; then
             gh issue comment "$EXISTING" --body "$BODY"
@@ -153,6 +153,19 @@ jobs:
           else
             gh issue create --title "$TITLE" --body "$BODY"
             echo "已新建 issue"
+          fi
+
+      # 连续失败计数归零即恢复：自动关闭失败追踪 issue，避免积压僵尸 issue
+      - name: 刷新恢复 → 自动关闭失败追踪 issue
+        if: success() && github.event_name != 'push'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXISTING=$(gh issue list --state open --search "定时刷新加载器版本矩阵连续失败 in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            gh issue close "$EXISTING" --comment "本次定时刷新已成功（$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID），自动关闭。"
+            echo "已关闭失败追踪 issue #$EXISTING"
           fi
 
       - name: 工作流摘要

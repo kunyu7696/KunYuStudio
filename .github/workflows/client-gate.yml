@@ -128,6 +128,21 @@ jobs:
           fi
           exit "$ec"
 
+      # 失败 issue 只在失败时创建；恢复后自动关闭，避免积压僵尸 issue。
+      # 定向复跑（combos 非空）不关：部分组合通过不代表基线恢复。
+      - name: 门禁恢复 → 自动关闭失败追踪 issue
+        if: success() && (github.event_name != 'workflow_dispatch' || github.event.inputs.combos == '')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          existing=$(gh issue list --state open --search "客户端进游戏门禁失败 in:title" --json number --jq '.[0].number')
+          if [ -n "$existing" ]; then
+            gh issue close "$existing" --comment "门禁已恢复通过（commit $GITHUB_SHA）。运行：$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo "已关闭失败追踪 issue #$existing"
+          fi
+
       # 截图是「编译绿 ≠ 能玩」的证据：无论成败都上传
       - uses: actions/upload-artifact@v4
         if: always()

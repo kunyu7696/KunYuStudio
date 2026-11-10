@@ -210,6 +210,22 @@ jobs:
           }
           exit $ec
 
+      # 失败 issue 只在失败时创建；恢复后自动关闭，避免积压僵尸 issue。
+      # 定向复跑（combos 非空）不关：部分组合通过不代表基线恢复。
+      - name: 门禁恢复 → 自动关闭失败追踪 issue
+        if: success() && github.event.inputs.combos == ''
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          $existing = gh issue list --state open --search "矩阵门禁失败 in:title" --json number --jq '.[0].number'
+          if ($existing) {
+            $body = "门禁已恢复通过（commit $env:GITHUB_SHA）。`n运行：$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
+            gh issue close "$existing" --comment $body
+            Write-Host "已关闭失败追踪 issue #$existing"
+          }
+
       # 定向复跑（combos 非空）不写回仓库：只用于诊断单个组合，避免部分结果覆盖基线
       - name: matrixHealth 快照导出 manifest
         if: always() && github.event.inputs.combos == ''

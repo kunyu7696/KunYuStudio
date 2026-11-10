@@ -67,13 +67,29 @@ export function useMatrixHealth() {
     return t('settings.ai.matrix.label', { label, rate: row.passRate })
   }
 
+  /**
+   * 编译态解析：优先读 stages.compile；但该字段当前不由门禁写入
+   * （CI 编译门禁只更新 templateCount/verifiedCount/passRate 与 health），
+   * 缺省时从统计派生，避免三态点里「编译」永远灰：
+   *  green → 通过；yellow（待重测）/red/deprecated → 失败；unknown/beta（无档案）→ 未跑
+   */
   function matrixStageState(
     row: MatrixHealthRow,
     stage: MatrixStageKey
   ): 'pass' | 'fail' | 'pending' {
     const result = row.stages?.[stage]
-    if (!result) return 'pending'
-    return result.pass ? 'pass' : 'fail'
+    if (result) return result.pass ? 'pass' : 'fail'
+    if (stage !== 'compile') return 'pending'
+    switch (row.health) {
+      case 'green':
+        return 'pass'
+      case 'yellow':
+      case 'red':
+      case 'deprecated':
+        return 'fail'
+      default:
+        return 'pending'
+    }
   }
 
   /** 三态状态点：pass=绿 / fail=红 / pending=灰（未跑） */
@@ -89,14 +105,22 @@ export function useMatrixHealth() {
 
   function matrixStageLabel(row: MatrixHealthRow, stage: MatrixStageKey): string {
     const name = t(`settings.ai.matrix.stage.${stage}`)
-    const result = row.stages?.[stage]
-    const state = result
-      ? result.pass
+    const state = matrixStageState(row, stage)
+    const stateText =
+      state === 'pass'
         ? t('settings.ai.matrix.stagePass')
-        : t('settings.ai.matrix.stageFail')
-      : t('settings.ai.matrix.stagePending')
-    const note = result?.note ? ` — ${result.note}` : ''
-    return t('settings.ai.matrix.stageLabel', { stage: name, state, note })
+        : state === 'fail'
+          ? t('settings.ai.matrix.stageFail')
+          : t('settings.ai.matrix.stagePending')
+    const result = row.stages?.[stage]
+    let note = ''
+    if (result?.note) {
+      note = ` — ${result.note}`
+    } else if (stage === 'compile' && state !== 'pending') {
+      // 编译态由统计派生时说清来源，避免与真实落库的阶段结论混淆
+      note = ` — ${t('settings.ai.matrix.stageCompileDerived', { rate: row.passRate })}`
+    }
+    return t('settings.ai.matrix.stageLabel', { stage: name, state: stateText, note })
   }
 
   function formatMatrixTime(iso: string | null): string {
