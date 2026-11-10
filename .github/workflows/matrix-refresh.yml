@@ -107,6 +107,10 @@ jobs:
         if: steps.refresh.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v7
         with:
+          # 同 deps-refresh：GITHUB_TOKEN 建出的 PR 作者是 github-actions[bot]，
+          # 非协作者身份会让 PR 的 CI 停在 action_required 等人工批准；
+          # 配置 AUTOMATION_PAT（owner 的 fine-grained PAT）后自动运行。
+          token: ${{ secrets.AUTOMATION_PAT || secrets.GITHUB_TOKEN }}
           branch: chore/refresh-loader-matrix
           title: 'chore: 刷新加载器版本矩阵（定时）'
           labels: automation

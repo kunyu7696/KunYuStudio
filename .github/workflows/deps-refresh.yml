@@ -91,6 +91,12 @@ jobs:
         if: steps.bump.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v7
         with:
+          # PR 用 GITHUB_TOKEN 创建时作者是 github-actions[bot]（非仓库协作者），
+          # GitHub 按外部贡献者对待，pull_request 触发的 CI 会停在 action_required
+          # 等人工批准，自动化卡在最后一公里。配置仓库 secret AUTOMATION_PAT
+          # （owner 的 fine-grained PAT：Contents RW + Pull requests RW）后，
+          # PR 以真实账号身份创建，CI 自动运行；未配置时行为不变。
+          token: ${{ secrets.AUTOMATION_PAT || secrets.GITHUB_TOKEN }}
           branch: chore/deps-auto-update
           title: 'chore(deps): 自动升级 minor/patch 依赖'
           labels: automation
