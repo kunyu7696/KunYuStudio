@@ -136,9 +136,11 @@ jobs:
           path: .dev-userdata/client-gate
           if-no-files-found: warn
 
-      # 定向复跑（combos 非空）不写回仓库：只用于诊断，避免部分结果覆盖基线
+      # 定向复跑（dispatch 且 combos 非空）不写回仓库：只用于诊断，避免部分结果覆盖基线。
+      # 定时触发没有 inputs，必须按事件名放行（此前写成 inputs.combos == ''，定时跑永远 skip，
+      # stage 结论只留在 overlay 里不进 manifest）。
       - name: matrixHealth 快照导出 manifest
-        if: always() && github.event.inputs.combos == ''
+        if: always() && (github.event_name != 'workflow_dispatch' || github.event.inputs.combos == '')
         run: node scripts/exportMatrixHealth.mjs
 
       - uses: actions/upload-artifact@v4
@@ -148,7 +150,7 @@ jobs:
           path: resources/ai-reference/manifest.json
 
       - name: stages.runtime 落回仓库 manifest
-        if: always() && github.event.inputs.combos == ''
+        if: always() && (github.event_name != 'workflow_dispatch' || github.event.inputs.combos == '')
         run: |
           git config user.name "kunyu-ci-bot"
           git config user.email "actions@users.noreply.github.com"
