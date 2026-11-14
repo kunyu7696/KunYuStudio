@@ -1,4 +1,4 @@
-// refresh-loader-matrix.mjs 刷新于 2026-11-10（3 条变更）
+// refresh-loader-matrix.mjs 刷新于 2026-11-14（3 条变更）
 /**
  * 加载器版本矩阵（Fabric / Forge / NeoForge 全版本线）。
  *
@@ -356,7 +356,8 @@ const FORGE_MATRIX: Record<string, ForgeToolchain> = {
     loader: 'forge', mcVersion: '26.3',
     // REFRESH: forgeVersion 66.0.11 → 66.1.0
     // REFRESH: forgeVersion 66.1.0 → 66.1.5
-    forgeVersion: '66.1.5', forgeGradleVersion: '[7.0.17,8)',
+    // REFRESH: forgeVersion 66.1.5 → 66.1.8
+    forgeVersion: '66.1.8', forgeGradleVersion: '[7.0.17,8)',
     gradleVersion: '9.7.1', jdk: 25, forgeConstructorStyle: 'modbusgroup'
   }
 }
@@ -378,7 +379,8 @@ const NEOFORGE_MATRIX: Record<string, NeoForgeToolchain> = {
   '1.21.1': {
     loader: 'neoforge', mcVersion: '1.21.1',
     // REFRESH: neoForgeVersion 21.1.250 → 21.1.265
-    neoForgeVersion: '21.1.265', modDevGradleVersion: '2.0.147',
+    // REFRESH: neoForgeVersion 21.1.265 → 21.1.266
+    neoForgeVersion: '21.1.266', modDevGradleVersion: '2.0.147',
     gradleVersion: '8.10.2', jdk: 21
   },
   '1.21.3': {
@@ -449,7 +451,8 @@ const NEOFORGE_MATRIX: Record<string, NeoForgeToolchain> = {
     loader: 'neoforge', mcVersion: '26.3',
     // REFRESH: neoForgeVersion 26.3.0.75-beta → 26.3.0.101
     // REFRESH: neoForgeVersion 26.3.0.101 → 26.3.0.102
-    neoForgeVersion: '26.3.0.102', modDevGradleVersion: '2.0.147',
+    // REFRESH: neoForgeVersion 26.3.0.102 → 26.3.0.103
+    neoForgeVersion: '26.3.0.103', modDevGradleVersion: '2.0.147',
     // REFRESH: stability beta → 移除（上游已取消该标记）
     gradleVersion: '9.7.1', jdk: 25
   }
