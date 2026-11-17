@@ -242,9 +242,27 @@ jobs:
         # 回写在 test:matrix 内部完成（writeBackMatrixHealth），这里把变更提交回触发分支。
         # 若无变更（如环境性失败未回写）则 git diff --quiet 短路，push 为 no-op。
         if: always() && github.event.inputs.combos == ''
+        shell: bash
         run: |
+          set -uo pipefail
           git config user.name "kunyu-ci-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add resources/ai-reference/manifest.json
-          git diff --cached --quiet || git commit -m "chore(matrix): 定时真机构建刷新 matrixHealth"
-          git push
+          # 默认分支是 master（GITHUB_REF_NAME 在 schedule/dispatch 下即它）
+          BRANCH="${GITHUB_REF_NAME:-master}"
+          # 并发兜底：runtime/client 门禁可能在本作业期间也提交 manifest，直接 push
+          # 会 non-fast-forward。失败即取最新分支重跑导出再重试（增量合并，不丢对方阶段）。
+          for attempt in 1 2 3 4 5; do
+            git add resources/ai-reference/manifest.json
+            git diff --cached --quiet || git commit -m "chore(matrix): 定时真机构建刷新 matrixHealth"
+            if git push; then
+              echo "manifest 已推送（第 $attempt 次尝试）"
+              exit 0
+            fi
+            echo "推送被拒，同步 origin/$BRANCH 后重新导出（第 $attempt 次）"
+            git fetch origin "$BRANCH"
+            git reset --hard "origin/$BRANCH"
+            node scripts/exportMatrixHealth.mjs
+            sleep $((attempt * 5))
+          done
+          echo "manifest 连续 5 次推送失败，放弃（下一轮门禁会重试）"
+          exit 1

@@ -117,9 +117,29 @@ jobs:
 
       - name: stages.load 落回仓库 manifest
         if: always() && (github.event_name != 'workflow_dispatch' || github.event.inputs.combos == '')
+        shell: bash
         run: |
+          set -uo pipefail
           git config user.name "kunyu-ci-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add resources/ai-reference/manifest.json
-          git diff --cached --quiet || git commit -m "chore(matrix): 夜间 runtime 门禁刷新 stages.load"
-          git push
+          # 默认分支是 master（GITHUB_REF_NAME 在 schedule/dispatch 下即它）
+          BRANCH="${GITHUB_REF_NAME:-master}"
+          # 并发兜底：ci（矩阵）作业可能在本作业跑着的几十分钟里也向默认分支提交 manifest，
+          # 直接 push 会 non-fast-forward（2026-11-16 实测：CI 定时任务恰在本作业 checkout
+          # 后 2 秒推送，整轮门禁因此红）。失败即取最新分支重跑导出再重试——
+          # exportMatrixHealth 是「overlay → 现有 manifest」增量合并，重跑不会丢对方写入的阶段。
+          for attempt in 1 2 3 4 5; do
+            git add resources/ai-reference/manifest.json
+            git diff --cached --quiet || git commit -m "chore(matrix): 夜间 runtime 门禁刷新 stages.load"
+            if git push; then
+              echo "manifest 已推送（第 $attempt 次尝试）"
+              exit 0
+            fi
+            echo "推送被拒，同步 origin/$BRANCH 后重新导出（第 $attempt 次）"
+            git fetch origin "$BRANCH"
+            git reset --hard "origin/$BRANCH"
+            node scripts/exportMatrixHealth.mjs
+            sleep $((attempt * 5))
+          done
+          echo "manifest 连续 5 次推送失败，放弃（下一轮门禁会重试）"
+          exit 1
