@@ -1,4 +1,4 @@
-// refresh-loader-matrix.mjs 刷新于 2026-11-10（3 条变更）
+// refresh-loader-matrix.mjs 刷新于 2026-11-21（4 条变更）
 /**
  * 加载器版本矩阵（Fabric / Forge / NeoForge 全版本线）。
  *
@@ -296,7 +296,8 @@ const FABRIC_MATRIX: Record<string, FabricToolchain> = {
     // REFRESH: fabricVersion 0.162.0+26.3 → 0.165.0+26.3
     // REFRESH: loomVersion 1.18-SNAPSHOT → 1.19-SNAPSHOT
     // REFRESH: fabricVersion 0.165.0+26.3 → 0.165.2+26.3
-    fabricVersion: '0.165.2+26.3', loomVersion: '1.19-SNAPSHOT',
+    // REFRESH: fabricVersion 0.165.2+26.3 → 0.166.2+26.3
+    fabricVersion: '0.166.2+26.3', loomVersion: '1.19-SNAPSHOT',
     // REFRESH: gradleVersion 9.7.1 → 9.8.2
     gradleVersion: '9.8.2', jdk: 25
   }
@@ -356,7 +357,8 @@ const FORGE_MATRIX: Record<string, ForgeToolchain> = {
     loader: 'forge', mcVersion: '26.3',
     // REFRESH: forgeVersion 66.0.11 → 66.1.0
     // REFRESH: forgeVersion 66.1.0 → 66.1.5
-    forgeVersion: '66.1.5', forgeGradleVersion: '[7.0.17,8)',
+    // REFRESH: forgeVersion 66.1.5 → 66.1.9
+    forgeVersion: '66.1.9', forgeGradleVersion: '[7.0.17,8)',
     gradleVersion: '9.7.1', jdk: 25, forgeConstructorStyle: 'modbusgroup'
   }
 }
@@ -378,7 +380,8 @@ const NEOFORGE_MATRIX: Record<string, NeoForgeToolchain> = {
   '1.21.1': {
     loader: 'neoforge', mcVersion: '1.21.1',
     // REFRESH: neoForgeVersion 21.1.250 → 21.1.265
-    neoForgeVersion: '21.1.265', modDevGradleVersion: '2.0.147',
+    // REFRESH: neoForgeVersion 21.1.265 → 21.1.267
+    neoForgeVersion: '21.1.267', modDevGradleVersion: '2.0.147',
     gradleVersion: '8.10.2', jdk: 21
   },
   '1.21.3': {
@@ -449,7 +452,8 @@ const NEOFORGE_MATRIX: Record<string, NeoForgeToolchain> = {
     loader: 'neoforge', mcVersion: '26.3',
     // REFRESH: neoForgeVersion 26.3.0.75-beta → 26.3.0.101
     // REFRESH: neoForgeVersion 26.3.0.101 → 26.3.0.102
-    neoForgeVersion: '26.3.0.102', modDevGradleVersion: '2.0.147',
+    // REFRESH: neoForgeVersion 26.3.0.102 → 26.3.0.115
+    neoForgeVersion: '26.3.0.115', modDevGradleVersion: '2.0.147',
     // REFRESH: stability beta → 移除（上游已取消该标记）
     gradleVersion: '9.7.1', jdk: 25
   }
