@@ -196,7 +196,7 @@
         "stages": {
           "runtime": {
             "pass": true,
-            "at": "2026-11-16T13:58:47.194Z",
+            "at": "2026-11-23T16:27:53.882Z",
             "note": "已进入世界并截图：.dev-userdata/client-gate/fabric-1.20.1.png"
           },
           "load": {
@@ -515,7 +515,7 @@
         "stages": {
           "runtime": {
             "pass": true,
-            "at": "2026-11-16T14:03:54.577Z",
+            "at": "2026-11-23T16:37:38.859Z",
             "note": "已进入世界并截图：.dev-userdata/client-gate/forge-1.20.1.png"
           },
           "load": {
@@ -1026,7 +1026,7 @@
         "stages": {
           "runtime": {
             "pass": true,
-            "at": "2026-11-16T14:00:39.759Z",
+            "at": "2026-11-23T16:30:29.880Z",
             "note": "已进入世界并截图：.dev-userdata/client-gate/fabric-1.21.11.png"
           },
           "load": {
@@ -1215,7 +1215,7 @@
         "stages": {
           "runtime": {
             "pass": true,
-            "at": "2026-11-16T14:06:07.275Z",
+            "at": "2026-11-23T16:40:06.745Z",
             "note": "已进入世界并截图：.dev-userdata/client-gate/neoforge-1.21.11.png"
           },
           "load": {
@@ -1255,7 +1255,7 @@
         "stages": {
           "runtime": {
             "pass": true,
-            "at": "2026-11-16T14:01:38.157Z",
+            "at": "2026-11-23T16:31:52.924Z",
             "note": "已进入世界并截图：.dev-userdata/client-gate/fabric-26.3.png"
           },
           "load": {
@@ -1329,7 +1329,7 @@
         "stages": {
           "runtime": {
             "pass": true,
-            "at": "2026-11-16T14:08:01.245Z",
+            "at": "2026-11-23T16:42:15.099Z",
             "note": "已进入世界并截图：.dev-userdata/client-gate/neoforge-26.3.png"
           },
           "load": {
